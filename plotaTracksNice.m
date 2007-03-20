@@ -9,8 +9,8 @@ t = [0 t];
 
 % color values (black and white set)
 %%%%%%%
-box1_gray = [0.8,0.8,0.8];
-box2_gray = [0.65,0.65,0.65];
+%box1_gray = [0.8,0.8,0.8];
+box2_gray = [0.,0.,0.];
 acc_color = [0,0,0];
 vel_color = [0,0,0];
 pos_color = [0,0,0];
@@ -26,18 +26,6 @@ clf;
 hold on;
 
 tend = t(length(t));
-
-% plot gray boxes in the background to make the different jerk phases
-% easier recognisable
-ymax = max([amax vmax ptarget]);
-ymin = min([-amax -vmax p0]);
-for i=1:length(t)-1,
-	if (mod(i,2) == 1)
-		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
-	else 
-		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none')
-	end
-end
 
 % plot boundries for jerk, acc and vel
 line([0,tend],[0,0],'Color','k');
@@ -62,4 +50,19 @@ for i=1:length(t)-1,
 end
 
 axis tight;
+
+% plot gray boxes in the background to make the different jerk phases
+% easier recognisable
+ax = axis;
+ymin = ax(3);
+ymax = ax(4);
+for i=1:length(t)-1,
+	if (mod(i,2) == 1)
+%		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
+	else 
+		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none','FaceAlpha',0.2)
+	end
+end
+
 hold off;
+set(gcf,'PaperPosition',[0,0,8,4],'Color','w');

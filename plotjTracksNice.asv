@@ -56,10 +56,9 @@ for i=1:length(t)-1,
 end
 
 axis tight;
+
 % plot gray boxes in the background to make the different jerk phases
 % easier recognisable
-%ymax = max([jmax amax vmax ptarget]);
-%ymin = min([-jmax -amax -vmax p0]);
 ax = axis;
 ymin = ax(3);
 ymax = ax(4);
