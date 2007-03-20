@@ -5,12 +5,12 @@ jerk = inline(num2str(jk));
 
 t_t0 = ['(t-',num2str(t0),')'];
 
-%str_acc = [num2str(a0), '+', t_t0, '*', num2str(jk)];
-%str_vel = [num2str(v0), '+', t_t0, '*', num2str(a0)];
-%str_vel = [str_vel, '+0.5*', t_t0, '^2*', num2str(jk)];
-%str_pos = [num2str(p0), '+', t_t0, '*', num2str(v0)];
-%str_pos = [str_pos, '+0.5*', t_t0, '^2*', num2str(a0)];
-%   		str_pos = [str_pos, '+(1/6)*', t_t0, '^3*', num2str(jk)];
+str_acc = [num2str(a0), '+', t_t0, '*', num2str(jk)];
+str_vel = [num2str(v0), '+', t_t0, '*', num2str(a0)];
+str_vel = [str_vel, '+0.5*', t_t0, '^2*', num2str(jk)];
+str_pos = [num2str(p0), '+', t_t0, '*', num2str(v0)];
+str_pos = [str_pos, '+0.5*', t_t0, '^2*', num2str(a0)];
+str_pos = [str_pos, '+(1/6)*', t_t0, '^3*', num2str(jk)];
 
 acc = inline(str_acc);
 vel = inline(str_vel);
@@ -18,11 +18,11 @@ pos = inline(str_pos);
 
 hold on;
 
-[x,y]=fplot(jerk,[t0 t1]); plot(x,y,'Color',jerk_color,'linewidth',2,'linestyle','-');
-plot([t1,t1],[jk,next_jk],'Color',jerk_color,'linewidth',2,'linestyle','-');
+[x,y]=fplot(jerk,[t0 t1]); plot(x,y,'Color',jerk_color,'linewidth',2,'linestyle','--');
+plot([t1,t1],[jk,next_jk],'Color',jerk_color,'linewidth',2,'linestyle','--');
 [x,y]=fplot(acc,[t0 t1]);  plot(x,y,'Color',acc_color,'linewidth',2,'linestyle','-');
-[x,y]=fplot(vel,[t0 t1]);  plot(x,y,'Color',vel_color,'linewidth',2);
-[x,y]=fplot(pos,[t0 t1]);  plot(x,y,'Color',pos_color,'linewidth',2);
+[x,y]=fplot(vel,[t0 t1]);  plot(x,y,'Color',vel_color,'linewidth',2,'linestyle','-');
+[x,y]=fplot(pos,[t0 t1]);  plot(x,y,'Color',pos_color,'linewidth',2,'linestyle','-.');
 
 p = pos(t1);
 v = vel(t1);
