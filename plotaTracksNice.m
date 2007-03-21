@@ -9,15 +9,14 @@ t = [0 t];
 
 % color values (black and white set)
 %%%%%%%
-%box1_gray = [0.8,0.8,0.8];
-box2_gray = [0.,0.,0.];
+box_gray = [0.,0.,0.];
 acc_color = [0,0,0];
 vel_color = [0,0,0];
 pos_color = [0,0,0];
 
 % color values (colored set)
 %%%%%%%
-% box_gray = [0.9,0.9,0.9];
+% box_gray = [0.0,0.0,0.0];
 % acc_color = 'b';
 % vel_color = 'g';
 % pos_color = 'r';
@@ -58,9 +57,9 @@ ymin = ax(3);
 ymax = ax(4);
 for i=1:length(t)-1,
 	if (mod(i,2) == 1)
-%		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
+%		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box_gray,'LineStyle','none','FaceAlpha',0.4)
 	else 
-		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none','FaceAlpha',0.2)
+		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box_gray,'LineStyle','none','FaceAlpha',0.2)
 	end
 end
 
