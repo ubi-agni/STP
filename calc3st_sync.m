@@ -1,7 +1,10 @@
-function [t, a] = calc3st(goal,aMax,vMax,v,cur)
+function [t, a] = calc3st_sync(newDuration, goal, aMax, vMax, v, cur)
 % Berechnung des zeitoptimalen Bewegungsprofil mit Beschleunigungsimpulsen
-% von a_max, bzw. -a_max. Zurückgegeben werden 3 Zeitintervalle mit den
-% dazugehörigen acc-Werten.
+% von a_max, bzw. -a_max und nachfolgendes Skalieren des Profils auf die
+% übergebene Zeit. Nur Verlängerungen der Zeit sind zulässig.
+% Zurückgegeben werden 3 Zeitintervalle mit den dazugehörigen acc-Werten.
+
+bDoubleDeceleration = false;
 
 % compute time needed for full stop
 dir = -sign(v); % direction of acceleration to stop
@@ -61,5 +64,50 @@ a(1) = acc;
 a(2) = 0;
 a(3) = dec;
 
+% now scale up to new duration
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% it should be longer than the optimal time we computed
+if (newDuration < t(3))
+	disp(sprintf('Error: You tried to scale to a time shorter than the optimal!'));
+	return;
+end
+
+% old cruising time
+tcruise = t(2)-t(1);
+A = abs(w) * (newDuration - t(3)) / aMax;
+B = newDuration - t(3) + tcruise;
+
+% compute time delta to steel from acc + decl phase
+deltaT = -B/2. + sqrt (B*B/4. + A); % > 0
+
+if (~bDoubleDeceleration && (t(1) - deltaT >= 0))
+    t(1) = t(1) - deltaT;
+    diff = t(3) - t(2);
+    t(3) = newDuration;
+    t(2) = t(3) - diff + deltaT;
+
+    w = v + 2. * 0.5*acc * t(1);
+else
+	% compute time needed for full stop
+    dir = -sign (v); % direction of acceleration to stop
+    stopT = abs(v / aMax);
+    % compute final position after full stop
+    stop = cur + stopT * (v + dir * aMax/2. * stopT);
+
+    % cruising speed:
+    w = (goal - stop) / (newDuration - stopT);
+    % turn acceleration into deceleration:
+    if (~bDoubleDeceleration)
+		a(1) = -a(1);
+        bDoubleDeceleration = true;
+    end
+	
+	% time to reach cruising speed:
+    t(1) = abs(w - v) / aMax;
+    t(2) = newDuration - (stopT - t(1));
+    t(3) = newDuration;
+end
+
 % display graph
-%plotaTracksNice(t, a, aMax, vMax, goal, v, cur);
+plotaTracksNice(t, a, aMax, vMax, goal, v, cur);
