@@ -10,7 +10,7 @@ t = [0 t];
 % color values (black and white set)
 %%%%%%%
 box1_gray = [1.0,1.0,1.0];
-box2_gray = [0.,0.,0.];
+box2_gray = [0.8,0.8,0.8];
 jerk_color = [0,0,0];
 acc_color = [0,0,0];
 vel_color = [0,0,0];
@@ -25,12 +25,37 @@ pos_color = [0,0,0];
 % vel_color = 'g';
 % pos_color = 'r';
 
-clf;
-hold on;
+clf; hold off;
+% plot the curves to find axes ranges
+a=a0;
+v=v0;
+p=p0;
+for i=1:length(t)-1,
+    if (t(i+1) > t(i))
+        if (i<length(t)-1)
+            [a,v,p] = plotjTrack(t(i),t(i+1),j(i),j(i+1),a,v,p,jerk_color,acc_color,vel_color,pos_color);
+        else
+            [a,v,p] = plotjTrack(t(i),t(i+1),j(i),0,a,v,p,jerk_color,acc_color,vel_color,pos_color);
+        end
+    end
+end
+axis tight;
+ax = axis; ymin = ax(3); ymax = ax(4);
 
-tend = t(length(t));
+clf; hold on;
+
+% plot gray boxes in the background to make the different jerk phases
+% easier recognisable
+for i=1:length(t)-1,
+	if (mod(i,2) == 1)
+%		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
+	else 
+		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none')
+	end
+end
 
 % plot boundries for jerk, acc and vel
+tend = t(length(t));
 line([0,tend],[0,0],'Color','k');
 line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':');
 line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':');
@@ -55,20 +80,5 @@ for i=1:length(t)-1,
     end
 end
 
-axis tight;
-
-% plot gray boxes in the background to make the different jerk phases
-% easier recognisable
-ax = axis;
-ymin = ax(3);
-ymax = ax(4);
-for i=1:length(t)-1,
-	if (mod(i,2) == 1)
-%		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
-	else 
-		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none','FaceAlpha',0.2)
-	end
-end
-
-hold off;
-set(gcf,'PaperPosition',[0,0,8,4],'Color','w');
+axis tight; hold off;
+set(gcf,'PaperPosition',[0,0,8,3],'Color','w');
