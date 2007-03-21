@@ -57,12 +57,12 @@ end
 % plot boundries for jerk, acc and vel
 tend = t(length(t));
 line([0,tend],[0,0],'Color','k');
-line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':');
-line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':');
-line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':');
-line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':');
-line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':');
-line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':');
+if ( jmax <= ymax) line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':'); end
+if (-jmax >= ymax) line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':'); end
+if ( amax <= ymax) line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':'); end
+if (-amax >= ymax) line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':'); end
+if ( vmax <= ymax) line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':'); end
+if (-vmax >= ymax) line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':'); end
 %line([0,tend],[p0,p0],'Color', pos_color, 'LineStyle', ':');
 %line([0,tend],[ptarget,ptarget],'Color', pos_color, 'LineStyle', ':');
 
