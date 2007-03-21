@@ -21,6 +21,10 @@ pos_color = [0,0,0];
 % vel_color = 'g';
 % pos_color = 'r';
 
+<<<<<<< .mine
+%clf;
+hold on;
+=======
 clf; hold off;
 % plot the curves to find axes ranges
 v = v0;
@@ -36,6 +40,7 @@ for i=1:length(t)-1,
 end
 axis tight;
 ax = axis; ymin = ax(3); ymax = ax(4);
+>>>>>>> .r803
 
 clf; hold on;
 
