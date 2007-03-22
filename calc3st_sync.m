@@ -110,4 +110,4 @@ else
 end
 
 % display graph
-plotaTracksNice(t, a, aMax, vMax, goal, v, cur);
+plotaTracksNice(t, a, aMax, vMax, goal, v, cur, false);

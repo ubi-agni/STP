@@ -77,8 +77,9 @@ else
 	trapezoid_stop = false;
 end
 % get direction
-dir = sign(p_target-p_stop);    
- 
+dir = sign(p_target-p_stop);
+p_fullstop = p_stop;
+
 % (4)
 % position change just from acc and dec phase:
 [t_acc a_acc] = calc3st(dir*vmax,jmax,amax,a0,v0); % acc. part (before cruising)
@@ -88,6 +89,8 @@ dir = sign(p_target-p_stop);
 % distance we need to go in cruising phase:
 p_delta = (p_target-p_stop);
 t_delta = p_delta / (dir*vmax);
+
+disp (sprintf ('full stop at: %f  zero-cruise: %f', p_fullstop, p_stop));
 
 % (5)
 % case differentiation: Do we have a cruising phase?

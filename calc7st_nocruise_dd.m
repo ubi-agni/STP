@@ -59,7 +59,7 @@ for i=1:length(pos_real_ns),
 	t3 = pos_real_ns(i);
 	t1 = -(a0-s_dir*1/2*dir*(4*jmax^2*dir^2*t3^2+2*a0^2-4*v0*jmax*dir)^(1/2))/jmax/dir;
 	t2 = (jmax*dir*t3+s_dir*1/2*dir*(4*jmax^2*dir^2*t3^2+2*a0^2-4*v0*jmax*dir)^(1/2))/dir/jmax;
-	[a,v,p] = calcjtracks([0, t1, t1+t2, t1+t2+t3], j_res, a0,v0,p0);
+	[a,v,p] = calcjTracks([0, t1, t1+t2, t1+t2+t3], j_res, a0,v0,p0);
 	if ((isreal(t1)) && (isreal(t2)) && (t1 >= 0) && (t2 >=0) && (iszero(a)) && (iszero(v)) && (iszero(ptarget-p)) && (t3 < best_t3))
 		best_t3 = t3;
 	end
