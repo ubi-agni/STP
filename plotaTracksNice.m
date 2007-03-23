@@ -63,7 +63,6 @@ if (bOverWrite)
     %line([0,tend],[ptarget,ptarget],'Color', pos_color, 'LineStyle', ':');
 else
     line([0,tend],[0,0],'Color','k');
-    tend
     hold on;
 end
 

@@ -11,6 +11,31 @@ calc7st(1,1,0.7,0.8,0,0,-1,true);
 figure;
 calc7st(1.3,  1, 0.7, 0.8,  0.8, 0.7, -1.2, true);
 
+% shortening T-T
+figure;
+calc7st(-0.513672, 2,1,1.5, 1.5,0.5,-2,true,false);
+calc7st(0.15, 2,1,1.5, 1.5,0.5,-2,true,false);
+calc7st(0.826172, 2,1,1.5, 1.5,0.5,-2, true, false);
+ax=axis; tend=ax(2);
+line([0,tend],[1.5,1.5],'Color','k','LineStyle',':');
+line([0,tend],[1,1],'Color','k','LineStyle',':');
+line([0,tend],[-1,-1],'Color','k','LineStyle',':');
+set(gca,'ytick',[-1 0 1 1.5],'xtick',[]);
+
+% shortening T-T to T-D
+figure; 
+calc7st(0.672039, 2,1.2,1.5, 1.7,-0.5,-2,true,false);
+calc7st(-0.8, 2,1.2,1.5, 1.7,-0.5,-2,true,false);
+calc7st(-1.225, 2,1.2,1.5, 1.7,-0.5,-2,true,false);
+calc7st(-1.7, 2,1.2,1.5, 1.7,-0.5,-2,true,false);
+calc7st(-1.941370, 2,1.2,1.5, 1.7,-0.5,-2,true,false);
+ax=axis; tend=ax(2);
+line([0,tend],[1.5,1.5],'Color','k','LineStyle',':');
+line([0,tend],[1.2,1.2],'Color','k','LineStyle',':');
+line([0,tend],[-1.2,-1.2],'Color','k','LineStyle',':');
+set(gca,'ytick',[-1.2 0 1.2 1.5],'xtick',[]);
+
+
 % double deceleration, D-D -> D-T
 figure; calc7st(1.5, 2,1.5,1, 0,2,-1.5, true);
 figure; calc7st(1.3, 2,1.5,1, 0,2,-1.5, true); % buggy

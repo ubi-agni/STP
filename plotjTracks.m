@@ -7,7 +7,7 @@ v=v0;
 p=p0;
 
 for i=1:length(t)-1,
-    if (t(i+1) > t(i)+0.00001)
+    if (t(i+1) > t(i))
         [a,v,p] = plotjTrack(t(i),t(i+1),j(i),a,v,p);
     end
 end
