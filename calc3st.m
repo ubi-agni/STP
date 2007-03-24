@@ -61,5 +61,9 @@ a(1) = acc;
 a(2) = 0;
 a(3) = dec;
 
+% give back the time intervalls, not end times.
+t(3) = t(3) - t(2);
+t(2) = t(2) - t(1);
+
 % display graph
 %plotaTracksNice(t, a, aMax, vMax, goal, v, cur);

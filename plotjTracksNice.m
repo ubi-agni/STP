@@ -3,11 +3,11 @@
 
 function [a,v,p] = plot7Track(t,j,jmax,amax,vmax,ptarget,a0,v0,p0, bOverWrite)
 
-if (nargin < 10) bOverWrite=true; end
+if (nargin < 10) bOverWrite=false; end
 
 [t,j]= shrink_t_j(t,j);
-t = [0 t];
-tend = t(length(t));
+%t = [0 t];
+tend = sum(t);
 
 % color values (black and white set)
 %%%%%%%
@@ -33,14 +33,14 @@ if (bOverWrite)
     a=a0;
     v=v0;
     p=p0;
-    for i=1:length(t)-1,
-        if (t(i+1) > t(i))
-            if (i<length(t)-1)
-                [a,v,p] = plotjTrack(t(i),t(i+1),j(i),j(i+1),a,v,p,jerk_color,acc_color,vel_color,pos_color);
-            else
-                [a,v,p] = plotjTrack(t(i),t(i+1),j(i),0,a,v,p,jerk_color,acc_color,vel_color,pos_color);
-            end
+    t_curr = 0;
+    for i=1:length(t),
+        if (i<length(t))
+            [a,v,p] = plotjTrack(t_curr, t_curr+t(i),j(i),j(i+1),a,v,p,jerk_color,acc_color,vel_color,pos_color);
+        else
+            [a,v,p] = plotjTrack(t_curr, t_curr+t(i),j(i),0,a,v,p,jerk_color,acc_color,vel_color,pos_color);
         end
+        t_curr = t_curr + t(i);
     end
     axis tight;
     ax = axis; ymin = ax(3); ymax = ax(4);
@@ -49,12 +49,16 @@ if (bOverWrite)
 
     % plot gray boxes in the background to make the different jerk phases
     % easier recognisable
-    for i=1:length(t)-1,
-        if (mod(i,2) == 1)
-    %		fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box1_gray,'LineStyle','none')
-        else 
-            fill([t(i),t(i+1),t(i+1),t(i)], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none')
-        end
+    t_curr = 0;
+    bPaint = false;
+    for i=1:length(t),
+        if (t(i) > 0) 
+            if bPaint
+                fill([t_curr, t_curr+t(i), t_curr+t(i), t_curr], [ymin,ymin,ymax,ymax],box2_gray,'LineStyle','none')
+            end
+            bPaint = ~bPaint;
+            t_curr = t_curr + t(i);
+        end        
     end
 
     % plot boundries for jerk, acc and vel
@@ -76,14 +80,14 @@ end
 a=a0;
 v=v0;
 p=p0;
-for i=1:length(t)-1,
-    if (t(i+1) > t(i))
-        if (i<length(t)-1)
-            [a,v,p] = plotjTrack(t(i),t(i+1),j(i),j(i+1),a,v,p,jerk_color,acc_color,vel_color,pos_color);
-        else
-            [a,v,p] = plotjTrack(t(i),t(i+1),j(i),0,a,v,p,jerk_color,acc_color,vel_color,pos_color);
-        end
+t_curr = 0;
+for i=1:length(t),
+    if (i<length(t))
+            [a,v,p] = plotjTrack(t_curr, t_curr+t(i),j(i),j(i+1),a,v,p,jerk_color,acc_color,vel_color,pos_color);
+    else
+            [a,v,p] = plotjTrack(t_curr, t_curr+t(i),j(i),0,a,v,p,jerk_color,acc_color,vel_color,pos_color);
     end
+    t_curr = t_curr + t(i);
 end
 
 axis tight; hold off;

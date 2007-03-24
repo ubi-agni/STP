@@ -24,9 +24,10 @@ plot([t1,t1],[jk,next_jk],'Color',jerk_color,'linewidth',2,'linestyle','--');
 [x,y]=fplot(vel,[t0 t1]);  plot(x,y,'Color',vel_color,'linewidth',2,'linestyle','-');
 [x,y]=fplot(pos,[t0 t1]);  plot(x,y,'Color',pos_color,'linewidth',2,'linestyle','-.');
 
-p = pos(t1);
-v = vel(t1);
-a = acc(t1);
+t = t1-t0;
+a = a0+t*jk;
+v = v0+t*a0+0.5*t^2*jk;
+p = p0+t*v0+0.5*t^2*a0+(1/6)*t^3*jk;
 
 % jerk = inline(num2str(j));
 % t = sym('t');
