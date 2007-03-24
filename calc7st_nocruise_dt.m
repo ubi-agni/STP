@@ -5,7 +5,6 @@ function [t_res,j_res] = calc7st_nocruise_dt(dir,ptarget,jmax,amax,vmax,a0,v0,p0
 % berechnet.
 % Zurückgegeben werden 4 Zeitintervalle mit den dazugehoerigen jerk-Werten.
 	% (1) Die kleinste reelle, positive Nullstellen des Polynoms für t1 finden.
-
 	% (2) t2, t3 und t4 berechnen und zurückgeben.
 
 t1 = sym('t1', 'positive');

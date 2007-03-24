@@ -1,5 +1,4 @@
 % t = (t1 t2 t3 t4 t5 t6 t7 t8) ... start time, times for the 7 phases
-
 % j = (j1 j2 j3 j4 j5 j6 j7) ... jerks for the 7 phases
 
 function [a,v,p] = plot7Track(t,j,jmax,amax,vmax,ptarget,a0,v0,p0, bOverWrite)
