@@ -9,7 +9,8 @@ j = j(nonzero);
 for i=1:length(t)-1
     if (j(i) == j(i+1))
         % merge
-        t(i) = t(i)+t(i+1)
+        t(i) = t(i)+t(i+1);
+        t(i+1) = 0;
     end
 end
 
