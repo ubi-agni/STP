@@ -83,10 +83,9 @@ for i=1:length(t)
         % in the case of overshooting velocity or position, get the
         % maximum between v (p) and v2 (p2):
         syms tt;
-        f_a = inline(eval('a+tt*j(i)'));
-        f_v = inline(eval('v+tt*a+0.5*tt^2*j(i)'));
-        f_p = inline(eval('p+tt*v+0.5*tt^2*a+(1/6)*tt^3*j(i)'));               
         if ((sign(a) == -sign(a2)) && ~isZero(a) && ~isZero(a2))
+            f_a = inline(char(eval('a+tt*j(i)')));
+            f_v = inline(char(eval('v+tt*a+0.5*tt^2*j(i)')));
             t0 = fzero(f_a,[0,t(i)]);
             if (a > 0)
                 ranges.v(2) = max (ranges.v(2), f_v(t0));
@@ -95,6 +94,8 @@ for i=1:length(t)
             end
         end
         if ((sign(v) == -sign(v2)) && ~isZero(v) && ~isZero(v2))
+            f_v = inline(char(eval('v+tt*a+0.5*tt^2*j(i)')));
+            f_p = inline(char(eval('p+tt*v+0.5*tt^2*a+(1/6)*tt^3*j(i)')));
             t0 = fzero(f_v,[0,t(i)]);
             if (v > 0)
                 ranges.p(2) = max (ranges.p(2), f_p(t0));
