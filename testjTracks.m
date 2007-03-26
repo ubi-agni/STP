@@ -9,9 +9,9 @@ v=v0;
 p=p0;
 
 for ii=1:length(t),
-	if (t(ii) < 0)
+	if (~isreal(t(ii)) || (t(ii) < 0))
 		isCorrect = false;
-		reason = sprintf('Negative time intervalls!!');
+		reason = sprintf('Negative or unreal time intervalls!! (t(%d) = %f)', ii, t(ii));
 		return;
 	end
     if (t(ii) > 0)

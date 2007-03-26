@@ -70,11 +70,14 @@ end
 
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
+	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice)
 end
 
 % test, whether the solution is correct
 if (testResult)
+    t
+    j
+    disp(sprintf('testjTracks(t,j,%f,%f,%f,%f,%f,%f,%f)',a0,v0,p0,jmax,amax,vmax,p_target));
     [isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,p_target);
     if (~isCorrect)
 		error(reason);    

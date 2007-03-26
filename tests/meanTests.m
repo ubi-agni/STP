@@ -1,3 +1,12 @@
+% open problems
+% description: negative time intervalls at t(1) and t(5).
+[t,j] = calc7st(4, 2, 10, 10, 2, -15, 0,true)
+
+% WT, v0>vmax
+% description: producing nonsence, double deceleration case
+%calc7st(4.228053, 0.857550, 1.727873, 3.105438, 0.2, 5, -10.239185,false, false, true);
+
+
 % let's start with some easy some standard tests with cruising phase:
 if true
     % TcT
@@ -39,3 +48,10 @@ if true
     % TW
     calc7st(10, 4, 8, 12, -5, 15, 0, false, false, true);
 end
+
+% solved problems
+% description: producing a WW instead of TW profile so she breaks amax
+% limit
+% solved: the cutted out t profile was passed to the solving funcition,
+% however, the original one should have been used
+[t,j] = calc7st(1, 4, 4.5, 12, -2, -4, 0,true,true,true);
