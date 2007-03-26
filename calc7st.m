@@ -1,4 +1,4 @@
-function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,plotNice)
+function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,plotNice,testResult)
 
 % Calculates the time optimal third-order trajectory to reach the target
 % position with the given start conditions and according to the limitations
@@ -27,6 +27,7 @@ function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,plotNice)
 % fill in missing arguments
 if (nargin < 8) plotMe=false; end
 if (nargin < 9) plotNice=true; end
+if (nargin < 10) testResult=false; end
 
 % (1)
 % calculate the dir-flag by testing if we over-shoot the target
@@ -45,7 +46,7 @@ p_fullstop = p_stop;
 t_zeroCruise = [t_acc 0 t_dec];
 j_zeroCruise= [a_acc 0 a_dec];
 [ah vh p_stop] = calcjTracks(t_zeroCruise,j_zeroCruise, a0, v0, p0);
-%h = figure;set(h,'Name','Zero-Cruise-Profile');plotjTracksNice(t_zeroCruise,j_zeroCruise, p_target, jmax, amax, vmax, a0, v0, p0);
+%h = figure;set(h,'Name','Zero-Cruise-Profile');plotjTracks(t_zeroCruise,j_zeroCruise, p_target, jmax, amax, vmax, a0, v0, p0,true);
 % distance we need to go in cruising phase:
 p_delta = (p_target-p_stop);
 t_delta = p_delta / (dir*vmax);
@@ -60,13 +61,18 @@ if (t_delta >= 0)
     j = [a_acc, 0, a_dec];
 else
     % without cruising phase
-    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0)
+    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
 end
 
 % display graph
 if (plotMe)
 	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
-    if (~isZero(a_end) || ~isZero(v_end) || ~isZero(p_end - p_target))
-        error (sprintf ('target not reached: a=%f  v=%f  dp=%f', a_end, v_end, p_end-p_target));
+end
+
+% test, whether the solution is correct
+if (testResult)
+    [isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,p_target);
+    if (~isCorrect)
+        error(reason);    
     end
 end
