@@ -10,13 +10,13 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v
     % (1) Check whether we have a double deceleration profile.
     % (2) Case distinction: TT / TW / WT / WW
     
-plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
+%plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
 t_original = t;
 
 % (1)
 % check if we have a double deceleration profile
 if (sign(j(3)) ~= sign (j(5)))
-    dips(sprintf('DoubleDec Case!'));
+    disp(sprintf('DoubleDec Case!'));
     bSecondTrapezoidal = false;
     if (t(6) == 0) % second part is currently wedge, may become trapez
         % calculate maximal shift from first to second deceleration phase

@@ -41,33 +41,37 @@ end
 % get direction
 dir = sign(p_target-p_stop);
 p_fullstop = p_stop;
-
-% (2)
-% position change just from acc and dec phase:
-[t_acc a_acc] = calc3st(dir*vmax,jmax,amax,a0,v0); % acc. part (before cruising)
-[t_dec a_dec] = calc3st(0,jmax,amax,0,dir*vmax); % dec. part (after cruising)
-% postion change:
-t_zeroCruise = [t_acc 0 t_dec];
-j_zeroCruise= [a_acc 0 a_dec];
-[ah vh p_stop] = calcjTracks(t_zeroCruise,j_zeroCruise, a0, v0, p0);
-%h = figure;set(h,'Name','Zero-Cruise-Profile');plotjTracks(t_zeroCruise,j_zeroCruise, p_target, jmax, amax, vmax, a0, v0, p0,true);
-% distance we need to go in cruising phase:
-p_delta = (p_target-p_stop);
-t_delta = p_delta / (dir*vmax);
-
-disp (sprintf ('full stop at: %f  zero-cruise: %f', p_fullstop, p_stop));
-
-% (3)
-% case differentiation: Do we have a cruising phase?
-if (t_delta >= 0)
-	% with cruising phase
-    t = [t_acc t_delta t_dec];
-    j = [a_acc, 0, a_dec];
+if (dir == 0)
+    t = t_stop;
+    j = a_stop;
 else
-    % without cruising phase
-    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
-end
+	% (2)
+	% position change just from acc and dec phase:
+	[t_acc a_acc] = calc3st(dir*vmax,jmax,amax,a0,v0); % acc. part (before cruising)
+	[t_dec a_dec] = calc3st(0,jmax,amax,0,dir*vmax); % dec. part (after cruising)
+	% postion change:
+	t_zeroCruise = [t_acc 0 t_dec];
+	j_zeroCruise= [a_acc 0 a_dec];
+	[ah vh p_stop] = calcjTracks(t_zeroCruise,j_zeroCruise, a0, v0, p0);
+	%h = figure;set(h,'Name','Zero-Cruise-Profile');plotjTracks(t_zeroCruise,j_zeroCruise, p_target, jmax, amax, vmax, a0, v0, p0,true);
+	% distance we need to go in cruising phase:
+	p_delta = (p_target-p_stop);
+	t_delta = p_delta / (dir*vmax);
 
+	disp (sprintf ('full stop at: %f  zero-cruise: %f', p_fullstop, p_stop));
+
+	% (3)
+	% case differentiation: Do we have a cruising phase?
+	if (t_delta >= 0)
+		% with cruising phase
+		t = [t_acc t_delta t_dec];
+		j = [a_acc, 0, a_dec];
+	else
+		% without cruising phase
+		[t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
+	end
+end
+	
 % display graph
 if (plotMe)
 	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice)
