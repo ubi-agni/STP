@@ -12,17 +12,9 @@ while (1 > 0)
 	ptarget = 20*vmax*rand-10*vmax;
 	p0 = 20*vmax*rand-10*vmax;
 	
-	disp(sprintf('calc7st(%f, %f, %f, %f, %f, %f, %f)...',ptarget,jmax,amax,vmax,a0,v0,p0));
-	[t,j] = calc7st(ptarget,jmax,amax,vmax,a0,v0,p0,false);
-	%[t,j] = shrink_t_j(t,j);
-	
-	[isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,ptarget);
-	if (isCorrect == false)
-		disp(sprintf('Problem when calling calc7st(%f, %f, %f, %f, %f, %f, %f)...',ptarget,jmax,amax,vmax,a0,v0,p0));
-		disp(sprintf('!!!!!!!!!!!'));
-		disp(sprintf(reason));
-		return;
-	end
+	%disp(sprintf('calc7st(%f, %f, %f, %f, %f, %f, %f)...',ptarget,jmax,amax,vmax,a0,v0,p0));
+    calc7st(ptarget,jmax,amax,vmax,a0,v0,p0,false,false,true);
+    
 	c = c+1;
 	if (mod(c,10)==0)
 		disp(sprintf('Tested %d cases',c));

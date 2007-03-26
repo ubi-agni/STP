@@ -29,6 +29,10 @@ if (nargin < 8) plotMe=false; end
 if (nargin < 9) plotNice=true; end
 if (nargin < 10) testResult=false; end
 
+if (testResult)
+    disp(sprintf('Runnign calc7st(%f, %f, %f, %f, %f, %f, %f)...',p_target,jmax,amax,vmax,a0,v0,p0));
+end
+
 % (1)
 % calculate the dir-flag by testing if we over-shoot the target
 % at imidiate halt
@@ -73,6 +77,6 @@ end
 if (testResult)
     [isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,p_target);
     if (~isCorrect)
-        error(reason);    
+		error(reason);    
     end
 end
