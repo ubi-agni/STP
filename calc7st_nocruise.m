@@ -24,7 +24,7 @@ if (sign(j(3)) ~= sign (j(5)))
         end
         % adapt profile
         t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
-        %h = figure; set(h, 'Name', 'W-T-Grenzfall'); plotjTracksNice(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); figure;
+        %h = figure; set(h, 'Name', 'W-T-Grenzfall'); plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
         % compute reached position
         [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
         % if we still overshoot, the profile becomes trapezoidal
@@ -44,7 +44,7 @@ if (sign(j(3)) ~= sign (j(5)))
     return;
 end
 
-%h = figure; set(h, 'Name', 'Before cut out'); plotjTracksNice(t, j, ptarget, jmax, amax, vmax, a0, v0, p0);
+%h = figure; set(h, 'Name', 'Before cut out'); plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
 
 % we don't have double deceleration --> cut out instead of merging
 % (2)
@@ -58,7 +58,7 @@ if (~isZero(t(2)) && ~isZero(t(6)))
     t(6) = t(6) - dt;
     % test whether we still overshoot
     [a_end,v_end,p_end] =  calcjTracks(t, j, a0, v0, p0);
-   % h = figure; set(h, 'Name', 'Cutted out'); plotjTracksNice(t, j, ptarget, jmax, amax, vmax, a0, v0, p0); figure;
+   % h = figure; set(h, 'Name', 'Cutted out'); plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
     if (sign(p_end - ptarget)*dir == -1)
         % Success! We stop before the target now!
         % Call the appropriate function to solve:
@@ -130,7 +130,7 @@ else
         t(2) = 0;
         t(5) = sqrt((area_w_max-area_t_max)/abs(j(5)));
         t(7) = t(5);
-        %h = figure; set(h, 'Name', 'After cut out'); plotjTracksNice(t, j, ptarget, jmax, amax, vmax, a0, v0, p0); figure;
+        %h = figure; set(h, 'Name', 'After cut out'); plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
         % test whether we still overshoot
         [a_end,v_end,p_end] =  calcjTracks(t,j, a0, v0, p0);
         if (sign(p_end - ptarget)*dir == -1)

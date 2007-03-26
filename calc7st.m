@@ -1,4 +1,4 @@
-function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,bOverWrite)
+function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,plotNice)
 
 % Calculates the time optimal third-order trajectory to reach the target
 % position with the given start conditions and according to the limitations
@@ -25,8 +25,8 @@ function [t,j] = calc7st(p_target,jmax,amax,vmax,a0,v0,p0,plotMe,bOverWrite)
     % profile.
     
 % fill in missing arguments
-if (nargin < 9) bOverWrite=true; end
 if (nargin < 8) plotMe=false; end
+if (nargin < 9) plotNice=true; end
 
 % (1)
 % calculate the dir-flag by testing if we over-shoot the target
@@ -65,7 +65,7 @@ end
 
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracksNice(t,j,jmax,amax,vmax,p_target,a0,v0,p0, bOverWrite);
+	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
     if (~isZero(a_end) || ~isZero(v_end) || ~isZero(p_end - p_target))
         error (sprintf ('target not reached: a=%f  v=%f  dp=%f', a_end, v_end, p_end-p_target));
     end
