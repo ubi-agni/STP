@@ -79,13 +79,36 @@ ymax = max ([ranges.p(2), ranges.v(2), ranges.a(2), ranges.j(2), j]);
 v=v0; p=p0; a=a0;
 for i=1:length(t)
     if (t(i) > 0)
-        [a,v,p] = calcjTrack(t(i),j(i), a,v,p);
+        [a2,v2,p2] = calcjTrack(t(i),j(i), a,v,p);
+        % in the case of overshooting velocity or position, get the
+        % maximum between v (p) and v2 (p2):
+        syms tt;
+        f_a = inline(eval('a+tt*j(i)'));
+        f_v = inline(eval('v+tt*a+0.5*tt^2*j(i)'));
+        f_p = inline(eval('p+tt*v+0.5*tt^2*a+(1/6)*tt^3*j(i)'));               
+        if ((sign(a) == -sign(a2)) && ~isZero(a) && ~isZero(a2))
+            t0 = fzero(f_a,[0,t(i)]);
+            if (a > 0)
+                ranges.v(2) = max (ranges.v(2), f_v(t0));
+            else
+                ranges.v(1) = min (ranges.v(1), f_v(t0));
+            end
+        end
+        if ((sign(v) == -sign(v2)) && ~isZero(v) && ~isZero(v2))
+            t0 = fzero(f_v,[0,t(i)]);
+            if (v > 0)
+                ranges.p(2) = max (ranges.p(2), f_p(t0));
+            else
+                ranges.p(1) = min (ranges.p(1), f_p(t0));
+            end
+        end
+        a = a2; v = v2; p = p2;
+        ranges.p(1) = min (ranges.p(1), p); ranges.p(2) = max (ranges.p(2), p);
+        ranges.v(1) = min (ranges.v(1), v); ranges.v(2) = max (ranges.v(2), v);
+        ranges.a(1) = min (ranges.a(1), a); ranges.a(2) = max (ranges.a(2), a);
+        ymin = min ([ymin, ranges.p(1), ranges.v(1), ranges.a(1)]);
+        ymax = max ([ymax, ranges.p(2), ranges.v(2), ranges.a(2)]);
     end
-    ranges.p(1) = min (ranges.p(1), p); ranges.p(2) = max (ranges.p(2), p);
-    ranges.v(1) = min (ranges.v(1), v); ranges.v(2) = max (ranges.v(2), v);
-    ranges.a(1) = min (ranges.a(1), a); ranges.a(2) = max (ranges.a(2), a);
-    ymin = min ([ymin, ranges.p(1), ranges.v(1), ranges.a(1)]);
-    ymax = max ([ymax, ranges.p(2), ranges.v(2), ranges.a(2)]);
 end
 return
 
