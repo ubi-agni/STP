@@ -10,6 +10,8 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v
     % (1) Check whether we have a double deceleration profile.
     % (2) Case distinction: TT / TW / WT / WW
     
+plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
+
 % (1)
 % check if we have a double deceleration profile
 if (sign(j(3)) ~= sign (j(5)))
@@ -19,18 +21,22 @@ if (sign(j(3)) ~= sign (j(5)))
         % in order to reach the W-T-border case
         [a2, v2, p2] = calcjTracks(t(1:2),j(1:2), a0, v0, p0);
         [DeltaT, T5, T7] = calc7st_opt_shift(t,j,dir, jmax,amax, a2,v2);
-        if (DeltaT < 0 || DeltaT > t(3))
-            error ('This should not happen!');
-        end
-        % adapt profile
-        t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
-        %h = figure; set(h, 'Name', 'W-T-Grenzfall'); plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
-        % compute reached position
-        [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
-        % if we still overshoot, the profile becomes trapezoidal
-        if (sign(p_end - ptarget)*dir == 1)
-            bSecondTrapezoidal = true;
-            t = t_new;
+        if (DeltaT < 0) error ('This should not happen!'); end
+        if (DeltaT < t(3))
+            % adapt profile by shortening t(3)
+            t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
+            plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall'); figure;
+            % compute reached position
+            [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
+            % if we still overshoot, the profile becomes trapezoidal
+            if (sign(p_end - ptarget)*dir == 1)
+                bSecondTrapezoidal = true;
+                t = t_new;
+            end
+        else
+            % velocity delta in phase 3 is not enough to extend
+            % wedge-shaped second decleration phase to trapezoidal shape
+            % so we stay at a triangular profile
         end
     end
     % compute last part of profile, keeping first one fixed

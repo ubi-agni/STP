@@ -15,11 +15,13 @@ else
     if (s(1) ~= '-') solIdx=1; else solIdx=2; end
 end
 
+% substitute solutions for variables in T1 in equation EQ2
 for i=1:length(T1)
     val = getfield(solT1, char(T1(i)));
 %    disp (sprintf('%s: %s', char(T1(i)), char(val(solIdx))));
     EQ2 = subs(EQ2, T1(i), val(solIdx));
 end
+
 % solve for single variable T
 solT  = solve (EQ2, char(T));
 

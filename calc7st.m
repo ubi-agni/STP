@@ -60,7 +60,7 @@ if (t_delta >= 0)
     j = [a_acc, 0, a_dec];
 else
     % without cruising phase
-    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
+    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0)
 end
 
 % display graph

@@ -92,9 +92,8 @@ if (N==7)
     if (t(4) ~= 0) aEQ = addEQ (aEQ, a3, 0); end
 
     if (bDoubleDec) % double deceleration
-        % add max limits for trapezoidal profiles
-        if (t(2) ~= 0) aEQ = addEQ (aEQ, a1, -dir*amax); end
-        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end    
+        % add max limits for trapezoidal profile
+        if (t(6) ~= 0) aEQ = addEQ (aEQ, a(6), -dir*amax); end    
         % first two phase are completely known:
         if (t(1) ~= 0) TEQ = addEQ (TEQ, 't1', t(1)); end
         if (t(2) ~= 0) TEQ = addEQ (TEQ, 't2', t(2)); end
