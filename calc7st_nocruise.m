@@ -222,6 +222,6 @@ function [t_res,j_res] = calc7st_nocruise_decT(t,j, dir,ptarget,jmax,amax,vmax, 
 % Calculate exact phase duration from given profile t, j
 % generate set of equations
 [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = stp7_solve ([A V TEQ], P, TVARS, sym('t5', 'positive'));
+t_res = stp7_solve ([A V TEQ], P, TVARS, sym('t3', 'positive'));
 j_res = j;
 return

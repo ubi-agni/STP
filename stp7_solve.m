@@ -7,14 +7,16 @@ T1 = TVARS; T1(find(T1 == T)) = [];
 solT1 = eval (solveCmd ([EQ1 T1]));
 
 % in some cases multiple solutions exists (positive and negative)
-val = getfield(solT1, char(T1(1)));
-if (length(val) == 1) solIdx=1;
-else
-    % simply choose solution whose value doesn't start with '-'
-    s=char(val(1));
-    if (s(1) ~= '-') solIdx=1; else solIdx=2; end
+N = length(getfield(solT1, char(T1(1)))); t_res=[];
+for i=1:N
+    % try all possible solutions and choose best one
+    trial = trySolution (solT1, i, EQ1, EQ2, T1, T);
+    if (length(trial) > 0) t_res = trial; end
 end
 
+if (length(t_res) == 0) error ('This should not happen: no solution'); end
+
+function t_res = trySolution (solT1, solIdx, EQ1, EQ2, T1, T)
 % substitute solutions for variables in T1 in equation EQ2
 for i=1:length(T1)
     val = getfield(solT1, char(T1(i)));
@@ -25,22 +27,36 @@ end
 % solve for single variable T
 solT  = solve (EQ2, char(T));
 
-% Take the smallest real solution > 0
-t = 0;
-for i=1:length(solT)
-    val = eval(solT(i));
-	if (isreal(val) && (val > 0) && ((val < t) || (t == 0)))
-		t = val;
-	end
-end
+% choose real solutions >= 0
+solT = eval(solT);
+solT = solT(imag(solT) == 0);
+solT = solT(solT >= 0);
+solT = sort(solT); % sort in ascending order
 
-% Replace values and build result vector
-varname = char(T); idx = str2num(varname(2));
-t_res(idx) = t;
+% create index vector containing indeces of T1 vars
+idxs = [];
 for i=1:length(T1);
-    varname = char(T1(i)); idx=str2num(varname(2));
-    val = getfield(solT1, varname);
-    t_res(idx) = subs (val(solIdx), T, t); % replace with correct value
+    varname = char(T1(i)); 
+    idxs = [idxs str2num(varname(2))];
+end
+% index of T variable
+varname = char(T); idxT = str2num(varname(2));
+
+% replace values, build and check result vector
+t_res = []; % empty set indicates failure
+for s=1:length(solT)
+    t_res(idxT) = solT(s);
+    for i=1:length(T1);
+        val = getfield(solT1,char(T1(i)));
+        t_res(idxs(i)) = subs (val(solIdx), T, solT(s)); % replace with correct value
+        if (t_res(idxs(i)) < 0)
+            disp (sprintf ('invalid: %f', t_res(idxs(i))));
+            t_res = []; % reset
+            break;
+        end
+    end
+    % return first feasible solution
+    if (length(t_res) > 0) return; end
 end
 return
 
