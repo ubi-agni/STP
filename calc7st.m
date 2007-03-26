@@ -58,17 +58,15 @@ if (t_delta >= 0)
 	% with cruising phase
     t = [t_acc t_delta t_dec];
     j = [a_acc, 0, a_dec];
-    % display graph
-    if (plotMe)
-	    [a_end, v_end, p_end] = plotjTracksNice(t,j,jmax,amax,vmax,p_target,a0,v0,p0, bOverWrite);
-    end
-    return;
+else
+    % without cruising phase
+    [t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
 end
-
-% without cruising phase
-[t,j] = calc7st_nocruise_cutter(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
 
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracksNice(t,j,jmax,amax,vmax,p_target,a0,v0,p0, bOverWrite)
+	[a_end, v_end, p_end] = plotjTracksNice(t,j,jmax,amax,vmax,p_target,a0,v0,p0, bOverWrite);
+    if (~isZero(a_end) || ~isZero(v_end) || ~isZero(p_end - p_target))
+        error (sprintf ('target not reached: a=%f  v=%f  dp=%f', a_end, v_end, p_end-p_target));
+    end
 end
