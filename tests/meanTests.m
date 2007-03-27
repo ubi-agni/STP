@@ -1,4 +1,7 @@
 % open problems
+calc7st (-0.030068, 2,1,1, 0.8,-0.2,0, true, true);
+calc7st (-0.275, 2,1,1, -0.8,-0.2,0, true, true);
+calc7st (-0.27, 2,1,1, -0.8,-0.2,0, true, true);
 
 % let's start with some easy some standard tests with cruising phase:
 if true

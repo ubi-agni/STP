@@ -102,3 +102,53 @@ figure;
 [t,a] = calc3st_sync(tnew,0.4,0.6,0.75,0.5,-0.8);
 [t,a] = calc3st_sync(tnew,-0.4,0.4,0.75,0,0.5);
 set(gcf,'PaperPosition',[0,0,8,2]);
+
+% 1a) normal profiles. T>T
+% calc7st (2, 2,1,1, 1.5,-1.5,0, true, true);
+calc7st (1, 2,1,1, 1.5,-0.6,0, true, true);
+% 1b) normal profiles. Tw
+% calc7st (1.35, 2,1,1, 1.5,(-1.5^2/4), true, true);
+% calc7st (-0.55, 2,1,1, 1.5,-1.5,0, true, true);
+calc7st (0.335, 2,1,1, 1.5,-0.6,0, true, true);
+
+% 1c) normal profiles. T fullstop.
+calc7st (-0.160078, 2,1,1, 1.5,-0.6,0, true, true);
+
+% 1d) normal profiles. W fullstop.
+calc7st (0.859375, 2,1,1, 1.5,(-1.5^2/4), true, true);
+
+% 2a) normal profiles. T>T
+calc7st (1.46786, 2,1,1, 0.8,-0.2,0, true, true);
+
+% 2b) normal profiles. TW
+calc7st (0.46, 2,1,1, 0.8,-0.2,0, true, true);
+
+% 2c) normal profiles. WW.
+calc7st (0.04, 2,1,1, 0.8,-0.2,0, true, true);
+
+% 2d) normal profiles. W fullstop.
+calc7st (-0.03007, 2,1,1, 0.8,-0.2,0, true, true);
+
+% 2a) normal profiles. T<T
+calc7st (1, 2,1,1, 0.6,0.2,0, true, true);
+
+% 3b) normal profiles. WT
+calc7st (0.65, 2,1,1, 0.6,0.2,0, true, true);
+
+% 3c) normal profiles. WW.
+calc7st (0.5, 2,1,1, 0.6,0.2,0, true, true);
+
+% 3d) normal profiles. W fullstop.
+calc7st (0.188429, 2,1,1, 0.6,0.2,0, true, true);
+
+% 4a) normal profiles. T>T
+calc7st (0.7, 2,1,1, -0.8,-0.2,0, true, true);
+
+% 4b) normal profiles. TW
+calc7st (0.22, 2,1,1, -0.8,-0.2,0, true, true);
+
+% 4c) normal profiles. WW.
+calc7st (-0.2, 2,1,1, -0.8,-0.2,0, true, true);
+
+% 4d) normal profiles. W fullstop.
+calc7st (-0.275402, 2,1,1, -0.8,-0.2,0, true, true);
