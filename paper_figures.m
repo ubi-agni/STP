@@ -123,8 +123,12 @@ figure;
 [t,a] = calc3st_sync(tnew,-0.4,0.4,0.75,0,0.5);
 set(gcf,'PaperPosition',[0,0,8,2]);
 
-% 1a) normal profiles. T>T
-% calc7st (2, 2,1,1, 1.5,-1.5,0, true, true);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ab hier editiert von Risto
+
+%%%%%%%%%
+% PLOTS 1
+figure;
 [t, j] = calc7st (1, 2,1,1, 1.5,-0.6,0);
 plotjTracks(t,j, 2,1,1, 1, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
 [t, j] = calc7st (0.335, 2,1,1, 1.5,-0.6,0);
@@ -141,6 +145,10 @@ figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, fals
 [t, j] = calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0);
 figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
 
+% 1a) normal profiles. T>T
+% calc7st (2, 2,1,1, 1.5,-1.5,0, true, true);
+calc7st (1, 2,1,1, 1.5,-0.6,0, true);
+
 % 1b) normal profiles. Tw
 % calc7st (1.35, 2,1,1, 1.5,(-1.5^2/4), true, true);
 % calc7st (-0.55, 2,1,1, 1.5,-1.5,0, true, true);
@@ -152,40 +160,101 @@ calc7st (-0.160078, 2,1,1, 1.5,-0.6,0, true);
 % 1d) normal profiles. W fullstop.
 calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0,true);
 
+%%%%%%%%%
+% PLOTS 2
+figure;
+[t, j] = calc7st (1.46786, 2,1,1, 0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, 1.46786, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.46, 2,1,1, 0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, 0.46, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.04, 2,1,1, 0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, 0.04, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (-0.03007, 2,1,1, 0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, -0.03007, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
 
+[t, j] = calc7st (1.46786, 2,1,1, 0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.46, 2,1,1, 0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.04, 2,1,1, 0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (-0.03007, 2,1,1, 0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
 
 % 2a) normal profiles. T>T
-calc7st (1.46786, 2,1,1, 0.8,-0.2,0, true, true);
+calc7st (1.46786, 2,1,1, 0.8,-0.2,0, true);
 
 % 2b) normal profiles. TW
-calc7st (0.46, 2,1,1, 0.8,-0.2,0, true, true);
+calc7st (0.46, 2,1,1, 0.8,-0.2,0, true);
 
 % 2c) normal profiles. WW.
-calc7st (0.04, 2,1,1, 0.8,-0.2,0, true, true);
+calc7st (0.04, 2,1,1, 0.8,-0.2,0, true);
 
 % 2d) normal profiles. W fullstop.
-calc7st (-0.03007, 2,1,1, 0.8,-0.2,0, true, true);
+calc7st (-0.03007, 2,1,1, 0.8,-0.2,0, true);
 
-% 2a) normal profiles. T<T
-calc7st (1, 2,1,1, 0.6,0.2,0, true, true);
+%%%%%%%%%
+% PLOTS 3
+figure;
+[t, j] = calc7st (1, 2,1,1, 0.6,0.2,0);
+plotjTracks(t,j, 2,1,1, 1, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.65, 2,1,1, 0.6,0.2,0);
+plotjTracks(t,j, 2,1,1, 0.65, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.5, 2,1,1, 0.6,0.2,0);
+plotjTracks(t,j, 2,1,1, 0.5, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.188429, 2,1,1, 0.6,0.2,0);
+plotjTracks(t,j, 2,1,1, 0.188429, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+
+[t, j] = calc7st (1, 2,1,1, 0.6,0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.65, 2,1,1, 0.6,0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.5, 2,1,1, 0.6,0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.188429, 2,1,1, 0.6,0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+
+% 3a) normal profiles. T<T
+calc7st (1, 2,1,1, 0.6,0.2,0, true);
 
 % 3b) normal profiles. WT
-calc7st (0.65, 2,1,1, 0.6,0.2,0, true, true);
+calc7st (0.65, 2,1,1, 0.6,0.2,0, true);
 
 % 3c) normal profiles. WW.
-calc7st (0.5, 2,1,1, 0.6,0.2,0, true, true);
+calc7st (0.5, 2,1,1, 0.6,0.2,0, true);
 
 % 3d) normal profiles. W fullstop.
-calc7st (0.188429, 2,1,1, 0.6,0.2,0, true, true);
+calc7st (0.188429, 2,1,1, 0.6,0.2,0, true);
+
+%%%%%%%%%
+% PLOTS 4
+figure;
+[t, j] = calc7st (0.7, 2,1,1, -0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, 0.7, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.22, 2,1,1, -0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, 0.22, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (-0.2, 2,1,1, -0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, -0.2, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (-0.275402, 2,1,1, -0.8,-0.2,0);
+plotjTracks(t,j, 2,1,1, -0.275402, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+
+[t, j] = calc7st (0.7, 2,1,1, -0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.22, 2,1,1, -0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (-0.2, 2,1,1, -0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (-0.275402, 2,1,1, -0.8,-0.2,0);
+figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
 
 % 4a) normal profiles. T>T
-calc7st (0.7, 2,1,1, -0.8,-0.2,0, true, true);
+calc7st (0.7, 2,1,1, -0.8,-0.2,0, true);
 
 % 4b) normal profiles. TW
-calc7st (0.22, 2,1,1, -0.8,-0.2,0, true, true);
+calc7st (0.22, 2,1,1, -0.8,-0.2,0, true);
 
 % 4c) normal profiles. WW.
-calc7st (-0.2, 2,1,1, -0.8,-0.2,0, true, true);
+calc7st (-0.2, 2,1,1, -0.8,-0.2,0, true);
 
 % 4d) normal profiles. W fullstop.
-calc7st (-0.275402, 2,1,1, -0.8,-0.2,0, true, true);
+calc7st (-0.275402, 2,1,1, -0.8,-0.2,0, true);
