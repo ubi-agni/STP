@@ -2,7 +2,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%
 figure;
 [t,a] = calc3st(0.8,0.6,0.75,-0.4,-0.55);
-plotaTracksNice(t,a,0.6,0.75,0.8,-0.4,-0.55);
+plotaTracks(t,a,0.6,0.75,0.8,-0.4,-0.55, true);
 set(gca,'ytick',[0],'xtick',[0 t(1),t(2),t(3)]);
 text(-0.02,0.75,'v_{max}','HorizontalAlignment','right','FontSize',12')
 text(-0.02,0.6,'a_{max}','HorizontalAlignment','right','FontSize',12')
@@ -19,7 +19,27 @@ text((t(2)+t(3))/2,-0.4,'deceleration phase','HorizontalAlignment','center','Fon
 % standard 7-phases case
 %%%%%%%%%%%%%%%%%%%%%%%%%
 figure;
-calc7st(1,1,0.7,0.8,0,0,-1,true);
+[t, j] = calc7st(1, 1,0.7,0.8, 0,0,-1,true);
+set(gca,'ytick',[0],'xtick',[0 t(1) sum(t(1:2)) sum(t(1:3)) sum(t(1:4)) sum(t(1:5)) sum(t(1:6)) sum(t(1:7))]);
+text(-0.03,0.7,'v_{max}','HorizontalAlignment','right','FontSize',10')
+text(-0.03,0.8,'a_{max}','HorizontalAlignment','right','FontSize',10')
+text(-0.03,1.0,'j_{max}','HorizontalAlignment','right','FontSize',10')
+text(-0.03,-0.7,'-v_{max}','HorizontalAlignment','right','FontSize',10')
+text(-0.03,-0.8,'-a_{max}','HorizontalAlignment','right','FontSize',10')
+text(-0.03,-1.0,'-j_{max}','HorizontalAlignment','right','FontSize',10')
+
+tc = 0;
+for i=1:7
+  text(tc+t(i),   -1,sprintf('t_%d',i),'HorizontalAlignment','center','VerticalAlignment','top','FontSize',12');
+  text(tc+t(i)/2, -1,sprintf('\\Delta t_%d',i),'HorizontalAlignment','center','VerticalAlignment','top','FontSize',12');
+  tc = tc + t(i);
+end
+text(sum(t(1:3))/2,-0.5,'acceleration phase','HorizontalAlignment','center','FontSize',13')
+text(sum(t(1:3))+t(4)/2,-0.5,'cruising phase','HorizontalAlignment','center','FontSize',13')
+text(sum(t(1:4))+sum(t(5:7))/2,-0.5,'deceleration phase','HorizontalAlignment','center','FontSize',13')
+
+
+% overshoot
 figure;
 calc7st(1.3,  1, 0.7, 0.8,  0.8, 0.7, -1.2, true);
 
@@ -105,17 +125,34 @@ set(gcf,'PaperPosition',[0,0,8,2]);
 
 % 1a) normal profiles. T>T
 % calc7st (2, 2,1,1, 1.5,-1.5,0, true, true);
-calc7st (1, 2,1,1, 1.5,-0.6,0, true, true);
+[t, j] = calc7st (1, 2,1,1, 1.5,-0.6,0);
+plotjTracks(t,j, 2,1,1, 1, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (0.335, 2,1,1, 1.5,-0.6,0);
+plotjTracks(t,j, 2,1,1, 0.335, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+[t, j] = calc7st (-0.160078, 2,1,1, 1.5,-0.6,0);
+plotjTracks(t,j, 2,1,1, -0.160078, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+
+[t, j] = calc7st (1, 2,1,1, 1.5,-0.6,0);
+figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (0.335, 2,1,1, 1.5,-0.6,0);
+figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (-0.160078, 2,1,1, 1.5,-0.6,0);
+figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+[t, j] = calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0);
+figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+
 % 1b) normal profiles. Tw
 % calc7st (1.35, 2,1,1, 1.5,(-1.5^2/4), true, true);
 % calc7st (-0.55, 2,1,1, 1.5,-1.5,0, true, true);
-calc7st (0.335, 2,1,1, 1.5,-0.6,0, true, true);
+calc7st (0.335, 2,1,1, 1.5,-0.6,0, true);
 
 % 1c) normal profiles. T fullstop.
-calc7st (-0.160078, 2,1,1, 1.5,-0.6,0, true, true);
+calc7st (-0.160078, 2,1,1, 1.5,-0.6,0, true);
 
 % 1d) normal profiles. W fullstop.
-calc7st (0.859375, 2,1,1, 1.5,(-1.5^2/4), true, true);
+calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0,true);
+
+
 
 % 2a) normal profiles. T>T
 calc7st (1.46786, 2,1,1, 0.8,-0.2,0, true, true);

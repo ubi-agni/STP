@@ -1,10 +1,18 @@
 % t = (t1 t2 t3 t4 t5 t6 t7 t8) ... start time, times for the 7 phases
 % j = (j1 j2 j3 j4 j5 j6 j7) ... jerks for the 7 phases
 
-function [a,v,p] = plotjTracks(t,j, jmax,amax,vmax,ptarget, a0,v0,p0, bNice,bColor)
+function [a,v,p] = plotjTracks(t,j, jmax,amax,vmax,ptarget, a0,v0,p0, bNice,bColor, bJerk, bAcc, bVel, bPos, dColScale, bAddToFigure)
 
-if (nargin < 10) bNice=false; end
-if (nargin < 11) bColor = false; end
+if (nargin < 10) bNice=true; end
+% if ptarget == false do not draw target line
+if (islogical(ptarget) && ptarget == false) bTarget = false; else bTarget = true; end
+if (nargin < 11) bColor = true; end
+if (nargin < 12) bJerk = true; end
+if (nargin < 13) bAcc = true; end
+if (nargin < 14) bVel = true; end
+if (nargin < 15) bPos = true; end
+if (nargin < 16) dColScale = 1; end
+if (nargin < 17) bAddToFigure = false; end
 
 [t,j]= shrink_t_j(t,j);
 tend = sum(t);
@@ -13,45 +21,49 @@ tend = sum(t);
 if (~bColor)
     % color values (black and white set)
     box_gray = [0.8,0.8,0.8];
-    jerk_color = [0,0,0];
-    acc_color = [0,0,0];
-    vel_color = [0,0,0];
-    pos_color = [0,0,0];
+    jerk_color = (1-dColScale)*[1,1,1];
+    acc_color =  (1-dColScale)*[1,1,1];
+    vel_color =  (1-dColScale)*[1,1,1];
+    pos_color =  (1-dColScale)*[1,1,1];
 else
     % color values (colored set)
-    box_gray = [0.8,0.8,0.8];
-    jerk_color = 'g';
-    acc_color = 'r';
-    vel_color = 'b';
-    pos_color = 'k';
+    box_gray   = [0.8,0.8,0.8];
+    jerk_color = dColScale * [0.75,0,0.75];
+    acc_color  = dColScale * [0 0 1];
+    vel_color  = dColScale * [1 0 0];
+    pos_color  = (1-dColScale) * [0 0 0];
 end
 
-hold off; % begin new figure
+if (bAddToFigure)
+    hold on   % append to current figure
+else
+    hold off; % begin new figure
+end
 % plot x-axis at y=0
 plot([0,tend],[0,0],'Color','k');
 
 hold on; % continue in current figure
-if (bNice) 
-    % plot gray boxes in the background to make the different phases easier recognisable
-    tc=0; bPaint = false;
-    for i=1:length(t)
-        if (bPaint)
-            fill([tc,tc+t(i),tc+t(i),tc], [ymin,ymin,ymax,ymax],box_gray,'LineStyle','none')
+if (bNice)
+    if (~bAddToFigure)
+        % plot gray boxes in the background to make the different phases easier recognisable
+        tc=0; bPaint = false;
+        for i=1:length(t)
+            if (bPaint)
+                fill([tc,tc+t(i),tc+t(i),tc], [ymin,ymin,ymax,ymax],box_gray,'LineStyle','none')
+            end
+            bPaint = ~bPaint;
+            tc = tc + t(i);
         end
-        bPaint = ~bPaint;
-        tc = tc + t(i);
     end
-
     % plot boundries for jerk, acc and vel
-    line([0,tend],[0,0],'Color','k');
-    if ( jmax <= ymax) line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':'); end
-    if (-jmax >= ymin) line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':'); end
-    if ( amax <= ymax) line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':'); end
-    if (-amax >= ymin) line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':'); end
-    if ( vmax <= ymax) line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':'); end
-    if (-vmax >= ymin) line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':'); end
+    if ( jmax <= ymax && bJerk) line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':'); end
+    if (-jmax >= ymin && bJerk) line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':'); end
+    if ( amax <= ymax && bAcc) line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':'); end
+    if (-amax >= ymin && bAcc) line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':'); end
+    if ( vmax <= ymax && bVel) line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':'); end
+    if (-vmax >= ymin && bVel) line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':'); end
     %line([0,tend],[p0,p0],'Color', pos_color, 'LineStyle', ':');
-    %line([0,tend],[ptarget,ptarget],'Color', pos_color, 'LineStyle', ':');
+    if (bPos && bTarget) line([0,tend],[ptarget,ptarget],'Color', pos_color, 'LineStyle', ':'); end
 end
 
 % plot the curves
@@ -60,7 +72,7 @@ v=v0;
 p=p0;
 tc = 0; j = [j j(length(j))];
 for i=1:length(t),
-    [a,v,p] = plotjTrack(tc, tc+t(i),j(i),j(i+1), a,v,p, jerk_color,acc_color,vel_color,pos_color);
+    [a,v,p] = plotjTrack(tc, tc+t(i),j(i),j(i+1), a,v,p, jerk_color,acc_color,vel_color,pos_color, bJerk, bAcc, bVel, bPos);
     tc = tc + t(i);
 end
 
@@ -115,17 +127,19 @@ return
 
 
 
-function [a,v,p] = plotjTrack(t0,t1, j,j_next, a0,v0,p0, jerk_color,acc_color,vel_color,pos_color)
+function [a,v,p] = plotjTrack(t0,t1, j,j_next, a0,v0,p0, jerk_color,acc_color,vel_color,pos_color, bJerk, bAcc, bVel, bPos)
 t = sym('t');
 acc = sym('a0+(t-t0)*j');
 vel = sym('v0+(t-t0)*a0+0.5*(t-t0)^2*j');
 pos = sym('p0+(t-t0)*v0+0.5*(t-t0)^2*a0+(1/6)*(t-t0)^3*j');
 
-line([t0 t1], [j,j], 'Color',jerk_color,'linewidth',2,'linestyle','--');
-line([t1,t1], [j,j_next], 'Color',jerk_color,'linewidth',2,'linestyle','--');
-[x,y]=fplot(char(eval(acc)),[t0 t1]);  plot(x,y,'Color',acc_color,'linewidth',2,'linestyle','-');
-[x,y]=fplot(char(eval(vel)),[t0 t1]);  plot(x,y,'Color',vel_color,'linewidth',2,'linestyle','-');
-[x,y]=fplot(char(eval(pos)),[t0 t1]);  plot(x,y,'Color',pos_color,'linewidth',2,'linestyle','-.');
+if (bJerk)
+    line([t0 t1], [j,j], 'Color',jerk_color,'linewidth',2,'linestyle','--');
+    line([t1,t1], [j,j_next], 'Color',jerk_color,'linewidth',2,'linestyle','--');
+end
+if (bAcc) [x,y]=fplot(char(eval(acc)),[t0 t1]);  plot(x,y,'Color',acc_color,'linewidth',2,'linestyle','-'); end
+if (bVel) [x,y]=fplot(char(eval(vel)),[t0 t1]);  plot(x,y,'Color',vel_color,'linewidth',2,'linestyle','-'); end
+if (bPos) [x,y]=fplot(char(eval(pos)),[t0 t1]);  plot(x,y,'Color',pos_color,'linewidth',2,'linestyle','-.'); end
 
 % compute end points
 t = t1;
