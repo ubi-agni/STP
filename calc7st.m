@@ -37,10 +37,9 @@ end
 % calculate the dir-flag by testing if we over-shoot the target
 % at imidiate halt
 [t_stop a_stop] = calc3st(0,jmax,amax,a0,v0);
-[ah vh p_stop] = calcjTracks(t_stop,a_stop,a0,v0,p0);
+[ah vh p_fullstop] = calcjTracks(t_stop,a_stop,a0,v0,p0);
 % get direction
-dir = sign(p_target-p_stop);
-p_fullstop = p_stop;
+dir = sign(p_target-p_fullstop);
 if (dir == 0)
     t = t_stop;
     j = a_stop;
@@ -68,7 +67,7 @@ else
 		j = [a_acc, 0, a_dec];
 	else
 		% without cruising phase
-		[t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_delta,p_target,jmax,amax,vmax,a0,v0,p0);
+		[t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_target,jmax,amax,vmax,a0,v0,p0);
 	end
 end
 	

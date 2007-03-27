@@ -1,4 +1,4 @@
-function [t_res,j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v0,p0)
+function [t_res,j_res] = calc7st_nocruise(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0)
 
 % The function must be called with a valid 7-phases profile, which is
 % overshooting the target. It will then first do a case distinction
@@ -39,92 +39,102 @@ if (sign(j(3)) ~= sign (j(5)))
             % so we stay at a triangular profile
         end
     end
-    % compute last part of profile, keeping first one fixed
-    % in order to keep first part fixed we add further equations
+
     if (t(6) == 0 && ~bSecondTrapezoidal) % second part will be wedge-shaped (W)
         disp('double dec: ?-W');
-        [t_res, j_res] = calc7st_nocruise_decW (t,j,dir, ptarget, jmax,amax,vmax, a0,v0,p0);
     else % second part will be trapezoidal (T)
+        t(6)=1; % allow trapez in second part when generating formulas
         disp('double dec: ?-T');
-        [t_res, j_res] = calc7st_nocruise_decT (t,j,dir, ptarget, jmax,amax,vmax, a0,v0,p0);
     end
-    return;
+
+    % Calculate exact phase duration from given profile t, j
+    % generate generic set of equations
+    [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+
+    % compute last part of profile, keeping first one fixed
+    % in order to keep first part fixed we add further equations
+    
+    t_res = solveAll ([A V TEQ P], TVARS);
+    j_res = j;
+    return
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % we don't have double deceleration --> cut out instead of merging
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-t_original = t;
-% (2)
-% case distinction
-if (~isZero(t(2)) && ~isZero(t(6)))
-    % TT profile
-    disp('TT-Profile...');
+
+% find correct profile by cutting pieces and descending to shorter profiles
+[t,j,type] = findProfile(t,j,dir, a0,v0,p0, ptarget, jmax,amax);
+disp (sprintf ('profile: %s', type));
+
+% Calculate exact phase duration for choosen profile t, j
+% generate set of equations
+[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+t_res = split35 (solveAll ([A V TEQ P], TVARS), a0, dir*jmax);
+j_res = j;
+return
+
+function [t,j,type] = findProfile(t,j,dir, a0,v0,p0, ptarget, jmax,amax)
+% find correct profile by cutting pieces and descending to shorter profiles
+if (t(2) ~= 0) % T? profile
+    if (t(6) ~= 0) 
+        type = 'TT'; % TT profile
+    else
+        type = 'TW'; % TW profile
+    end
+else
+    if (t(6) ~= 0) 
+        type = 'WT'; % WT profile
+    else
+        type = 'WW'; % WW profile
+    end
+end
+    
+t_orig = t;
+if (strcmp (type, 'TT')) 
     % cut out smaller a=const. part
     dt = min(t(2), t(6));
     t(2) = t(2) - dt;
     t(6) = t(6) - dt;
-    % test whether we still overshoot
-    [a_end,v_end,p_end] =  calcjTracks(t, j, a0, v0, p0);
-   % h = figure; set(h, 'Name', 'Cutted out'); plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
-    if (sign(p_end - ptarget)*dir == -1)
-        % Success! We stop before the target now!
-        % Call the appropriate function to solve:
-        [t_res, j_res] = calc7st_nocruise_tt(t_original,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-        return;
+    if (stillOvershoots(t,j,dir,a0,v0,p0,ptarget))
+        % recursively calling this function even cuts further
+        [t,j,type] = findProfile (t,j,dir, a0,v0,p0, ptarget, jmax,amax);
     else
-        % The resulting profile is still stopping behind the target.
-        % We recursively call this function to do some further cutting:
-        [t_res, j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v0,p0);
+        % now we stop before the target, hence profile stays TT
+        t = t_orig; % return input profile
     end
-    
-elseif (isZero(t(2)) && isZero(t(6)))
-    % WW profile
-    % if we cut out anymore, we will reach the full stop profile. However,
-    % we already know, that the full stop profile is stopping before the
-    % target. So we know we have the WW case for sure!
-    disp(sprintf('WW-Profile!...'));
-    [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-    return;
-    
-elseif (isZero(t(2)))
-    % WT profile
-    disp(sprintf('WT-Profile...'));
+    return
+end
+
+if (strcmp (type, 'WW'))
+    return % nothing to do, WW stays WW anytime
+end
+
+if (strcmp (type, 'WT'))
     a1 = a0 + j(1)*t(1);
     dt_w = min(t(1),t(3));
     area_w_max = abs(dt_w * (2*a1 - dt_w*j(1)));
     area_t_max = t(6)*amax;
     if (area_w_max > area_t_max)
-        % we will cut out the whole t(6)
+        % we will cut out the whole t(6) WT -> WW
         t(6) = 0;
         dt = (abs(a1)-sqrt(a1^2-area_t_max))/jmax;
         t(1) = t(1)-dt;
         t(3) = t(3)-dt;
-        % test whether we still overshoot
-        [a_end,v_end,p_end] =  calcjTracks(t,j, a0, v0, p0);
-        if (sign(p_end - ptarget)*dir == -1)
-            % Success! We stop before the target now!
-            % Call the appropriate function to solve:
-            [t_res, j_res] = calc7st_nocruise_wt(t_original,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-            return;
+
+        if (stillOvershoots(t,j,dir,a0,v0,p0,ptarget))
+            type = 'WW'; % type switches to WW
         else
-            % The resulting profile is still stopping behind the target.
-            % So it must be the WW-profile:
-            disp(sprintf('WW-Profile...'));
-            [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-            return;
+            % now we stop before the target, hence profile stays WT
+            t = t_orig; % return input profile
         end
     else
-        % not: (area_w_max > area_t_max)
-        % so we would have to cut out the wedge completely - which would
-        % lead to a full stop profile --> we have the td case
-        [t_res, j_res] = calc7st_nocruise_wt(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-        return;
+        % nothing to cut out, stays at WT
     end
-    
-else
-    % TW profile
-    disp(sprintf('TW-Profile...'));
+    return
+end
+
+if (strcmp (type, 'TW'))
     a5 = j(5)*t(5);
     area_w_max = abs(t(5)*a5);
     area_t_max = t(2)*amax;
@@ -133,66 +143,23 @@ else
         t(2) = 0;
         t(5) = sqrt((area_w_max-area_t_max)/abs(j(5)));
         t(7) = t(5);
-        % test whether we still overshoot
-        [a_end,v_end,p_end] =  calcjTracks(t,j, a0, v0, p0);
-        if (sign(p_end - ptarget)*dir == -1)
-            % Success! We stop before the target now!
-            % Call the appropriate function to solve:
-            disp(sprintf('TW-Profile1...'));
-            [t_res, j_res] = calc7st_nocruise_tw(t_original,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-            return;
+
+        if (stillOvershoots(t,j,dir,a0,v0,p0,ptarget))
+            type = 'WW'; % type switches to WW
         else
-            % The resulting profile is still stopping behind the target.
-            % So it must be the WW-profile:
-            disp(sprintf('WW-Profile...'));
-            [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-            return;
+            % now we stop before the target, hence profile stays TW
+            t = t_orig; % return input profile
         end
     else
-        % not: (area_w_max > area_t_max)
-        % so we would have to cut out the wedge completely - which would
-        % lead to a full stop profile --> we have the td case
-        disp(sprintf('TW-Profile2...'));
-        [t_res, j_res] = calc7st_nocruise_tw(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
-        return;
+        % nothing to cut out, stays at TW
     end
+    return
 end
 return
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% solve normal profiles                                     %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-function [t_res,j_res] = calc7st_nocruise_tt(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (stp7_solve ([A V TEQ], P, TVARS, sym('t6', 'positive')), a0, dir*jmax);
-j_res = j;
-return
-
-function [t_res,j_res] = calc7st_nocruise_tw(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (stp7_solve ([A V TEQ], P, TVARS, sym('t7', 'positive')), a0, dir*jmax);
-j_res = j;
-return
-
-function [t_res,j_res] = calc7st_nocruise_wt(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (stp7_solve ([A V TEQ], P, TVARS, sym('t1', 'positive')), a0, dir*jmax);
-j_res = j;
-return
-
-function [t_res,j_res] = calc7st_nocruise_ww(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (stp7_solve ([A V TEQ], P, TVARS, sym('t7', 'positive')), a0, dir*jmax);
-j_res = j;
+function bOverShoot = stillOvershoots(t,j,dir,a0,v0,p0,ptarget)
+    [a_end, v_end, p_end] = calcjTracks(t,j, a0,v0,p0);
+    bOverShoot = (sign(p_end - ptarget)*dir == 1);
 return
 
 function t = split35 (t, a0, j)
@@ -201,24 +168,4 @@ a1 = a0+j*t(1); % == a2
 t3 = abs(a1/j);
 t(5) = t(3) - t3;
 t(3) = t3;
-return
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% these functions are used for double deceleration profiles %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [t_res,j_res] = calc7st_nocruise_decW(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = stp7_solve ([A V TEQ], P, TVARS, sym('t5', 'positive'));
-j_res = j;
-return
-
-function [t_res,j_res] = calc7st_nocruise_decT(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
-% Calculate exact phase duration from given profile t, j
-t(6)=1; % allow trapez in second part when generating formulas
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = stp7_solve ([A V TEQ], P, TVARS, sym('t3', 'positive'));
-j_res = j;
 return

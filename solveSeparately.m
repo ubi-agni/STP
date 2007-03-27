@@ -1,32 +1,3 @@
-function t_res = stp7_solve (EQ1, EQ2, TVARS, T)
-t_res = solveAll ([EQ1 EQ2], TVARS);
-% t_res = solveSeparately  (EQ1(EQ1 ~= 0), EQ2, TVARS, T);
-if (length(t_res) == 0) error ('This should not happen: no solution'); end
-return
-
-function t_res = solveAll (EQ, VARS) 
-% Solve equations EQ for vars TVARS
-sol = eval (solveCmd ([EQ(EQ ~= 0) VARS]));
-% convert into solution matrix: each row is a single solution
-solMatrix = []; N=length(VARS);
-for v=1:N
-    solMatrix = [solMatrix eval(getfield(sol, char(VARS(v))))];
-end
-
-t_res=[]; numSolutions=size(solMatrix); numSolutions=numSolutions(1);
-for s=1:numSolutions
-    solVec = solMatrix(s,1:N);
-    if (~isreal (solVec)) continue; end % skip imaginary solution
-    if (length(solVec(solVec >= 0)) ~= N) continue; end % skip negative values
-    if (length(t_res) == 0 || sum(t_res) > sum(solVec))
-        t_res = solVec;
-    end
-end
-if (length(t_res) == 0) 
-    solMatrix 
-end
-return
-
 function t_res = solveSeparately (EQ1, EQ2, TVARS, T)
 % Solve equation set EQ1 for variables T1 = TVARS \ T first and
 % subsequently solve equation EQ2 for (single) variable T
@@ -42,6 +13,8 @@ for i=1:N
     trial = trySolution (solT1, i, EQ1, EQ2, T1, T);
     if (length(trial) > 0) t_res = trial; end
 end
+
+if (length(t_res) == 0) error ('This should not happen: no solution'); end
 return
 
 
