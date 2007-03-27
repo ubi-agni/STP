@@ -1,9 +1,8 @@
-function [aEQ, vEQ, pEQ, TEQ, Ts, VARS] = stp7_formulas(t, j, bNice, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
+function [aEQ, vEQ, pEQ, TEQ, Ts, VARS] = stp7_formulas(t, j, bNice, dirVal,ptarget,jmax,amax,vmax, a0,v0,p0)
 % Generate formulars from given profile dt, j
 % returns equations for a, v, p as well as variables T
 
 if (nargin < 3) bNice = true; end
-if (nargin < 4) dir = sym('dir','real'); end
 if (nargin < 5) ptarget = sym('ptarget','real'); end
 if (nargin < 6) jmax = sym('jmax','real'); end
 if (nargin < 7) amax = sym('amax','real'); end
@@ -12,6 +11,10 @@ if (nargin < 9) a0 = sym('a0','real'); end
 if (nargin < 10) v0 = sym('v0','real'); end
 if (nargin < 11) p0 = sym('p0','real'); end
 N=length(t);
+
+% if exactly 4 arguments are given, we insert dir as symbol everywhere
+bUseDir = false; dir = dirVal;
+if (nargin == 4) bUseDir=true; dir = sym('d'); end
 
 if (N == 7) % these things work only for "correct" 7-phases profiles
     if (sign(j(3)) ~= sign (j(5)))
@@ -29,7 +32,7 @@ end
 % acceleration, velocity and position *after* phase i
 % Because MatLab can't handle zero indices (e.g. a(0)) we distinguish
 % between i==1 and greater.
-aEQ=[]; vEQ=[]; TEQ=[]; Ts=[]; VARS=[];
+aEQ=[]; vEQ=[]; TEQ(1) = sym('0'); Ts=[]; VARS=[];
 for i=1:N
     if (t(i) == 0) % as t(i) == 0, values do not change
         if (i == 1) 
@@ -37,22 +40,29 @@ for i=1:N
             v(i) = v0;
             p(i) = p0;
         else
-            if ((t(i-1) == 0) || (bNice == false))
-                a(i) = a(i-1);
-                v(i) = v(i-1);
-            else % for a nicer display of formulars we reuse previously introduced vars
+            % normally use previous expressions
+            a(i) = a(i-1);
+            v(i) = v(i-1);
+            p(i) = p(i-1); 
+            % for a nicer display we use variables
+            if (bNice)
                 a(i) = sym(sprintf('a%d',i-1));
                 v(i) = sym(sprintf('v%d',i-1));
             end
-            p(i) = p(i-1); 
         end
         % add equation: ti = 0
-        TEQ = [TEQ sym(sprintf('t%d=0', i))];
+        % attention: the equation is inserted at the corresponding index,
+        % which allows a later overwriting (or removal) of this equation.
+        TEQ(i) = sym(sprintf('t%d=0', i));
         % add variable ti
         Ts = [Ts sym(sprintf('t%d', i))];
     else
-        T = sym(sprintf('t%d', i), 'real');
+        T = sym(sprintf('t%d', i), 'real'); 
         J = j(i);
+        if (bUseDir && (j(i) ~= 0))
+            if (dirVal == sign(j(i))) J = sym('d*jmax');
+            else J=sym('(-d*jmax)'); end
+        end
 
         % new time variable t_i
         Ts = [Ts T];
@@ -61,16 +71,22 @@ for i=1:N
             A0 = a0; V0 = v0; P0 = p0;
         else
             A0 = a(i-1); V0 = v(i-1); P0 = p(i-1);
+            % for a nicer display we use variables
+            if (bNice)
+                A0 = sym(sprintf('a%d',i-1));
+                V0 = sym(sprintf('v%d',i-1));
+            end
         end
         a(i) = A0 + J * T;
         v(i) = V0 + T * (A0 + 1/2 * J * T);
         p(i) = P0 + T * (V0 + T * (1/2 * A0 + 1/6 * J * T));
-        % add equations
-        if ((i ~= 7) && (bNice == true))
-            aEQ = [aEQ sym(sprintf('a%d = %s', i, char(a(i))))];
-            vEQ = [vEQ sym(sprintf('v%d = %s', i, char(v(i))))];
-            VARS = [VARS sym(sprintf('a%d',i)) sym(sprintf('v%d',i))];
-        end
+    end
+    
+    % add equations
+    if (bNice && i ~= 7)
+        aEQ = [aEQ sym(sprintf('a%d = %s', i, char(a(i))))];
+        vEQ = [vEQ sym(sprintf('v%d = %s', i, char(v(i))))];
+        VARS = [VARS sym(sprintf('a%d',i)) sym(sprintf('v%d',i))];
     end
 end
 
@@ -80,10 +96,12 @@ pEQ=addEQ ([], ptarget, p(N)); % reach target
 aEQ = addEQ (aEQ, 0, a(7));
 vEQ = addEQ (vEQ, 0, v(7));
 
+if (bUseDir) VARS = addEQ (VARS, dir, dirVal); end
+
 % the following things work only for "correct" 7-phases profiles
 if (N==7)
     if (bNice) 
-        a1 = 'a1'; a5 = 'a5', a3 = 'a3';
+        a1 = 'a1'; a5 = 'a5'; a3 = 'a3';
     else
         a1 = a(1); a5 = a(5); a3 = a(3);
     end
@@ -92,11 +110,14 @@ if (N==7)
     if (t(4) ~= 0) aEQ = addEQ (aEQ, a3, 0); end
 
     if (bDoubleDec) % double deceleration
-        % add max limits for trapezoidal profile
-        if (t(6) ~= 0) aEQ = addEQ (aEQ, a(6), -dir*amax); end    
-        % first two phase are completely known:
-        if (t(1) ~= 0) TEQ = addEQ (TEQ, 't1', t(1)); end
-        if (t(2) ~= 0) TEQ = addEQ (TEQ, 't2', t(2)); end
+        % add max limit for second trapezoidal profile
+        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end
+        % first profile does not need this, 
+        % because t(1) is fixed hence fixing a1
+        
+        % t(1) and t(2) are fixed
+        TEQ(1) = sym(strcat('t1=', char(sym(t(1)))));
+        TEQ(2) = sym(strcat('t2=', char(sym(t(2)))));
     else % normal profile
         % add max limits for trapezoidal profiles (and remove corr. variable)
         if (t(2) ~= 0) aEQ = addEQ (aEQ, a1,  dir*amax); end

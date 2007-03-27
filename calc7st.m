@@ -74,7 +74,7 @@ end
 	
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice)
+	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
 end
 
 % test, whether the solution is correct

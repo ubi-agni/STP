@@ -10,13 +10,11 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v
     % (1) Check whether we have a double deceleration profile.
     % (2) Case distinction: TT / TW / WT / WW
     
-%plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
-t_original = t;
+% plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
 
 % (1)
 % check if we have a double deceleration profile
 if (sign(j(3)) ~= sign (j(5)))
-    disp(sprintf('DoubleDec Case!'));
     bSecondTrapezoidal = false;
     if (t(6) == 0) % second part is currently wedge, may become trapez
         % calculate maximal shift from first to second deceleration phase
@@ -27,7 +25,7 @@ if (sign(j(3)) ~= sign (j(5)))
         if (DeltaT < t(3))
             % adapt profile by shortening t(3)
             t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
-            %plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall'); figure;
+% plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall'); figure;
             % compute reached position
             [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
             % if we still overshoot, the profile becomes trapezoidal
@@ -44,22 +42,24 @@ if (sign(j(3)) ~= sign (j(5)))
     % compute last part of profile, keeping first one fixed
     % in order to keep first part fixed we add further equations
     if (t(6) == 0 && ~bSecondTrapezoidal) % second part will be wedge-shaped (W)
+        disp('double dec: ?-W');
         [t_res, j_res] = calc7st_nocruise_decW (t,j,dir, ptarget, jmax,amax,vmax, a0,v0,p0);
     else % second part will be trapezoidal (T)
-        t(6)=1; % allow trapez in second part
-        [t_res, j_res] = calc7st_nocruise_decT (t,j,dir, ptarget, jmax,amax,vmax, a2,v2,p2);
+        disp('double dec: ?-T');
+        [t_res, j_res] = calc7st_nocruise_decT (t,j,dir, ptarget, jmax,amax,vmax, a0,v0,p0);
     end
     return;
 end
 
-%h = figure; set(h, 'Name', 'Before cut out'); plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true);
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % we don't have double deceleration --> cut out instead of merging
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+t_original = t;
 % (2)
 % case distinction
 if (~isZero(t(2)) && ~isZero(t(6)))
     % TT profile
-    disp(sprintf('[cutter] TT-Profile...'));
+    disp('TT-Profile...');
     % cut out smaller a=const. part
     dt = min(t(2), t(6));
     t(2) = t(2) - dt;
@@ -75,7 +75,6 @@ if (~isZero(t(2)) && ~isZero(t(6)))
     else
         % The resulting profile is still stopping behind the target.
         % We recursively call this function to do some further cutting:
-        disp(sprintf('[cutter] recursive call...'));
         [t_res, j_res] = calc7st_nocruise(t,j,dir,dp,ptarget,jmax,amax,vmax,a0,v0,p0);
     end
     
@@ -84,13 +83,13 @@ elseif (isZero(t(2)) && isZero(t(6)))
     % if we cut out anymore, we will reach the full stop profile. However,
     % we already know, that the full stop profile is stopping before the
     % target. So we know we have the WW case for sure!
-    disp(sprintf('[cutter] WW-Profile!...'));
+    disp(sprintf('WW-Profile!...'));
     [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
     return;
     
 elseif (isZero(t(2)))
     % WT profile
-    disp(sprintf('[cutter] WT-Profile...'));
+    disp(sprintf('WT-Profile...'));
     a1 = a0 + j(1)*t(1);
     dt_w = min(t(1),t(3));
     area_w_max = abs(dt_w * (2*a1 - dt_w*j(1)));
@@ -111,7 +110,7 @@ elseif (isZero(t(2)))
         else
             % The resulting profile is still stopping behind the target.
             % So it must be the WW-profile:
-            disp(sprintf('[cutter] WW-Profile...'));
+            disp(sprintf('WW-Profile...'));
             [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
             return;
         end
@@ -125,7 +124,7 @@ elseif (isZero(t(2)))
     
 else
     % TW profile
-    disp(sprintf('[cutter] TW-Profile...'));
+    disp(sprintf('TW-Profile...'));
     a5 = j(5)*t(5);
     area_w_max = abs(t(5)*a5);
     area_t_max = t(2)*amax;
@@ -139,13 +138,13 @@ else
         if (sign(p_end - ptarget)*dir == -1)
             % Success! We stop before the target now!
             % Call the appropriate function to solve:
-            disp(sprintf('[cutter] TW-Profile1...'));
+            disp(sprintf('TW-Profile1...'));
             [t_res, j_res] = calc7st_nocruise_tw(t_original,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
             return;
         else
             % The resulting profile is still stopping behind the target.
             % So it must be the WW-profile:
-            disp(sprintf('[cutter] WW-Profile...'));
+            disp(sprintf('WW-Profile...'));
             [t_res, j_res] = calc7st_nocruise_ww(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
             return;
         end
@@ -153,7 +152,7 @@ else
         % not: (area_w_max > area_t_max)
         % so we would have to cut out the wedge completely - which would
         % lead to a full stop profile --> we have the td case
-        disp(sprintf('[cutter] TW-Profile2...'));
+        disp(sprintf('TW-Profile2...'));
         [t_res, j_res] = calc7st_nocruise_tw(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p0);
         return;
     end
@@ -217,6 +216,7 @@ return
 
 function [t_res,j_res] = calc7st_nocruise_decT(t,j, dir,ptarget,jmax,amax,vmax, a0,v0,p0)
 % Calculate exact phase duration from given profile t, j
+t(6)=1; % allow trapez in second part when generating formulas
 % generate set of equations
 [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
 t_res = stp7_solve ([A V TEQ], P, TVARS, sym('t3', 'positive'));
