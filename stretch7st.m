@@ -1,9 +1,15 @@
-function [t_res,j_res] = stretch7st(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0)
+function [t_res,j_res] = stretch7st(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0, plotMe)
 % This functions stretches a given profile [t,j] to a new duration T.
 
-% check if we have must use tje double deceleration branch
+if (nargin < 11) plotMe=false; end
+
+[dummy, v3, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
+dir = sign(v3); % TODO: what happens when dir=0?
+
+bDoubleDec = false;
+% check if we must use the double deceleration branch
 if (sign(j(3)) ~= sign (j(5))) bDoubleDec = true;
-else
+elseif (0) % TODO
     % calc full-stop profile
     [t_stop a_stop] = calc3st(0,jmax,amax,a0,v0);
     % if full stop deceleration profile crosses zero we must cut there
@@ -23,12 +29,23 @@ if (bDoubleDec)
     [t, j] = findProfileDoubleDec (t,j);
 else
     % normal profile branch
-    [t, j] = findProfileNormal (t,j);
+    [t, j] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
 end
-[t_res, j_res] = solveProfile (t,j);
+% Calculate exact phase duration for choosen profile t, j
+% generate set of equations
+[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
+j_res = j;
+
+% display graph
+if (plotMe)
+	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
+end
+
 return
 
-function [t, j] = adaptProfile (t, j, dp)
+function [t, j] = adaptProfile (t, j, dp, a0,v0,p0)
 % Given a profile (t,j) where acceleration and deceleration phase was
 % already changed (cutted or shifted) such that velocity v(3) is smaller
 % in magnitude than before, this function extends the cruising phase (or
@@ -41,40 +58,41 @@ t(4) = t(4) + (dp - dp_new) / v3_new;
 return
 
 
-function [t,j,type] = findProfileDoubleDec (t,j, type)
+% TODO
+function [t,j,type] = findProfileDoubleDec (t,j,T)
 return
 
-function [t,j,type] = findProfileNormal (t,j, a0,v0,p0, ptarget, type)
-if (nargin < 7) % initial call, type not yet known, simply find initial profile
-    if (t(2) ~= 0) % T? profile
-        if (t(6) ~= 0) 
-            type = 'TT' % TT profile
-        else
-            type = 'TW' % TW profile
-        end
+function [t,j,type] = findProfileNormal(t,j,T, a0,v0,p0, ptarget, jmax,amax)
+% find correct profile by cutting pieces and descending to shorter profiles
+if (t(2) ~= 0) % T? profile
+    if (t(6) ~= 0) 
+        type = 'TT'; % TT profile
     else
-        if (t(6) ~= 0) 
-            type = 'WT' % WT profile
-        else
-            type = 'WW' % WW profile
-        end
+        type = 'TW'; % TW profile
+    end
+else
+    if (t(6) ~= 0) 
+        type = 'WT'; % WT profile
+    else
+        type = 'WW'; % WW profile
     end
 end
     
-disp ('profile: %s', type);
-
 t_orig = t;
 if (strcmp (type, 'TT')) 
     % cut out smaller a=const. part
     dt = min(t(2), t(6));
     t(2) = t(2) - dt;
     t(6) = t(6) - dt;
-    if (stillOvershoots(t,j,a0,v0,p0,ptarget))
+    [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
+
+    if (stillTooShort(t,T))
         % recursively calling this function even cuts further
-        [t,j,type] = findProfileNormal (t,j, a0,v0,p0, ptarget, type);
+        [t,j,type] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
     else
         % now we stop before the target, hence profile stays TT
         t = t_orig; % return input profile
+    end
     return
 end
 
@@ -93,8 +111,9 @@ if (strcmp (type, 'WT'))
         dt = (abs(a1)-sqrt(a1^2-area_t_max))/jmax;
         t(1) = t(1)-dt;
         t(3) = t(3)-dt;
+        [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
 
-        if (stillOvershoots(t,j,a0,v0,p0,ptarget))
+        if (stillTooShort(t,T))
             type = 'WW'; % type switches to WW
         else
             % now we stop before the target, hence profile stays WT
@@ -115,8 +134,9 @@ if (strcmp (type, 'TW'))
         t(2) = 0;
         t(5) = sqrt((area_w_max-area_t_max)/abs(j(5)));
         t(7) = t(5);
+        [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
 
-        if (stillOvershoots(t,j,a0,v0,p0,ptarget))
+        if (stillTooShort(t,T))
             type = 'WW'; % type switches to WW
         else
             % now we stop before the target, hence profile stays TW
@@ -129,7 +149,6 @@ if (strcmp (type, 'TW'))
 end
 return
 
-function bOverShoot = stillOvershoots(t,j,a0,v0,p0,ptarget)
-    [a_end, v_end, p_end] = calcjTracks(t,j, a0,v0,p0);
-    bOverShoot = (sign(p_end - ptarget)*dir == 1);
+function bTooShort = stillTooShort(t,T)
+    bTooShort = (sum(t) < T);
 return

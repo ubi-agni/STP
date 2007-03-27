@@ -53,6 +53,9 @@ if (sign(j(3)) ~= sign (j(5)))
 
     % compute last part of profile, keeping first one fixed
     % in order to keep first part fixed we add further equations
+    % t(1) and t(2) are fixed to their current values
+    TEQ(1) = sym(strcat('t1=', char(sym(t(1)))));
+    TEQ(2) = sym(strcat('t2=', char(sym(t(2)))));
     
     t_res = solveAll ([A V TEQ P], TVARS);
     j_res = j;

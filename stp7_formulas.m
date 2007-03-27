@@ -110,14 +110,12 @@ if (N==7)
     if (t(4) ~= 0) aEQ = addEQ (aEQ, a3, 0); end
 
     if (bDoubleDec) % double deceleration
-        % add max limit for second trapezoidal profile
+        % add max limits for second trapezoidal profile
         if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end
-        % first profile does not need this, 
-        % because t(1) is fixed hence fixing a1
-        
-        % t(1) and t(2) are fixed
-        TEQ(1) = sym(strcat('t1=', char(sym(t(1)))));
-        TEQ(2) = sym(strcat('t2=', char(sym(t(2)))));
+        % for first trapezoidal profile we add the limit as an equation
+        % for t(1) because it actually fixes t(1)
+        % this can be overwritten by calling routine if neccessary
+        TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(dir*amax))))
     else % normal profile
         % add max limits for trapezoidal profiles (and remove corr. variable)
         if (t(2) ~= 0) aEQ = addEQ (aEQ, a1,  dir*amax); end
