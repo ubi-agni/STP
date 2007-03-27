@@ -25,7 +25,7 @@ if (sign(j(3)) ~= sign (j(5)))
         if (DeltaT < t(3))
             % adapt profile by shortening t(3)
             t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
-% plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall'); figure;
+            %figure; plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall');
             % compute reached position
             [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
             % if we still overshoot, the profile becomes trapezoidal

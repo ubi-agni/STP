@@ -258,3 +258,38 @@ calc7st (-0.2, 2,1,1, -0.8,-0.2,0, true);
 
 % 4d) normal profiles. W fullstop.
 calc7st (-0.275402, 2,1,1, -0.8,-0.2,0, true);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% double deceleration figures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% full stop case
+[t_stop j_stop] = calc3st(0,1,1,-0.25,1.3);
+[dummy, dummy, p_stop] = calcjTracks(t_stop,j_stop,-0.25,1.3,-0.85);
+% zero cruise case
+[t_acc a_acc] = calc3st(0.9,1,1,-0.25,1.3); % acc. part (before cruising)
+[t_dec a_dec] = calc3st(0,1,1,0,0.9); % dec. part (after cruising)
+t0c = [t_acc 0 t_dec]; j0c = [a_acc 0 a_dec];
+[dummy, dummy, p0c] = calcjTracks(t0c,j0c, -0.25, 1.3, -0.85);
+% after shift case (W-T-Grenzfall)
+[a2, v2, p2] = calcjTracks(t0c(1:2),j0c(1:2), -0.25, 1.3, -0.85);
+[DeltaT, T5, T7] = calc7st_opt_shift(t0c,j0c,1,1,1,a2,v2);
+t_new = [t0c(1:2), t0c(3)-DeltaT, t0c(4), T5, 0, T7];
+[dummy,dummy,p_new] = calcjTracks(t_new,j0c, -0.25, 1.3, -0.85);
+% solution
+[t,j] = calc7st(0.5, 1, 1, 0.9, -0.25, 1.3, -0.85);
+
+% figure all with v,p
+figure;
+plotjTracks(t_stop,j_stop, 1,1,0.9,p_stop,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
+plotjTracks(t0c,j0c, 1,1,0.9,p0c,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
+plotjTracks(t_new, j0c, 1,1,0.9,p_new, -0.25, 1.3, -0.85, true,true,false,false,true,true,1,true);
+plotjTracks(t,j, 1,1,0.9,0.5,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
+% figure singles with a
+figure;
+plotjTracks(t_stop,j_stop, 1,1,0.9,p_stop,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
+figure;
+plotjTracks(t0c,j0c, 1,1,0.9,p0c,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
+figure;
+plotjTracks(t_new,j0c, 1,1,0.9,p_new,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
+figure;
+plotjTracks(t,j, 1,1,0.9,0.5,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
