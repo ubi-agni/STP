@@ -278,18 +278,17 @@ t_new = [t0c(1:2), t0c(3)-DeltaT, t0c(4), T5, 0, T7];
 % solution
 [t,j] = calc7st(0.5, 1, 1, 0.9, -0.25, 1.3, -0.85);
 
-% figure all with v,p
+% figure all with v,p (already adapted to new plotjTracks signature)
 figure;
-plotjTracks(t_stop,j_stop, 1,1,0.9,p_stop,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
-plotjTracks(t0c,j0c, 1,1,0.9,p0c,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
-plotjTracks(t_new, j0c, 1,1,0.9,p_new, -0.25, 1.3, -0.85, true,true,false,false,true,true,1,true);
-plotjTracks(t,j, 1,1,0.9,0.5,-0.25,1.3,-0.85, true, true, false, false, true, true, 1, true);
+plotjTracks(t_stop,j_stop, -0.25,1.3,-0.85, true, false,false,0.9,p_stop, true, true, 1, true);
+plotjTracks(t0c,j0c, -0.25,1.3,-0.85, true, false,false,0.9,p0c, true, true, 1, true);
+plotjTracks(t_new,j0c, -0.25,1.3,-0.85, true, false,false,0.9,p_new, true, true, 1, true);
+plotjTracks(t,j, -0.25,1.3,-0.85, true, false,false,0.9,0.5, true, true, 1, true);
+text(-0.02,0.9,'v_{max}','HorizontalAlignment','right','FontSize',12')
+
 % figure singles with a
 figure;
-plotjTracks(t_stop,j_stop, 1,1,0.9,p_stop,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
-figure;
-plotjTracks(t0c,j0c, 1,1,0.9,p0c,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
-figure;
-plotjTracks(t_new,j0c, 1,1,0.9,p_new,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
-figure;
-plotjTracks(t,j, 1,1,0.9,0.5,-0.25,1.3,-0.85, true, true, false, true, false, false, 1, true);axis off;
+plotjTracks(t_stop,j_stop, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
+plotjTracks(t0c,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
+plotjTracks(t_new,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
+plotjTracks(t,j, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off;
