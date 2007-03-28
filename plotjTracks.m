@@ -1,18 +1,25 @@
 % t = (t1 t2 t3 t4 t5 t6 t7 t8) ... start time, times for the 7 phases
 % j = (j1 j2 j3 j4 j5 j6 j7) ... jerks for the 7 phases
 
-function [a,v,p] = plotjTracks(t,j, jmax,amax,vmax,ptarget, a0,v0,p0, bNice,bColor, bJerk, bAcc, bVel, bPos, dColScale, bAddToFigure)
+function [a,v,p] = plotjTracks(t,j, a0,v0,p0, bNice, jmax,amax,vmax,ptarget, bColor, bTarget, dColScale, bAddToFigure)
 
-if (nargin < 10) bNice=true; end
-% if ptarget == false do not draw target line
-if (islogical(ptarget) && ptarget == false) bTarget = false; else bTarget = true; end
+if (nargin < 6) bNice=true; end
+% if jmax, amax, vmax, ptarget are not supplied, we do not draw them
+if (nargin < 7) jmax = true; end
+if (nargin < 8) amax = true; end
+if (nargin < 9) vmax = true; end
+if (nargin < 10) ptarget = true; end
+if (nargin < 12) bTarget = true; end
+% if jmax, amax, vmax, ptarget are false, we do not draw them as max values
+bMaxJerk = false; bMaxAcc = true; bMaxVel = true;
+if (islogical(jmax)) bJerk = jmax; bMaxJerk = false; jmax=0; else bJerk = true; end
+if (islogical(amax)) bAcc  = amax; bMaxAcc = false;  amax=0; else bAcc = true; end
+if (islogical(vmax)) bVel  = vmax; bMaxVel = false;  vmax=0; else bVel = true; end
+if (islogical(ptarget)) bPos = ptarget; bTarget = false; ptarget=p0; else bPos = true; end
+
 if (nargin < 11) bColor = true; end
-if (nargin < 12) bJerk = true; end
-if (nargin < 13) bAcc = true; end
-if (nargin < 14) bVel = true; end
-if (nargin < 15) bPos = true; end
-if (nargin < 16) dColScale = 1; end
-if (nargin < 17) bAddToFigure = false; end
+if (nargin < 13) dColScale = 1; end
+if (nargin < 14) bAddToFigure = false; end
 
 [t,j]= shrink_t_j(t,j);
 tend = sum(t);
@@ -56,12 +63,12 @@ if (bNice)
         end
     end
     % plot boundries for jerk, acc and vel
-    if ( jmax <= ymax && bJerk) line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':'); end
-    if (-jmax >= ymin && bJerk) line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':'); end
-    if ( amax <= ymax && bAcc) line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':'); end
-    if (-amax >= ymin && bAcc) line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':'); end
-    if ( vmax <= ymax && bVel) line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':'); end
-    if (-vmax >= ymin && bVel) line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':'); end
+    if ( jmax <= ymax && bMaxJerk) line([0,tend],[jmax,jmax],'Color', jerk_color, 'LineStyle', ':'); end
+    if (-jmax >= ymin && bMaxJerk) line([0,tend],[-jmax,-jmax],'Color', jerk_color, 'LineStyle', ':'); end
+    if ( amax <= ymax && bMaxAcc) line([0,tend],[amax,amax],'Color', acc_color, 'LineStyle', ':'); end
+    if (-amax >= ymin && bMaxAcc) line([0,tend],[-amax,-amax],'Color', acc_color, 'LineStyle', ':'); end
+    if ( vmax <= ymax && bMaxVel) line([0,tend],[vmax,vmax],'Color', vel_color, 'LineStyle', ':'); end
+    if (-vmax >= ymin && bMaxVel) line([0,tend],[-vmax,-vmax],'Color', vel_color, 'LineStyle', ':'); end
     %line([0,tend],[p0,p0],'Color', pos_color, 'LineStyle', ':');
     if (bPos && bTarget) line([0,tend],[ptarget,ptarget],'Color', pos_color, 'LineStyle', ':'); end
 end

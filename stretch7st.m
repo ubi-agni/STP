@@ -6,28 +6,21 @@ if (nargin < 11) plotMe=false; end
 [dummy, v3, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
 dir = sign(v3); % TODO: what happens when dir=0?
 
-bDoubleDec = false;
 % check if we must use the double deceleration branch
 if (sign(j(3)) ~= sign (j(5))) bDoubleDec = true;
-elseif (0) % TODO
-    % calc full-stop profile
-    [t_stop a_stop] = calc3st(0,jmax,amax,a0,v0);
-    % if full stop deceleration profile crosses zero we must cut there
-    % otherwise ???
-    [tn, jn] = adaptProfile ([t_stop 0 0 0 0], [a_stop 0 0 0 0], ptarget-p0);
-    % if still too fast
-    if (sum(tn(1:7)) < T)
-        bDoubleDec = true;
-        [t, j] = [tn, jn];
-    else
-        bDoubleDec = false;
-    end
-end
+else bDoubleDec = false; end
 
 if (bDoubleDec)
     % double deceleration branch
     [t, j] = findProfileDoubleDec (t,j);
 else
+    % This is a usual profile with acceleration and deceleration part.
+    % If the area below the deceleration part is larger than the area
+    % below the acceleration part (without negative parts) we may have to
+    % switch to a double deceleration branch (for very large slow down).
+    % This extends the decision tree of the no-cruise case by some
+    % more cases... 8-(
+    
     % normal profile branch
     [t, j] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
 end
@@ -40,7 +33,7 @@ j_res = j;
 
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
+	[a_end, v_end, p_end] = plotjTracks(t_res,j_res,a0,v0,p0, true, jmax,amax,vmax,ptarget);
 end
 
 return
@@ -55,6 +48,8 @@ function [t, j] = adaptProfile (t, j, dp, a0,v0,p0)
 [dummy, v3_new, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
 % enlarge cruising time, such that area below velocity profile equals dp again
 t(4) = t(4) + (dp - dp_new) / v3_new;
+
+% plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted'); figure;
 return
 
 
@@ -64,6 +59,7 @@ return
 
 function [t,j,type] = findProfileNormal(t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % find correct profile by cutting pieces and descending to shorter profiles
+
 if (t(2) ~= 0) % T? profile
     if (t(6) ~= 0) 
         type = 'TT'; % TT profile
@@ -78,7 +74,7 @@ else
     end
 end
     
-t_orig = t;
+t_orig = t; j_orig = j;
 if (strcmp (type, 'TT')) 
     % cut out smaller a=const. part
     dt = min(t(2), t(6));
@@ -97,6 +93,7 @@ if (strcmp (type, 'TT'))
 end
 
 if (strcmp (type, 'WW'))
+    % TODO checkDoubleDecel
     return % nothing to do, WW stays WW anytime
 end
 
@@ -114,12 +111,14 @@ if (strcmp (type, 'WT'))
         [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
 
         if (stillTooShort(t,T))
+            % TODO checkDoubleDecel
             type = 'WW'; % type switches to WW
         else
             % now we stop before the target, hence profile stays WT
             t = t_orig; % return input profile
         end
     else
+        % TODO checkDoubleDecel
         % nothing to cut out, stays at WT
     end
     return
@@ -137,17 +136,27 @@ if (strcmp (type, 'TW'))
         [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
 
         if (stillTooShort(t,T))
+            % TODO checkDoubleDecel
             type = 'WW'; % type switches to WW
         else
             % now we stop before the target, hence profile stays TW
             t = t_orig; % return input profile
         end
     else
+        % TODO checkDoubleDecel
         % nothing to cut out, stays at TW
     end
     return
 end
 return
+
+function [t,j] = checkDoubleDecel (t,j, type)
+    % If the area below the deceleration part is larger than the area
+    % below the acceleration part (without negative parts???) we may have to
+    % switch to a double deceleration branch (for very large slow down).
+    
+    % TODO: to be implemented
+return        
 
 function bTooShort = stillTooShort(t,T)
     bTooShort = (sum(t) < T);

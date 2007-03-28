@@ -7,10 +7,16 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p
 % profile until it is not overshooting the target anymore. At this time we
 % know which profile-type the final solution will have and can call the
 % appropriate function to find the final solution.
-    % (1) Check whether we have a double deceleration profile.
-    % (2) Case distinction: TT / TW / WT / WW
-    
-% plotjTracks(t, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'zero-cruise'); figure;
+
+% (1) Check whether we have a double deceleration profile.
+% (2) Case distinction: TT / TW / WT / WW
+
+bPlotAll=false;
+if (bPlotAll) 
+    h = figure;
+    set(h,'Name','Zero-Cruise-Profile');
+    plotjTracks(t,j, a0, v0, p0, true, jmax, amax, vmax, ptarget);
+end
 
 % (1)
 % check if we have a double deceleration profile
@@ -25,7 +31,12 @@ if (sign(j(3)) ~= sign (j(5)))
         if (DeltaT < t(3))
             % adapt profile by shortening t(3)
             t_new = [t(1:2), t(3)-DeltaT, t(4), T5, 0, T7];
-            %figure; plotjTracks(t_new, j, ptarget, jmax, amax, vmax, a0, v0, p0, true); set(gcf, 'Name', 'W-T-Grenzfall');
+
+if (bPlotAll) 
+    h = figure;
+    set(h,'Name','Double Deceleration: border case ?W -> ?T');
+    plotjTracks(t_new,j, a0, v0, p0, true, jmax, amax, vmax, ptarget);
+end
             % compute reached position
             [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
             % if we still overshoot, the profile becomes trapezoidal
@@ -73,7 +84,7 @@ disp (sprintf ('profile: %s', type));
 % Calculate exact phase duration for choosen profile t, j
 % generate set of equations
 [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (solveAll ([A V TEQ P], TVARS), a0, dir*jmax);
+t_res = split35 (solveAll ([A V TEQ P], TVARS), a0, j);
 j_res = j;
 return
 
@@ -167,8 +178,8 @@ return
 
 function t = split35 (t, a0, j)
 % Split phases 3 and 5 from each other, according to their zero-crossing
-a1 = a0+j*t(1); % == a2
-t3 = abs(a1/j);
+a1 = a0+j(1)*t(1); % == a2
+t3 = -a1/j(3);
 t(5) = t(3) - t3;
 t(3) = t3;
 return

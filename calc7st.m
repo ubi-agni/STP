@@ -30,11 +30,11 @@ if (nargin < 9) plotNice=true; end
 if (nargin < 10) testResult=false; end
 
 if (testResult)
-    disp(sprintf('Runnign calc7st(%f, %f, %f, %f, %f, %f, %f)...',p_target,jmax,amax,vmax,a0,v0,p0));
+    disp(sprintf('Running calc7st(%f, %f, %f, %f, %f, %f, %f) ...',p_target,jmax,amax,vmax,a0,v0,p0));
 end
 
 % (1)
-% calculate the dir-flag by testing if we over-shoot the target
+% calculate the dir-flag by testing whether we over-shoot the target
 % at imidiate halt
 [t_stop a_stop] = calc3st(0,jmax,amax,a0,v0);
 [ah vh p_fullstop] = calcjTracks(t_stop,a_stop,a0,v0,p0);
@@ -48,12 +48,13 @@ else
 	% position change just from acc and dec phase:
 	[t_acc a_acc] = calc3st(dir*vmax,jmax,amax,a0,v0); % acc. part (before cruising)
 	[t_dec a_dec] = calc3st(0,jmax,amax,0,dir*vmax); % dec. part (after cruising)
-	% postion change:
+
+    % position change:
 	t_zeroCruise = [t_acc 0 t_dec];
 	j_zeroCruise= [a_acc 0 a_dec];
 	[ah vh p_stop] = calcjTracks(t_zeroCruise,j_zeroCruise, a0, v0, p0);
-	%h = figure;set(h,'Name','Zero-Cruise-Profile');plotjTracks(t_zeroCruise,j_zeroCruise, p_target, jmax, amax, vmax, a0, v0, p0,true);
-	% distance we need to go in cruising phase:
+
+    % distance we need to go in cruising phase:
 	p_delta = (p_target-p_stop);
 	t_delta = p_delta / (dir*vmax);
 
@@ -67,13 +68,13 @@ else
 		j = [a_acc, 0, a_dec];
 	else
 		% without cruising phase
-		[t,j] = calc7st_nocruise(t_zeroCruise, j_zeroCruise,dir,p_target,jmax,amax,vmax,a0,v0,p0);
+		[t,j] = calc7st_nocruise(t_zeroCruise,j_zeroCruise,dir,p_target,jmax,amax,vmax,a0,v0,p0);
 	end
 end
 	
 % display graph
 if (plotMe)
-	[a_end, v_end, p_end] = plotjTracks(t,j,jmax,amax,vmax,p_target,a0,v0,p0, plotNice);
+	[a_end, v_end, p_end] = plotjTracks(t,j, a0,v0,p0, plotNice, jmax,amax,vmax,p_target);
 end
 
 % test, whether the solution is correct
