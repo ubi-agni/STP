@@ -292,3 +292,39 @@ plotjTracks(t_stop,j_stop, -0.25,1.3,-0.85, true, false,true,false,false, true, 
 plotjTracks(t0c,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
 plotjTracks(t_new,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
 plotjTracks(t,j, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% figures 6
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% full stop case
+[t_stop j_stop] = calc3st(0,3,3,-2,2);
+[dummy, dummy, p_stop] = calcjTracks(t_stop,j_stop,-2,2,0);
+
+[t1,j1]=calc7st(2, 3, 3, 3, -2, 2, 0);
+[t2,j2]=calc7st(2.5, 3, 3, 3, -2, 2, 0);
+[t3,j3]=calc7st(2.8, 3, 3, 3, -2, 2, 0);
+[t4,j4]=calc7st(1.5, 3, 3, 3, -2, 2, 0);
+[t5,j5]=calc7st(0.88, 3, 3, 3, -2, 2, 0);
+[t6,j6]=calc7st(0.75, 3, 3, 3, -2, 2, 0);
+[t7,j7]=calc7st(0, 3, 3, 3, -2, 2, 0);
+
+% figure all with v,p
+figure;
+plotjTracks(t_stop,j_stop, -2, 2, 0, true, false, false, 3, p_stop, true, true, 1, true);
+plotjTracks(t3,j3, -2, 2, 0, true, false, false, 3, 2.8, true, true, 1, true);
+plotjTracks(t4,j4, -2, 2, 0, true, false, false, 3, 1.5, true, true, 1, true);
+%plotjTracks(t6,j6, -2, 2, 0, true, false, false, 3, 0.75, true, true, 1, true);
+plotjTracks(t7,j7, -2, 2, 0, true, false, false, 3, 0, true, true, 1, true);
+
+% figure singles with a
+figure;
+plotjTracks(t_stop,j_stop, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+figure;
+plotjTracks(t3,j3, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+figure;
+plotjTracks(t4,j4, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+%figure;
+%plotjTracks(t6,j6, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+figure;
+plotjTracks(t7,j7, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+
+
