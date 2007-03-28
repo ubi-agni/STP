@@ -44,12 +44,13 @@ function [t, j] = adaptProfile (t, j, dp, a0,v0,p0)
 % in magnitude than before, this function extends the cruising phase (or
 % inserts one), such that the target is reach again.
 % This is a simple linear equation...
-[dummy, dummy, dp_new] = calcjTracks(t,j, a0,v0,p0);
+[dummy, dummy, p_reached] = calcjTracks(t,j, a0,v0,p0); 
+dp_new = p_reached - p0; % compute position delta during profile evolution
 [dummy, v3_new, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
 % enlarge cruising time, such that area below velocity profile equals dp again
 t(4) = t(4) + (dp - dp_new) / v3_new;
 
-% plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted'); figure;
+% figure; plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted');
 return
 
 
@@ -86,13 +87,15 @@ if (strcmp (type, 'TT'))
         % recursively calling this function even cuts further
         [t,j,type] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
     else
-        % now we stop before the target, hence profile stays TT
+        % now we stop after duration time T, hence profile stays TT
         t = t_orig; % return input profile
     end
     return
 end
 
 if (strcmp (type, 'WW'))
+    % allow for a cruising phase
+    t(4) = 1;
     % TODO checkDoubleDecel
     return % nothing to do, WW stays WW anytime
 end
@@ -114,7 +117,7 @@ if (strcmp (type, 'WT'))
             % TODO checkDoubleDecel
             type = 'WW'; % type switches to WW
         else
-            % now we stop before the target, hence profile stays WT
+            % now we stop after duration time T, hence profile stays WT
             t = t_orig; % return input profile
         end
     else
@@ -139,7 +142,7 @@ if (strcmp (type, 'TW'))
             % TODO checkDoubleDecel
             type = 'WW'; % type switches to WW
         else
-            % now we stop before the target, hence profile stays TW
+            % now we stop after duration time T, hence profile stays TW
             t = t_orig; % return input profile
         end
     else

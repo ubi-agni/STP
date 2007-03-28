@@ -343,6 +343,7 @@ line([sum(t2),sum(t2)],[ymin,ymax],'Color','k','LineStyle','--');
 line([sum(t3),sum(t3)],[ymin,ymax],'Color','k','LineStyle','--');
 % figure with all synch'ed vel
 T = max([sum(t1) sum(t2) sum(t3)]);
-[t1, j1] = stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1,true);
-[t2, j2] = stretch7st(t2,j2,T,-0.5, 0.75,0.7,0.8, -0.35,0.18,0.5,true);
-[t3, j3] = stretch7st(t3,j3,T,0.2, 1,0.7,0.8, -0.2,0.3,-0.5,true);
+figure;
+stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1,true)
+stretch7st(t2,j2,T,-0.5, 0.75,0.7,0.8, -0.35,0.18,0.5,true)
+stretch7st(t3,j3,T,0.2, 1,0.7,0.8, -0.2,0.3,-0.5,true)
