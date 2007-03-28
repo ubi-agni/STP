@@ -68,24 +68,20 @@ line([0,tend],[-1.2,-1.2],'Color','k','LineStyle',':');
 set(gca,'ytick',[-1.2 0 1.2 1.5],'xtick',[]);
 
 % double deceleration, shortening possebilities
-figure;
-t = [1.3 2.6 3.156776 3.71355287]; j = [-1 1 -1 1];
-[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-t = [1 2 3 4]; j = [-1 1 -1 1];
-[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-line([0,4],[1,1],'Color','k','LineStyle',':');
-%figure;
-%t = [1 2 3 4]; j = [-1 1 -1 1];
-%[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-%t = [0.5567764 1.1135528 2.4135528 3.7135528]; j = [-1 1 -1 1];
-%[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-%line([0,4],[1,1],'Color','k','LineStyle',':');
-figure;
-t = [1 1.5 2.118033988 3.236067977]; j = [-1 1 -1 1];
-[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-t = [1 2 3 4]; j = [-1 1 -1 1];
-[a v p] = plotjTracksNice(t,j, 1,1,1, 0,0,2,-2, false);
-line([0,4],[1,1],'Color','k','LineStyle',':');
+figure; 
+[t, j] = calc7st(2, 1,1,1, 0,2,-2);
+plotjTracks(t,j, 0,2,-2, true, false,true,1,true, true,false,1,true);
+t = [1 1 1 0 1 0 1]; j = [-1 0 1 0 -1 0 1];
+[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t,j, false, -1, 1.3,1,1,1, 0,2,-2);
+A = [A sym('-t1+t3=0')];
+t_res = solveAll ([A V TEQ P], TVARS);
+plotjTracks(t_res,j, 0,2,-2, true, false,true,true,1.3, true,true,0.7,true);
+
+figure; 
+[t, j] = calc7st(2, 1,1,1, 0,2,-2);
+plotjTracks(t,j, 0,2,-2, true, false,true,1,true, true,false,1,true);
+[t, j] = calc7st(1.3, 1,1,1, 0,2,-2);
+plotjTracks(t,j, 0,2,-2, true, false,true,true,1.3, true,true,0.7,true);
 
 % double deceleration, D-D -> D-T
 figure; calc7st(1.5, 2,1.5,1, 0,2,-1.5, true);
