@@ -7,21 +7,20 @@ if (nargin < 11) plotMe=false; end
 dir = sign(v3); % TODO: what happens when dir=0?
 
 % check if we must use the double deceleration branch
-if (sign(j(3)) ~= sign (j(5))) bDoubleDec = true;
-else bDoubleDec = false; end
-
-if (bDoubleDec)
+if (isDoubleDeceleration(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0))
     % double deceleration branch
-    [t, j] = findProfileDoubleDec (t,j);
+    disp('Double Deceleration Case');
+    % TODO TODO
+    % lets pretend its a WW-profil :)
+    t = [1 0 1 1 1 0 1];
+    j = [-1 0 1 0 -1 0 1];
+    j = j*jmax*sign(dir);
+    t
+    j
+    %[t, j] = findProfileDoubleDec (t,j);
 else
-    % This is a usual profile with acceleration and deceleration part.
-    % If the area below the deceleration part is larger than the area
-    % below the acceleration part (without negative parts) we may have to
-    % switch to a double deceleration branch (for very large slow down).
-    % This extends the decision tree of the no-cruise case by some
-    % more cases... 8-(
-    
     % normal profile branch
+    disp('Normal Case');
     [t, j] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
 end
 % Calculate exact phase duration for choosen profile t, j
@@ -38,17 +37,76 @@ end
 
 return
 
-function [t, j] = adaptProfile (t, j, dp, a0,v0,p0)
+function bDoubleDec = isDoubleDeceleration(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0);
+% tests for a given profile, whether stretching it to the time T would
+% lead to a double deceleration case.
+
+if (sign(j(3)) ~= sign (j(5)))
+    % that was easy - it already is a double dec. profile :)
+    bDoubleDec = true;
+    return;
+end
+
+% now its getting a bit tougher:
+% we will check whether we are still too early at the target, when we
+% reduce the acceleration to zero immidiately at the beginning as the first
+% three time intervalls.
+
+% first check, wether a1 and a5 have different signs:
+a1 = a0 + j(1)*t(1);
+a5 = a0 + j(1)*t(1) + j(3)*t(3) + j(5)*t(5);
+if (sign(a1) == sign(a5))
+    % its already double deceleration!
+    bDoubleDec = true;
+    return;
+end
+
+% first we will find out, how much area we have to cut out from the last
+% 3 phases acc profile, when removing the first 3 phases.
+t_0acc = abs(a0/jmax)
+v1_neu = v0 + t_0acc*a0 + 0.5*t_0acc^2*jmax*sign(-a0);
+
+[dummy, v3, dummy] = calcjTracks(t(1:3),j(1:3), a0,v0,p0)
+
+dV = v3-v1_neu
+t
+figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+if (~isZero(dV))
+    t(1) = t_0acc;
+    t(2) = 0;
+    t(3) = 0;
+    j(1) = -sign(a0)*jmax;
+    j(3) = -j(1);
+    [isPossible, t(5:7)] = remArea3(t(5:7),dV,jmax,amax);
+    if ((~isPossible) || (isZero(t(5))))
+       % the first part is bigger --> no double dec
+       bDoubleDec = false;
+       return;
+    end
+end
+figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+t
+% now we can finally test if we are still too fast
+[t,j] = adaptProfile (t, j, ptarget, a0,v0,p0);
+figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+sum(t)
+if (stillTooShort(t,T))
+    bDoubleDec = true;
+else
+    bDoubleDec = false;
+end
+return
+
+function [t, j] = adaptProfile (t, j, p_target, a0,v0,p0)
 % Given a profile (t,j) where acceleration and deceleration phase was
 % already changed (cutted or shifted) such that velocity v(3) is smaller
 % in magnitude than before, this function extends the cruising phase (or
 % inserts one), such that the target is reach again.
 % This is a simple linear equation...
 [dummy, dummy, p_reached] = calcjTracks(t,j, a0,v0,p0); 
-dp_new = p_reached - p0; % compute position delta during profile evolution
 [dummy, v3_new, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
 % enlarge cruising time, such that area below velocity profile equals dp again
-t(4) = t(4) + (dp - dp_new) / v3_new;
+t(4) = t(4) + (p_target - p_reached) / v3_new;
 
 % figure; plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted');
 return
@@ -81,7 +139,7 @@ if (strcmp (type, 'TT'))
     dt = min(t(2), t(6));
     t(2) = t(2) - dt;
     t(6) = t(6) - dt;
-    [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
+    [t,j] = adaptProfile (t,j, ptarget, a0,v0,p0);
 
     if (stillTooShort(t,T))
         % recursively calling this function even cuts further
@@ -111,7 +169,7 @@ if (strcmp (type, 'WT'))
         dt = (abs(a1)-sqrt(a1^2-area_t_max))/jmax;
         t(1) = t(1)-dt;
         t(3) = t(3)-dt;
-        [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
+        [t,j] = adaptProfile (t,j, ptarget, a0,v0,p0);
 
         if (stillTooShort(t,T))
             % TODO checkDoubleDecel
@@ -136,7 +194,7 @@ if (strcmp (type, 'TW'))
         t(2) = 0;
         t(5) = sqrt((area_w_max-area_t_max)/abs(j(5)));
         t(7) = t(5);
-        [t,j] = adaptProfile (t,j, ptarget-p0, a0,v0,p0);
+        [t,j] = adaptProfile (t,j, ptarget, a0,v0,p0);
 
         if (stillTooShort(t,T))
             % TODO checkDoubleDecel
