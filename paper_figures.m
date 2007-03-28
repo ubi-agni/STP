@@ -323,4 +323,26 @@ plotjTracks(t4,j4, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
 figure;
 plotjTracks(t7,j7, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 7 phases synchronisation case
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TcT
+[t1, j1] = calc7st(1, 1,0.7,0.8, 0,0,-1);
+% TW
+[t2, j2] = calc7st(-0.5, 0.75,0.7,0.8, -0.35,0.18,0.5);
+% WW
+[t3, j3] = calc7st(0.2, 1,0.7,0.8, -0.2,0.3,-0.5);
+% figure with all unsynch'ed vel
+figure;
+plotjTracks(t1,j1, 0, 0, -1, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t2,j2, -0.35, 0.18, 0.5, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t3,j3, -0.2, 0.3, -0.5, true, false, false, 0.8, false, true, true, 1, true);
+ax = axis; ymin = ax(3); ymax = ax(4);
+line([sum(t1),sum(t1)],[ymin,ymax],'Color','k','LineStyle','--');
+line([sum(t2),sum(t2)],[ymin,ymax],'Color','k','LineStyle','--');
+line([sum(t3),sum(t3)],[ymin,ymax],'Color','k','LineStyle','--');
+% figure with all synch'ed vel
+T = max([sum(t1) sum(t2) sum(t3)]);
+[t1, j1] = stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1,true);
+[t2, j2] = stretch7st(t2,j2,T,-0.5, 0.75,0.7,0.8, -0.35,0.18,0.5,true);
+[t3, j3] = stretch7st(t3,j3,T,0.2, 1,0.7,0.8, -0.2,0.3,-0.5,true);
