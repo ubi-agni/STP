@@ -40,6 +40,10 @@ return
 function bDoubleDec = isDoubleDeceleration(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0);
 % tests for a given profile, whether stretching it to the time T would
 % lead to a double deceleration case.
+% TODO TODO TODO:
+% folgenden einfachen algorithmus verwenden:
+% Profil erzeugen: erst a auf null, dann v auf null
+% ist dieses profil zu langsam --> double deceleration / normal
 
 if (sign(j(3)) ~= sign (j(5)))
     % that was easy - it already is a double dec. profile :)
