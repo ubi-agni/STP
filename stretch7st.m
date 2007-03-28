@@ -70,7 +70,7 @@ v1_neu = v0 + t_0acc*a0 + 0.5*t_0acc^2*jmax*sign(-a0);
 
 dV = v3-v1_neu
 t
-figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+%figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
 if (~isZero(dV))
     t(1) = t_0acc;
     t(2) = 0;
@@ -84,11 +84,11 @@ if (~isZero(dV))
        return;
     end
 end
-figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+%figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
 t
 % now we can finally test if we are still too fast
 [t,j] = adaptProfile (t, j, ptarget, a0,v0,p0);
-figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+%figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
 sum(t)
 if (stillTooShort(t,T))
     bDoubleDec = true;
@@ -140,7 +140,6 @@ if (strcmp (type, 'TT'))
     t(2) = t(2) - dt;
     t(6) = t(6) - dt;
     [t,j] = adaptProfile (t,j, ptarget, a0,v0,p0);
-
     if (stillTooShort(t,T))
         % recursively calling this function even cuts further
         [t,j,type] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
