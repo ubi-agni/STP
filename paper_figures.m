@@ -343,16 +343,16 @@ line([sum(t2),sum(t2)],[ymin,ymax],'Color','k','LineStyle','--');
 line([sum(t3),sum(t3)],[ymin,ymax],'Color','k','LineStyle','--');
 % figure with all synch'ed vel
 T = max([sum(t1) sum(t2) sum(t3)]);
-[t1, j1] = stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1);
-[t2, j2] = stretch7st(t2,j2,T,-0.4, 0.75,0.7,0.8, -0.35,0.2,0.5);
-[t3, j3] = stretch7st(t3,j3,T,0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
+[t1n, j1n] = stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1);
+[t2n, j2n] = stretch7st(t2,j2,T,-0.4, 0.75,0.7,0.8, -0.35,0.2,0.5);
+[t3n, j3n] = stretch7st(t3,j3,T,0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
 figure;
-plotjTracks(t1,j1, 0, 0, -1, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t2,j2, -0.35, 0.2, 0.5, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t3,j3, -0.3, 0.4, -0.5, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t1n,j1n, 0, 0, -1, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t2n,j2n, -0.35, 0.2, 0.5, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t3n,j3n, -0.3, 0.4, -0.5, true, false, false, 0.8, false, true, true, 1, true);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% show synch algorithm
+% show sync algorithm
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [t1, j1] = calc7st(1, 0.5,0.4,0.7, 0,0,-1);
 t2 = t1;

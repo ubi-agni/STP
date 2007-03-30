@@ -1,13 +1,13 @@
 function [isPossible, t_res] = remArea3(t,deltaV,jmax,amax)
 % Takes a vector of three time intervalls and then
-% deletes the passed deltaV to the area under the acceleration graph.
+% deletes the passed deltaV from the area under the acceleration graph.
 
 % We only decrease the area...
 deltaV = abs(deltaV);
 A_now = t(1)^2*jmax+amax*t(2);
 if (A_now < deltaV)
     isPossible = false;
-    t_res = [0,0,0];
+    t_res = t;
     return;
 end
 isPossible = true;
