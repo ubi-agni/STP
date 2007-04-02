@@ -11,11 +11,14 @@ t_res=[]; numSolutions=size(solMatrix); numSolutions=numSolutions(1);
 for s=1:numSolutions
     solVec = solMatrix(s,1:N);
     % skip imaginary solutions, but allow small numeric variations
-    if (length(solVec(abs(imag(solVec))<1.0e-10)) ~= N) continue; end
+    if (length(solVec(abs(imag(solVec)) < 1.0e-10)) ~= N) continue; end
     % use real parts only
     solVec = real(solVec);
-    if (~isreal (solVec)) continue; end 
-    if (length(solVec(solVec >= 0)) ~= N) continue; end % skip negative values
+    % clip small negative values to zero
+    solVec(find(abs(solVec) <= 1e-10)) = 0; 
+    % skip negative values
+    if (length(solVec(solVec >= 0)) ~= N) continue; end 
+    % store result with smallest sum
     if (length(t_res) == 0 || sum(t_res) > sum(solVec))
         t_res = solVec;
     end

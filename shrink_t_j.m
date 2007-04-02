@@ -1,7 +1,7 @@
 function [t_res, j_res] = shrink_t_j(t, j)
 
 % remove zero indices
-nonzero = find(t ~= 0);
+nonzero = find(abs(t) > 1.e-10);
 t = t(nonzero);
 j = j(nonzero);
 

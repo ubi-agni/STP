@@ -29,10 +29,6 @@ if (nargin < 8) plotMe=false; end
 if (nargin < 9) plotNice=true; end
 if (nargin < 10) testResult=false; end
 
-if (testResult)
-    disp(sprintf('Running calc7st(%f, %f, %f, %f, %f, %f, %f) ...',p_target,jmax,amax,vmax,a0,v0,p0));
-end
-
 % (1)
 % calculate the dir-flag by testing whether we over-shoot the target
 % at imidiate halt
@@ -58,7 +54,7 @@ else
 	p_delta = (p_target-p_stop);
 	t_delta = p_delta / (dir*vmax);
 
-	disp (sprintf ('full stop at: %f  zero-cruise: %f', p_fullstop, p_stop));
+%	disp (sprintf ('full stop at: %f  zero-cruise: %f', p_fullstop, p_stop));
 
 	% (3)
 	% case differentiation: Do we have a cruising phase?
@@ -79,11 +75,6 @@ end
 
 % test, whether the solution is correct
 if (testResult)
-    t
-    j
-    disp(sprintf('testjTracks(t,j,%f,%f,%f,%f,%f,%f,%f)',a0,v0,p0,jmax,amax,vmax,p_target));
     [isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,p_target);
-    if (~isCorrect)
-		error(reason);    
-    end
+    if (~isCorrect) error(reason); end
 end

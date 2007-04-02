@@ -1,4 +1,4 @@
-function [isPossible, t_res] = remArea3(t,deltaV,jmax,amax)
+function [isPossible, t_res] = removeArea(t,deltaV,jmax,amax)
 % Takes a vector of three time intervalls and then
 % deletes the passed deltaV from the area under the acceleration graph.
 

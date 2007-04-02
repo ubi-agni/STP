@@ -3,7 +3,21 @@ calc7st (-0.030068, 2,1,1, 0.8,-0.2,0, true, true);
 calc7st (-0.275, 2,1,1, -0.8,-0.2,0, true, true);
 calc7st (-0.27, 2,1,1, -0.8,-0.2,0, true, true);
 % description: negative time intervall t(3) in WW case
-calc7st(1.5, 3, 3, 3, -2, 2, 0);
+calc7st(1.5, 3, 3, 3, -2, 2, 0, true, true);
+
+% doesn't reach target:
+calc7st(0.26400000000000068, 1, 1, 1, -1.2, 0.7, 0, true, true);
+% a is too high
+calc7st(0.77973084054605746, 1, 1, 1, -1, 1.2, 0, true, true)
+calc7st(-0.11433333333333362, 1, 1, 1, -0.7, 0, 0, true, true)
+calc7st(0.89230768364536051, 1, 1, 1, -0.7, 1.2, 0, true, true)
+calc7st(1.1003205353432297, 1, 1, 1, -0.7, 1.2, 0, true, true)
+calc7st(1.3083333870410994, 1, 1, 1, -0.7, 1.2, 0, true, true)
+calc7st(-1.3083333870410985, 1, 1, 1, 0.7, -1.2, 0, true, true)
+calc7st(-1.1003205353432293, 1, 1, 1, 0.7, -1.2, 0, true, true)
+calc7st(-0.89230768364536006, 1, 1, 1, 0.7, -1.2, 0, true, true)
+calc7st(0.11433333333333362, 1, 1, 1, 0.7, 0, 0, true, true)
+calc7st(-0.77973084054605746, 1, 1, 1, 1, -1.2, 0, true, true)
 
 % let's start with some easy some standard tests with cruising phase:
 if true

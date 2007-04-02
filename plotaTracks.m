@@ -4,7 +4,7 @@
 function [a,v,p] = plotaTracks(t,a, amax,vmax,ptarget, v0,p0, bNice,bColor)
 
 if (nargin < 8) bNice=true; end
-if (nargin < 9) bColor = false; end
+if (nargin < 9) bColor=true; end
 
 [t,a]= shrink_t_j(t,a);
 tend = sum(t);

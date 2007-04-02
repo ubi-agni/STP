@@ -36,9 +36,9 @@ aEQ=[]; vEQ=[]; TEQ(1) = sym('0'); Ts=[]; VARS=[];
 for i=1:N
     if (t(i) == 0) % as t(i) == 0, values do not change
         if (i == 1) 
-            a(i) = a0;
-            v(i) = v0;
-            p(i) = p0;
+            a(i) = sym(a0);
+            v(i) = sym(v0);
+            p(i) = sym(p0);
         else
             % normally use previous expressions
             a(i) = a(i-1);

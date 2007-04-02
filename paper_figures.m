@@ -3,18 +3,18 @@
 figure;
 [t,a] = calc3st(0.8,0.6,0.75,-0.4,-0.55);
 plotaTracks(t,a,0.6,0.75,0.8,-0.4,-0.55, true);
-set(gca,'ytick',[0],'xtick',[0 t(1),t(2),t(3)]);
+set(gca,'ytick',[0],'xtick',[0 t(1),sum(t(1:2)),sum(t(1:3))]);
 text(-0.02,0.75,'v_{max}','HorizontalAlignment','right','FontSize',12')
 text(-0.02,0.6,'a_{max}','HorizontalAlignment','right','FontSize',12')
-text(t(1),-0.69,'t_1','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text(t(2),-0.69,'t_2','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text(t(3),-0.69,'t_3','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text(t(1)/2,-0.7,'\Delta t_1','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text((t(1)+t(2))/2,-0.7,'\Delta t_2','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text((t(2)+t(3))/2,-0.7,'\Delta t_3','HorizontalAlignment','center','VerticalAlignment','top','FontSize',12')
-text(t(1)/2,-0.4,'acceleration phase','HorizontalAlignment','center','FontSize',12')
-text((t(1)+t(2))/2,-0.4,'cruising phase','HorizontalAlignment','center','FontSize',12')
-text((t(2)+t(3))/2,-0.4,'deceleration phase','HorizontalAlignment','center','FontSize',12')
+tc = 0;
+for i=1:3
+  text(tc+t(i),   -0.69,sprintf('t_%d',i),'HorizontalAlignment','center','VerticalAlignment','top','FontSize',12');
+  text(tc+t(i)/2, -0.7,sprintf('\\Delta t_%d',i),'HorizontalAlignment','center','VerticalAlignment','top','FontSize',12');
+  tc = tc + t(i);
+end
+text(t(1)/2,-0.3,'acceleration phase','HorizontalAlignment','center','FontSize',12')
+text(t(1)+t(2)/2,-0.3,'cruising phase','HorizontalAlignment','center','FontSize',12')
+text(sum(t(1:2))+t(3)/2,-0.3,'deceleration phase','HorizontalAlignment','center','FontSize',12')
 
 % standard 7-phases case
 %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -97,26 +97,27 @@ figure; calc7st(0.4, 2,1.5,1.5, 0,2,-1.5, true);
 
 % multidimensional, sync. and async. 3-phases case
 % gray boxed and all graph plotting beside the vel-
-% graph need to be switched off in plotaTracksNice.m
+% graph need to be switched off in plotaTracks.m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure;
 [t1,a] = calc3st(0.8,0.6,0.75,-0.2,-0.8);
-plotaTracksNice(t1,a,0.6,0.75,0.8,-0.2,-0.8,false);
+plotaTracks(t1,a,0.6,0.75,0.8,-0.2,-0.8,false);
 [t2,a] = calc3st(0.4,0.6,0.75,0.5,-0.8);
-plotaTracksNice(t2,a,0.6,0.75,0.4,0.5,-0.8,false);
+plotaTracks(t2,a,0.6,0.75,0.4,0.5,-0.8,false);
 [t3,a] = calc3st(-0.4,0.4,0.75,0,0.5);
-plotaTracksNice(t3,a,0.4,0.75,-0.4,0,0.5,false);
+plotaTracks(t3,a,0.4,0.75,-0.4,0,0.5,false);
 set(gcf,'PaperPosition',[0,0,8,2]);
 ax = axis; ymin = ax(3); ymax = ax(4);
-line([max(t1),max(t1)],[ymin,ymax],'Color','k','LineStyle','--');
-line([max(t2),max(t2)],[ymin,ymax],'Color','k','LineStyle','--');
-line([max(t3),max(t3)],[ymin,ymax],'Color','k','LineStyle','--');
+T1 = sum(t1); T2 = sum(t2); T3 = sum(t3);
+line([T1 T1],[ymin,ymax],'Color','k','LineStyle','--');
+line([T2 T2],[ymin,ymax],'Color','k','LineStyle','--');
+line([T3 T3],[ymin,ymax],'Color','k','LineStyle','--');
 
-tnew = max([t1 t2 t3]);
+tnew = max([T1 T2 T3]);
 figure;
-[t,a] = calc3st_sync(tnew,0.8,0.6,0.75,-0.2,-0.8);
-[t,a] = calc3st_sync(tnew,0.4,0.6,0.75,0.5,-0.8);
-[t,a] = calc3st_sync(tnew,-0.4,0.4,0.75,0,0.5);
+[t,a] = stretch3st(tnew,0.8,0.6,0.75,-0.2,-0.8);
+[t,a] = stretch3st(tnew,0.4,0.6,0.75,0.5,-0.8);
+[t,a] = stretch3st(tnew,-0.4,0.4,0.75,0,0.5);
 set(gcf,'PaperPosition',[0,0,8,2]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -124,22 +125,23 @@ set(gcf,'PaperPosition',[0,0,8,2]);
 
 %%%%%%%%%
 % PLOTS 1
-figure;
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 [t, j] = calc7st (1, 2,1,1, 1.5,-0.6,0);
-plotjTracks(t,j, 2,1,1, 1, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 1.5,-0.6,0, true, bJerk,bAcc,bVel,1, true, true, 1, true)
 [t, j] = calc7st (0.335, 2,1,1, 1.5,-0.6,0);
-plotjTracks(t,j, 2,1,1, 0.335, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 1.5,-0.6,0, true, bJerk,bAcc,bVel,0.335, true, true, 1, true)
 [t, j] = calc7st (-0.160078, 2,1,1, 1.5,-0.6,0);
-plotjTracks(t,j, 2,1,1, -0.160078, 1.5,-0.6,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 1.5,-0.6,0, true, bJerk,bAcc,bVel,-0.160078, true, true, 1, true)
 
+bJerk=false; bAcc=1; bVel=false; bPos=false;
 [t, j] = calc7st (1, 2,1,1, 1.5,-0.6,0);
-figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 1.5,-0.6,0,  true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.335, 2,1,1, 1.5,-0.6,0);
-figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 1.5,-0.6,0,  true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (-0.160078, 2,1,1, 1.5,-0.6,0);
-figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 1.5,-0.6,0,  true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0);
-figure; plotjTracks(t,j, 2,1,1, false, 1.5,-0.6,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 1.5,-0.6,0,  true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 
 % 1a) normal profiles. T>T
 % calc7st (2, 2,1,1, 1.5,-1.5,0, true, true);
@@ -158,24 +160,25 @@ calc7st (-0.140625, 2,1,1, 1.5,(-1.5^2/4),0,true);
 
 %%%%%%%%%
 % PLOTS 2
-figure;
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 [t, j] = calc7st (1.46786, 2,1,1, 0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, 1.46786, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,1.46786,  true, true, 1, true)
 [t, j] = calc7st (0.46, 2,1,1, 0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, 0.46, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,0.46,     true, true, 1, true)
 [t, j] = calc7st (0.04, 2,1,1, 0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, 0.04, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,0.04,     true, true, 1, true)
 [t, j] = calc7st (-0.03007, 2,1,1, 0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, -0.03007, 0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,-0.03007, true, true, 1, true)
 
+bJerk=false; bAcc=1; bVel=false; bPos=false;
 [t, j] = calc7st (1.46786, 2,1,1, 0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.46, 2,1,1, 0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.04, 2,1,1, 0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (-0.03007, 2,1,1, 0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 
 % 2a) normal profiles. T>T
 calc7st (1.46786, 2,1,1, 0.8,-0.2,0, true);
@@ -191,24 +194,25 @@ calc7st (-0.03007, 2,1,1, 0.8,-0.2,0, true);
 
 %%%%%%%%%
 % PLOTS 3
-figure;
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 [t, j] = calc7st (1, 2,1,1, 0.6,0.2,0);
-plotjTracks(t,j, 2,1,1, 1, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel, 1,  true, true, 1, true)
 [t, j] = calc7st (0.65, 2,1,1, 0.6,0.2,0);
-plotjTracks(t,j, 2,1,1, 0.65, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,0.65,  true, true, 1, true)
 [t, j] = calc7st (0.5, 2,1,1, 0.6,0.2,0);
-plotjTracks(t,j, 2,1,1, 0.5, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,0.5,   true, true, 1, true)
 [t, j] = calc7st (0.188429, 2,1,1, 0.6,0.2,0);
-plotjTracks(t,j, 2,1,1, 0.188429, 0.6,0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,0.188429,  true, true, 1, true)
 
+bJerk=false; bAcc=1; bVel=false; bPos=false;
 [t, j] = calc7st (1, 2,1,1, 0.6,0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.65, 2,1,1, 0.6,0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.5, 2,1,1, 0.6,0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.188429, 2,1,1, 0.6,0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, 0.6,0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, 0.6,0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 
 % 3a) normal profiles. T<T
 calc7st (1, 2,1,1, 0.6,0.2,0, true);
@@ -224,24 +228,25 @@ calc7st (0.188429, 2,1,1, 0.6,0.2,0, true);
 
 %%%%%%%%%
 % PLOTS 4
-figure;
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 [t, j] = calc7st (0.7, 2,1,1, -0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, 0.7, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,0.7,   true, true, 1, true)
 [t, j] = calc7st (0.22, 2,1,1, -0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, 0.22, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,0.22,  true, true, 1, true)
 [t, j] = calc7st (-0.2, 2,1,1, -0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, -0.2, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,-0.2,  true, true, 1, true)
 [t, j] = calc7st (-0.275402, 2,1,1, -0.8,-0.2,0);
-plotjTracks(t,j, 2,1,1, -0.275402, -0.8,-0.2,0, true, true, false, false, true, true, 1, true)
+plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,-0.275402, true, true, 1, true)
 
+bJerk=false; bAcc=1; bVel=false; bPos=false;
 [t, j] = calc7st (0.7, 2,1,1, -0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (0.22, 2,1,1, -0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (-0.2, 2,1,1, -0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 [t, j] = calc7st (-0.275402, 2,1,1, -0.8,-0.2,0);
-figure; plotjTracks(t,j, 2,1,1, false, -0.8,-0.2,0, true, true, false, true, false, false, 1, true); axis off;
+figure; plotjTracks(t,j, -0.8,-0.2,0, true,  bJerk,bAcc,bVel,bPos,  true, true, 1, true); axis off;
 
 % 4a) normal profiles. T>T
 calc7st (0.7, 2,1,1, -0.8,-0.2,0, true);
@@ -274,8 +279,8 @@ t_new = [t0c(1:2), t0c(3)-DeltaT, t0c(4), T5, 0, T7];
 % solution
 [t,j] = calc7st(0.5, 1, 1, 0.9, -0.25, 1.3, -0.85);
 
-% figure all with v,p (already adapted to new plotjTracks signature)
-figure;
+% figure all with v,p
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 plotjTracks(t_stop,j_stop, -0.25,1.3,-0.85, true, false,false,0.9,p_stop, true, true, 1, true);
 plotjTracks(t0c,j0c, -0.25,1.3,-0.85, true, false,false,0.9,p0c, true, true, 1, true);
 plotjTracks(t_new,j0c, -0.25,1.3,-0.85, true, false,false,0.9,p_new, true, true, 1, true);
@@ -283,11 +288,12 @@ plotjTracks(t,j, -0.25,1.3,-0.85, true, false,false,0.9,0.5, true, true, 1, true
 text(-0.02,0.9,'v_{max}','HorizontalAlignment','right','FontSize',12')
 
 % figure singles with a
-figure;
+figure; bJerk=false; bAcc=1; bVel=false; bPos=false;
 plotjTracks(t_stop,j_stop, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
 plotjTracks(t0c,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
 plotjTracks(t_new,j0c, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off; figure;
 plotjTracks(t,j, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, true); axis off;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % figures 6
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -304,7 +310,7 @@ plotjTracks(t,j, -0.25,1.3,-0.85, true, false,true,false,false, true, true, 1, t
 [t7,j7]=calc7st(0, 3, 3, 3, -2, 2, 0);
 
 % figure all with v,p
-figure;
+figure; bJerk=false; bAcc=false; bVel=true; bPos=true;
 plotjTracks(t_stop,j_stop, -2, 2, 0, true, false, false, 3, p_stop, true, true, 1, true);
 plotjTracks(t3,j3, -2, 2, 0, true, false, false, 3, 2.8, true, true, 1, true);
 plotjTracks(t4,j4, -2, 2, 0, true, false, false, 3, 1.5, true, true, 1, true);
@@ -312,44 +318,40 @@ plotjTracks(t4,j4, -2, 2, 0, true, false, false, 3, 1.5, true, true, 1, true);
 plotjTracks(t7,j7, -2, 2, 0, true, false, false, 3, 0, true, true, 1, true);
 
 % figure singles with a
-figure;
-plotjTracks(t_stop,j_stop, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
-figure;
-plotjTracks(t3,j3, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
-figure;
-plotjTracks(t4,j4, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
-%figure;
-%plotjTracks(t6,j6, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
-figure;
-plotjTracks(t7,j7, -2, 2, 0, true, false, 3, false, false, true, true, 1, true);
+figure; bJerk=false; bAcc=1; bVel=false; bPos=false;
+plotjTracks(t_stop,j_stop, -2, 2, 0, true, false, 3, false, false, true, true, 1, true); axis off; figure;
+plotjTracks(t3,j3, -2, 2, 0, true, false, 3, false, false, true, true, 1, true); axis off; figure;
+plotjTracks(t4,j4, -2, 2, 0, true, false, 3, false, false, true, true, 1, true); axis off; figure;
+%plotjTracks(t6,j6, -2, 2, 0, true, false, 3, false, false, true, true, 1, true); axis off; figure;
+plotjTracks(t7,j7, -2, 2, 0, true, false, 3, false, false, true, true, 1, true); axis off; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 7 phases synchronisation case
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TcT
-[t1, j1] = calc7st(1, 1,0.7,0.8, 0,0,-1);
+[t1, j1] = calc7st(  1,  1,0.7,0.8, 0,0,-1);
 % TW
-[t2, j2] = calc7st(-0.4, 0.75,0.7,0.8, -0.35,0.2,0.5);
+[t2, j2] = calc7st(-0.4, 1,0.7,0.8, -0.35,0.2,0.5);
 % WW
-[t3, j3] = calc7st(0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
+[t3, j3] = calc7st( 0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
 % figure with all unsynch'ed vel
-figure;
-plotjTracks(t1,j1, 0, 0, -1, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t2,j2, -0.35, 0.2, 0.5, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t3,j3, -0.3, 0.4, -0.5, true, false, false, 0.8, false, true, true, 1, true);
+figure; bAcc=false;
+plotjTracks(t1,j1,  0,     0,   -1,  true, false, bAcc, 0.8, false, true, true, 1, true);
+plotjTracks(t2,j2, -0.35, 0.2,  0.5, true, false, bAcc, 0.8, false, true, true, 1, true);
+plotjTracks(t3,j3, -0.3,  0.4, -0.5, true, false, bAcc, 0.8, false, true, true, 1, true);
 ax = axis; ymin = ax(3); ymax = ax(4);
 line([sum(t1),sum(t1)],[ymin,ymax],'Color','k','LineStyle','--');
 line([sum(t2),sum(t2)],[ymin,ymax],'Color','k','LineStyle','--');
 line([sum(t3),sum(t3)],[ymin,ymax],'Color','k','LineStyle','--');
 % figure with all synch'ed vel
 T = max([sum(t1) sum(t2) sum(t3)]);
-[t1n, j1n] = stretch7st(t1,j1,T, 1,1,0.7,0.8, 0,0,-1);
-[t2n, j2n] = stretch7st(t2,j2,T,-0.4, 0.75,0.7,0.8, -0.35,0.2,0.5);
-[t3n, j3n] = stretch7st(t3,j3,T,0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
+[t1n, j1n] = stretch7st(t1,j1,T,  1,  1,0.7,0.8,  0,0,-1);
+[t2n, j2n] = stretch7st(t2,j2,T,-0.4, 1,0.7,0.8, -0.35,0.2,0.5);
+[t3n, j3n] = stretch7st(t3,j3,T, 0.3, 1,0.7,0.8, -0.3,0.4,-0.5);
 figure;
-plotjTracks(t1n,j1n, 0, 0, -1, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t2n,j2n, -0.35, 0.2, 0.5, true, false, false, 0.8, false, true, true, 1, true);
-plotjTracks(t3n,j3n, -0.3, 0.4, -0.5, true, false, false, 0.8, false, true, true, 1, true);
+plotjTracks(t1n,j1n,  0,    0,    -1,  true, false, bAcc, 0.8, false, true, true, 1, true);
+plotjTracks(t2n,j2n, -0.35, 0.2,  0.5, true, false, bAcc, 0.8, false, true, true, 1, true);
+plotjTracks(t3n,j3n, -0.3,  0.4, -0.5, true, false, bAcc, 0.8, false, true, true, 1, true);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % show sync algorithm

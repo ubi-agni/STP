@@ -8,14 +8,33 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p
 % know which profile-type the final solution will have and can call the
 % appropriate function to find the final solution.
 
+% (0) Check whether a normal profile has to switch into double deceleration
 % (1) Check whether we have a double deceleration profile.
 % (2) Case distinction: TT / TW / WT / WW
 
-bPlotAll=false;
+bPlotAll=true;
 if (bPlotAll) 
     h = figure;
     set(h,'Name','Zero-Cruise-Profile');
     plotjTracks(t,j, a0, v0, p0, true, jmax, amax, vmax, ptarget);
+end
+
+% (0)
+if (sign(j(3)) == sign(j(5)) && t(3) < t(1))
+    tacc = [t(3) t(2) t(3)]; tdec = t(5:7); 
+    [dummy deltaAcc dummy] = calcjTracks(tacc, j(1:3), 0,0,0);
+    [dummy deltaDec dummy] = calcjTracks(tdec, j(5:7), 0,0,0);
+    if (deltaAcc < deltaDec)
+        tacc = [0 0 t(1)-t(3)];
+        [ok, tdec] = removeArea (tdec, deltaAcc, jmax,amax);
+        tn = [tacc 0 tdec];
+        jn = [j(3) 0 j(1)  0  j(5:7)];
+        % if we still overshoot, the profile becomes double deceleration
+        if (stillOvershoots(tn,jn, dir, a0,v0,p0,ptarget))
+            t = tn;
+            j = jn;
+        end
+    end
 end
 
 % (1)
@@ -37,10 +56,8 @@ if (bPlotAll)
     set(h,'Name','Double Deceleration: border case ?W -> ?T');
     plotjTracks(t_new,j, a0, v0, p0, true, jmax, amax, vmax, ptarget);
 end
-            % compute reached position
-            [a_end,v_end,p_end] =  calcjTracks(t_new, j, a0, v0, p0);
             % if we still overshoot, the profile becomes trapezoidal
-            if (sign(p_end - ptarget)*dir == 1)
+            if (stillOvershoots(t_new,j, dir, a0,v0,p0,ptarget))
                 bSecondTrapezoidal = true;
                 t = t_new;
             end
@@ -84,7 +101,8 @@ disp (sprintf ('profile: %s', type));
 % Calculate exact phase duration for choosen profile t, j
 % generate set of equations
 [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-t_res = split35 (solveAll ([A V TEQ P], TVARS), a0, j);
+t_res = solveAll ([A V TEQ P], TVARS);
+%t_res = split35 (t_res, a0, j);
 j_res = j;
 return
 
