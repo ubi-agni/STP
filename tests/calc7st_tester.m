@@ -24,7 +24,7 @@ for i_a = 1:length(a0),
             if (~isCorrect)
                 err = sprintf('error in calc7st(%.20g, %g, %g, %g, %g, %g, %g):\n%s',p_target,jmax,amax,vmax,a0(i_a),v0(i_v),p0, reason);
                 disp(err); 
-                errors = [errors err];
+                errors = [errors err '\n'];
             end
             catch
                 disp(lasterr);

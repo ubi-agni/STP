@@ -118,7 +118,7 @@ if (N==7)
         if (t(2) ~= 0) TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(dir*amax)))); end
     else % normal profile
         % add max limits for trapezoidal profiles (and remove corr. variable)
-        if (t(2) ~= 0) aEQ = addEQ (aEQ, a1,  dir*amax); end
+        if (t(2) ~= 0 && t(1) ~= 0) aEQ = addEQ (aEQ, a1,  dir*amax); end
         if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end
     end
 end

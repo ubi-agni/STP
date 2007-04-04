@@ -29,6 +29,10 @@ if (nargin < 8) plotMe=false; end
 if (nargin < 9) plotNice=true; end
 if (nargin < 10) testResult=false; end
 
+if (testResult)
+    disp(sprintf('calc7st(%.20g, %g, %g, %g, %g, %g, %g): ',p_target,jmax,amax,vmax,a0(i_a),v0(i_v),p0));
+end
+
 % (1)
 % calculate the dir-flag by testing whether we over-shoot the target
 % at imidiate halt

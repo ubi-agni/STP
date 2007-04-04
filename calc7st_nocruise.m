@@ -12,7 +12,7 @@ function [t_res,j_res] = calc7st_nocruise(t,j,dir,ptarget,jmax,amax,vmax,a0,v0,p
 % (1) Check whether we have a double deceleration profile.
 % (2) Case distinction: TT / TW / WT / WW
 
-bPlotAll=true;
+bPlotAll=false;
 if (bPlotAll) 
     h = figure;
     set(h,'Name','Zero-Cruise-Profile');
@@ -24,6 +24,7 @@ if (sign(j(3)) == sign(j(5)) && t(3) < t(1))
     tacc = [t(3) t(2) t(3)]; tdec = t(5:7); 
     [dummy deltaAcc dummy] = calcjTracks(tacc, j(1:3), 0,0,0);
     [dummy deltaDec dummy] = calcjTracks(tdec, j(5:7), 0,0,0);
+    deltaAcc = abs(deltaAcc); deltaDec = abs(deltaDec);
     if (deltaAcc < deltaDec)
         tacc = [0 0 t(1)-t(3)];
         [ok, tdec] = removeArea (tdec, deltaAcc, jmax,amax);
