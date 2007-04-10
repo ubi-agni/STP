@@ -76,12 +76,18 @@ t = [1 1 1 0 1 0 1]; j = [-1 0 1 0 -1 0 1];
 A = [A sym('-t1+t3=0')];
 t_res = solveAll ([A V TEQ P], TVARS);
 plotjTracks(t_res,j, 0,2,-2, true, false,true,true,1.3, true,true,0.7,true);
+set(gca,'ytick',[-1,0,1,2]);
+text(-0.03,1,'v_{max}','HorizontalAlignment','right','FontSize',12')
+text(-0.03,2,'v_0','HorizontalAlignment','right','FontSize',12')
 
 figure; 
 [t, j] = calc7st(2, 1,1,1, 0,2,-2);
 plotjTracks(t,j, 0,2,-2, true, false,true,1,true, true,false,1,true);
 [t, j] = calc7st(1.3, 1,1,1, 0,2,-2);
 plotjTracks(t,j, 0,2,-2, true, false,true,true,1.3, true,true,0.7,true);
+set(gca,'ytick',[-1,0,1,2]);
+text(-0.03,1,'v_{max}','HorizontalAlignment','right','FontSize',12')
+text(-0.03,2,'v_0','HorizontalAlignment','right','FontSize',12')
 
 % double deceleration, D-D -> D-T
 figure; calc7st(1.5, 2,1.5,1, 0,2,-1.5, true);

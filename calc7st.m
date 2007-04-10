@@ -30,7 +30,7 @@ if (nargin < 9) plotNice=true; end
 if (nargin < 10) testResult=false; end
 
 if (testResult)
-    disp(sprintf('calc7st(%.20g, %g, %g, %g, %g, %g, %g): ',p_target,jmax,amax,vmax,a0(i_a),v0(i_v),p0));
+    disp(sprintf('calc7st(%.20g, %g, %g, %g, %g, %g, %g): ',p_target,jmax,amax,vmax,a0,v0,p0));
 end
 
 % (1)
