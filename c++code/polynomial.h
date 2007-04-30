@@ -48,7 +48,12 @@ public:
     Complex getCoeff(int i);
     double value(Complex x);
     
+    double Polynomial::getSmallestPositiveRealRoot();
+    
     std::string toString() const;
+    
+private:
+    void mayComputeRoots();
 };
 
 std::ostream& operator<<(std::ostream& os, const Polynomial& p); 

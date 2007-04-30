@@ -1,6 +1,7 @@
 // 
 // File:   stp7.h
 // Author: erik
+// Smooth Trajectory Planner, 3rd order (Stp7)
 //
 // Created on 25. April 2007, 08:40
 //
@@ -12,33 +13,15 @@ using namespace std;
 
 #include <iostream>
 #include <string>
-#include <exception>
-
-class stpException: public exception
-{
-  virtual const char* what() const throw()
-  {
-    return "Logic error. Consider to call planFastestProfile(...) first.";
-  }
-};
-
-//class stpException : public std::exception {
-//public:
-//    stpException(string sReason) throw() { What = sReason;};
-//    ~stpException() throw() {};
-//    const char* what() const throw() {return What.c_str;};
-//private:
-//    string What;
-//};
 
 class Stp7 {
 public:
     // string constants for different profile types
-    static const string PROFILE_TT;
-    static const string PROFILE_WT;
-    static const string PROFILE_TW;
-    static const string PROFILE_WW;
-    static const string PROFILE_STOP;
+    const static string PROFILE_TT;
+    const static string PROFILE_WT;
+    const static string PROFILE_TW;
+    const static string PROFILE_WW;
+    const static string PROFILE_STOP;
     
     // constructor
     Stp7(): _plannedProfile(false) {};
@@ -50,7 +33,7 @@ public:
     // 1 <= i <= 7. Returns the time of switch between phase (i) and (i+1) of
     // the profile.
     double getSwitchTime(int i) const;
-    // 1 <= 1 <= 7. Returns the time length of phase (i).
+    // 1 <= i <= 7. Returns the time length of phase (i).
     double getTimeIntervall(int i) const;
     double getDuration() const { return getSwitchTime(7); }
     // gives back in which time intervall the passed time lies inside. For
@@ -77,6 +60,11 @@ public:
     double scaleToDuration(double newDuration);
     
     string toString() const;
+    
+    static void calcjTrack(double dt, double x0, double v0, double a0, double j,
+                        double &newx, double &newv, double &newa);
+    static void calcjTracks(double t[], double j[], int length, double x0,
+                        double v0, double a0, double &x, double &v, double &a);
 protected:
     
 private:
@@ -89,18 +77,26 @@ private:
     bool _bHasCruise;
     bool _plannedProfile;
     
-    void calcjTrack(double dt, double x0, double v0, double a0, double j,
-                        double &newx, double &newv, double &newa) const;
-    
     void planProfile();
+    void planProfileNoCruise(int dir);
+    
+    void convertTimePointsToIntervalls();
+    void convertTimeIntervallsToPoints();
+    
+    static void removeArea(double t[4], double deltaV, double amax, double jmax);
+    static bool stillOvershoots(double t[], double j[], int length, int dir,
+                               double x0, double xTarget, double v0, double a0);
+    static string findProfile(double t[8], double j[8], int dir, double x0,
+                              double xTarget, double v0, double a0, double amax,
+                              double jmax);
+    static void calc7st_opt_shift(double t[8], double j[8], int dir, double amax,
+                                  double jmax, double v2, double a2,
+                                  double &tDelta, double &t5, double &t7);
+    static string getProfileString(double t[8]);
+    
+    static void solveProfileWW(double t[8], double x0, double xTarget,
+                               double v0, double a0, double j, int dir);
 };
-
-// initialize Stp7 string constants...
-const string Stp7::PROFILE_STOP = "stop profile";
-const string Stp7::PROFILE_TT = "TT profile";
-const string Stp7::PROFILE_TW = "TW profile";
-const string Stp7::PROFILE_WT = "WT profile";
-const string Stp7::PROFILE_WW = "WW profile";
 
 #endif	/* _stp7_H */
 

@@ -11,6 +11,7 @@
 #include <math.h>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 /*** DEFINES for Polynomial::findRoots ***/
 // fraction for rounding off imaginary part to zero
@@ -114,14 +115,32 @@ Complex Polynomial::getCoeff(int i) {
     return coeff[i];
 }
 
-Complex Polynomial::getRoot(int i) {
-    if ((i < 0) && (i >= degree)) throw i;
+void Polynomial::mayComputeRoots() {
     if (!foundRoots) {
         roots = new Complex[degree];
         findRoots(coeff, degree, roots, true);
         foundRoots = true;
     }
+}
+
+Complex Polynomial::getRoot(int i) {
+    if ((i < 0) && (i >= degree)) throw i;
+    mayComputeRoots();
     return roots[i];
+}
+
+double Polynomial::getSmallestPositiveRealRoot() {
+    mayComputeRoots();
+    bool found = false;
+    int mini;
+    for (int i = 1; i <= degree; i++) {
+        if (roots[i].r > 0 && roots[i].i == 0) {
+            if (!found) { mini = i; found = true;}
+            else if (roots[i].r < roots[mini].r) mini = i;
+        }
+    }
+    if (!found) throw range_error("No positive real root!");
+    return roots[mini].r;
 }
 
 double Polynomial::value(Complex x) {
