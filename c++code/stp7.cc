@@ -134,27 +134,27 @@ void Stp7::planProfileNoCruise(int dir) {
     _bHasCruise = false;
     convertTimePointsToIntervalls();
     
-    double dummy;
+    double x_dummy, v_dummy, a_dummy;
     
     // (0)
     if (sign(_j[3]) == sign(_j[5]) && _t[3] < _t[1]) {
         double tAcc[] = {0, _t[3],  _t[2], _t[3]};
         double tDec[] = {0, _t[5],  _t[6], _t[7]};
         double deltaAcc, deltaDec;
-        Stp7::calcjTracks(tAcc, _j, 3, 0, 0, 0, dummy, deltaAcc, dummy);
-        Stp7::calcjTracks(tDec, &(_j[4]), 3, 0, 0, 0, dummy, deltaDec, dummy);
+        Stp7::calcjTracksTimeInt(tAcc, _j, 3, 0, 0, 0, x_dummy, deltaAcc, a_dummy);
+        Stp7::calcjTracksTimeInt(tDec, &(_j[4]), 3, 0, 0, 0, x_dummy, deltaDec, a_dummy);
         deltaAcc = fabs(deltaAcc);
         deltaDec = fabs(deltaDec);
         if (deltaAcc < deltaDec) {
             tAcc[1] = tAcc[2] = 0; tAcc[3] = _t[1]-_t[3];
-            Stp7::removeArea(tDec, deltaAcc, _amax, _jmax);
+            Stp7::removeAreaTimeInt(tDec, deltaAcc, _amax, _jmax);
             double jNew[] = {0, _j[3], 0, _j[1], 0, _j[5], _j[6], _j[7]};
             double tNew[8];
             for (int i = 0; i < 8; i++) tNew[i] = (i<4) ? tAcc[i] : tDec[i-4];
             // If we still overshoot after putting as much area under the acc
             // graph from the front to the back, the profile becomes double
             // deceleration.
-            if (stillOvershoots(tNew, jNew, 7, dir, _x[0], _x[7], _v[0], _a[0]))
+            if (stillOvershootsTimeInt(tNew, jNew, 7, dir, _x[0], _x[7], _v[0], _a[0]))
                 for (int i = 0; i < 8; i++) {_t[i] = tNew[i]; _j[i] = jNew[i]; }
         }
     }
@@ -168,18 +168,19 @@ void Stp7::planProfileNoCruise(int dir) {
             // calculate maximal shift from first to second deceleration phase
             // in order to reach the W-T-border case
             double a2, v2;
-            Stp7::calcjTracks(_t, _j, 2, _x[0], _v[0], _a[0], dummy, v2, a2);
+            Stp7::calcjTracksTimeInt(_t, _j, 2, _x[0], _v[0], _a[0], x_dummy, v2, a2);
             double tDelta, t5, t7;
-            Stp7::calc7st_opt_shift(_t, _j, dir, _jmax, _amax, a2, v2, tDelta, t5,t7);
+            Stp7::calc7st_opt_shiftTimeInt(_t, _j, dir, _amax, _jmax, v2, a2, tDelta, t5,t7);
             if (tDelta < 0) throw out_of_range("DeltaT negative at opt_shift!");
             if (tDelta < _t[3]) {
                 // adapt profile by shortening t[3]
                 double tNew[] = {0, _t[1], _t[2], _t[3]-tDelta, _t[4], t5, 0, t7};
                 // if we still overshoot, the profile becomes trapezoidal
-                if (stillOvershoots(tNew, _j, 7, dir, _x[0], _x[7], _v[0], _a[0])) {
+                if (stillOvershootsTimeInt(tNew, _j, 7, dir, _x[0], _x[7], _v[0], _a[0])) {
                     for (int i = 0; i < 8; i++) _t[i] = tNew[i];
                     // allow trapez in second part when generating formulas:
-                    _t[6] = 1; 
+                    _t[6] = 1;
+                    bSecondTrapezoidal = true;
                 }
             } else {
                 // velocity delta in phase 3 is not enough to extend
@@ -187,12 +188,20 @@ void Stp7::planProfileNoCruise(int dir) {
                 // so we stay at a triangular profile    
             }  
         }
+        
+        if (bSecondTrapezoidal) {
+            // actually, we only know its a ?-T profile, but for the sake of
+            // testing before we finish the solving algorithm we set it to WT...
+            _sProfileType = Stp7::PROFILE_WT;
+        } else {
+            _sProfileType = Stp7::PROFILE_WW; // could also be TW...
+        }
         // Calculate exact phase duration from given profile t, j
         
         
         // TODO: call solver for double decleration case!
         // t[1], t[2] and j[0..7] already have their correct values!
-        TS_WARN("TODO");
+        TS_WARN("ddec - TODO");
         
         _sProfileType = getProfileString(_t);
         _bIsddec = true;
@@ -204,19 +213,20 @@ void Stp7::planProfileNoCruise(int dir) {
     // we don't have double deceleration --> cut out instead of merging
     // find correct profile by cutting pieces and descending to shorter profiles
     _bIsddec = false;
-    _sProfileType = Stp7::findProfile(_t, _j, dir, _x[0], _x[7], _v[0], _a[0],
+    _sProfileType = Stp7::findProfileTimeInt(_t, _j, dir, _x[0], _x[7], _v[0], _a[0],
                                      _amax, _jmax);
     
     // Calculate exact phase duration for choosen profile t, j
     // j[0..7] are already the correct values!
     if (_sProfileType == Stp7::PROFILE_TT) {
-        TS_WARN("TODO");
+        TS_WARN("canonical TT - TODO");
     } else if (_sProfileType == Stp7::PROFILE_TW) {
-        TS_WARN("TODO");
+        TS_WARN("canonical TW - TODO");
     } else if (_sProfileType == Stp7::PROFILE_WT) {
-        TS_WARN("TODO");
+        TS_WARN("canonical WT - TODO");
     } else if (_sProfileType == Stp7::PROFILE_WW) {
-        solveProfileWW(_t, _x[0], _x[7], _v[0], _a[0], _jmax, dir);
+        TS_WARN("canonical WW - TODO");
+        //solveProfileWW(_t, _x[0], _x[7], _v[0], _a[0], _jmax, dir);
     } else throw invalid_argument("Full stop case should be taken care of earlier!");
     
     convertTimeIntervallsToPoints();
@@ -228,7 +238,7 @@ void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, dou
     double a3 = a2*a0;
     double a4=a3*a0;
     double v2=v0*v0;
-    double v3=v*v2;
+    double v3=v0*v2;
     double j2 = j*j;
     double j3 = j2*j;
     double j4 = j3*j;
@@ -260,7 +270,7 @@ string Stp7::getProfileString(double t[8]) {
     } 
 }
 
-string Stp7::findProfile(double t[8], double j[8], int dir, double x0,
+string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
                          double xTarget, double v0, double a0, double amax,
                          double jmax) {
     // find correct profile by cutting pieces and descending to shorter profiles
@@ -276,9 +286,9 @@ string Stp7::findProfile(double t[8], double j[8], int dir, double x0,
         double dt = min(t[2], t[6]);
         t[2] = t[2] - dt;
         t[6] = t[6] - dt;
-        if (stillOvershoots(t, j, 7, dir, x0, xTarget, v0, a0)) {
+        if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
             // recursively calling this function even cuts further
-            type = findProfile (t,j,dir,x0,xTarget,v0,a0,amax,jmax);
+            type = findProfileTimeInt(t,j,dir,x0,xTarget,v0,a0,amax,jmax);
         } else {
             // now we stop before the target, hence profile stays TT
             for (int i = 0; i < 8; i++) t[i] = tOld[i];
@@ -302,7 +312,7 @@ string Stp7::findProfile(double t[8], double j[8], int dir, double x0,
             double dt = (fabs(a1)-sqrt(a1*a1-area_t_max))/jmax;
             t[1] = t[1]-dt;
             t[3] = t[3]-dt;
-            if (stillOvershoots(t, j, 7, dir, x0, xTarget, v0, a0)) {
+            if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
                 type = Stp7::PROFILE_WW; // type switches to WW
             } else {
                 // now we stop before the target, hence profile stays WT
@@ -321,7 +331,7 @@ string Stp7::findProfile(double t[8], double j[8], int dir, double x0,
             t[2] = 0;
             t[5] = sqrt((area_w_max-area_t_max)/fabs(j[5]));
             t[7] = t[5];
-            if (stillOvershoots(t, j, 7, dir, x0, xTarget, v0, a0)) {
+            if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
                 type = Stp7::PROFILE_WW;
             } else {
                 // now we stop before the target, hence profile stays TW
@@ -332,17 +342,17 @@ string Stp7::findProfile(double t[8], double j[8], int dir, double x0,
     }
 }
 
-void Stp7::calc7st_opt_shift(double t[8], double j[8], int dir, double amax,
+void Stp7::calc7st_opt_shiftTimeInt(double t[8], double j[8], int dir, double amax,
                                   double jmax, double v2, double a2,
                                   double &tDelta, double &t5, double &t7) {
     // Given a deceleration - deceleration profile with wedge-shaped second part, 
     // compute the period DeltaT which must be cut from third phase (and
     // inserted in second part), such that the second part becomes a triangular
     // profile exactly hitting -d*amax.
-    double v3, a3, v6, a6, dummy;
+    double v3, a3, v6, a6, x_dummy;
     // compute a3 and a6
-    Stp7::calcjTrack(t[3], 0., v2, a2, j[3], dummy, v3, a3);
-    Stp7::calcjTracks(&(t[4]), &(j[4]), 3, 0, v3, a3, dummy, v6, a6);
+    Stp7::calcjTrack(t[3], 0., v2, a2, j[3], x_dummy, v3, a3);
+    Stp7::calcjTracksTimeInt(&(t[3]), &(j[3]), 3, 0, v3, a3, x_dummy, v6, a6);
     
     // compute discriminant of quadratic polynomial solution
     double diskriminant = 4*amax*amax + 2*jmax*jmax*(t[7]*t[7] - t[5]*t[5])
@@ -362,7 +372,7 @@ void Stp7::calc7st_opt_shift(double t[8], double j[8], int dir, double amax,
 }
 
     
-void Stp7::removeArea(double t[4], double deltaV, double amax, double jmax) {
+void Stp7::removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax) {
     // Takes an array t[1..3] and deletes the passed deltaV from the area under
     // the acceleration graph. The elements of t are altered accordingly.
     
@@ -383,10 +393,10 @@ void Stp7::removeArea(double t[4], double deltaV, double amax, double jmax) {
     }
 }
 
-bool Stp7::stillOvershoots(double t[], double j[], int length, int dir,
+bool Stp7::stillOvershootsTimeInt(double t[], double j[], int length, int dir,
                             double x0, double xTarget, double v0, double a0) {
-    double dummy, xEnd;
-    Stp7::calcjTracks(t, j, length, x0, v0, a0, xEnd, dummy, dummy);
+    double v_dummy, a_dummy, xEnd;
+    Stp7::calcjTracksTimeInt(t, j, length, x0, v0, a0, xEnd, v_dummy, a_dummy);
     return (sign(xEnd - xTarget)*dir == 1);                            
 }
 
@@ -495,6 +505,14 @@ double v0, double a0, double &x, double &v, double &a) {
         calcjTrack(t[i]-t[i-1], x, v, a, j[i], x, v, a);
     }
 }
+
+void Stp7::calcjTracksTimeInt(double t[], double j[], int length,
+             double x0, double v0, double a0, double &x, double &v, double &a) {
+    x = x0; v = v0; a=a0;
+    for (int i = 1; i <= length; i++) {
+        calcjTrack(t[i], x, v, a, j[i], x, v, a);
+    }
+}    
 
 void Stp7::move(double t, double &x, double &v, double &a, double &j) const {
     if (!_plannedProfile)

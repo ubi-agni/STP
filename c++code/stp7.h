@@ -63,8 +63,17 @@ public:
     
     static void calcjTrack(double dt, double x0, double v0, double a0, double j,
                         double &newx, double &newv, double &newa);
+    // Calculates a given 3rd order profile and writes the resulting position,
+    // velocity and acceleration in the passed variables &x, &v, &a.
+    // The t[] array must contain the time points (not intervalls) and indicies
+    // go from t[1] to t[length].
     static void calcjTracks(double t[], double j[], int length, double x0,
                         double v0, double a0, double &x, double &v, double &a);
+    
+    // same as calcjTracks but with time intervalls instead of time points.
+    static void calcjTracksTimeInt(double t[], double j[], int length,
+              double x0, double v0, double a0, double &x, double &v, double &a);
+    
 protected:
     
 private:
@@ -83,13 +92,13 @@ private:
     void convertTimePointsToIntervalls();
     void convertTimeIntervallsToPoints();
     
-    static void removeArea(double t[4], double deltaV, double amax, double jmax);
-    static bool stillOvershoots(double t[], double j[], int length, int dir,
+    static void removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax);
+    static bool stillOvershootsTimeInt(double t[], double j[], int length, int dir,
                                double x0, double xTarget, double v0, double a0);
-    static string findProfile(double t[8], double j[8], int dir, double x0,
+    static string findProfileTimeInt(double t[8], double j[8], int dir, double x0,
                               double xTarget, double v0, double a0, double amax,
                               double jmax);
-    static void calc7st_opt_shift(double t[8], double j[8], int dir, double amax,
+    static void calc7st_opt_shiftTimeInt(double t[8], double j[8], int dir, double amax,
                                   double jmax, double v2, double a2,
                                   double &tDelta, double &t5, double &t7);
     static string getProfileString(double t[8]);

@@ -60,4 +60,10 @@ public:
  void runTest() { suite_Stp7TestSuite.testNoCruiseProfilesStandard(); }
 } testDescription_Stp7TestSuite_testNoCruiseProfilesStandard;
 
+static class TestDescription_Stp7TestSuite_testNoCruiseProfileDoubleDec : public CxxTest::RealTestDescription {
+public:
+ TestDescription_Stp7TestSuite_testNoCruiseProfileDoubleDec() : CxxTest::RealTestDescription( Tests_Stp7TestSuite, suiteDescription_Stp7TestSuite, 115, "testNoCruiseProfileDoubleDec" ) {}
+ void runTest() { suite_Stp7TestSuite.testNoCruiseProfileDoubleDec(); }
+} testDescription_Stp7TestSuite_testNoCruiseProfileDoubleDec;
+
 #include <cxxtest/Root.cpp>
