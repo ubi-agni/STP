@@ -99,7 +99,9 @@ public:
         
         // TT profile
         stp.planFastestProfile(-4,4,0,4,0,3,4);
-        // TS_ASSERT_DELTA(stp.getDuration(),6.3496,0.0001);
+        cout << stp.toString() << endl;
+        // calc7st(4,4,3,4,0,0,-4,true);
+        TS_ASSERT_DELTA(stp.getDuration(),4.1010,0.0001);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TT);
         TS_ASSERT(!stp.hasCruisingPhase());
         TS_ASSERT(!stp.isDoubleDecProfile());

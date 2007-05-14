@@ -105,6 +105,10 @@ private:
     
     static void solveProfileWW(double t[8], double x0, double xTarget,
                                double v0, double a0, double j, int dir);
+    
+    static void solveProfileTT(double t[8], double x0, double xTarget,
+                        double v0, double a0, double amax, double j, int dir);
+
 };
 
 #endif	/* _stp7_H */

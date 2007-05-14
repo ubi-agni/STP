@@ -219,7 +219,8 @@ void Stp7::planProfileNoCruise(int dir) {
     // Calculate exact phase duration for choosen profile t, j
     // j[0..7] are already the correct values!
     if (_sProfileType == Stp7::PROFILE_TT) {
-        TS_WARN("canonical TT - TODO");
+        //TS_WARN("canonical TT - TODO");
+        solveProfileTT(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, dir);
     } else if (_sProfileType == Stp7::PROFILE_TW) {
         TS_WARN("canonical TW - TODO");
     } else if (_sProfileType == Stp7::PROFILE_WT) {
@@ -258,6 +259,19 @@ void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, dou
     t[3] = R/j*d_c;
     t[4] = t[5] = t[6] = 0.;
     t[7] = 0.25*(-a2+2.*R2+2.*v0*d_c*j)/(R*j*d_c);
+}
+
+void Stp7::solveProfileTT(double t[8], double x0, double xTarget, double v0, double a0, double amax, double j, int dir) {
+    double d_a = fabs(a0)>amax ? -1 : 1;
+    double sq = -v0 * dir * j - 0.3e1 / 0.2e1 * amax * amax - a0 * d_a * dir * amax + dir * amax * a0 - a0 * a0 / 0.2e1 + a0 * a0 * d_a + sqrt(-0.24e2 * pow(amax, 0.4e1) * d_a + 0.114e3 * pow(amax, 0.4e1) + 0.144e3 * dir * pow(amax, 0.3e1) * a0 * d_a - 0.144e3 * x0 * j * j * dir * amax - 0.144e3 * v0 * dir * j * d_a * amax * amax + 0.144e3 * xTarget * j * j * dir * amax + 0.72e2 * v0 * dir * j * amax * amax + 0.90e2 * pow(a0, 0.4e1) - 0.144e3 * v0 * dir * j * d_a * a0 * a0 - 0.288e3 * dir * amax * pow(a0, 0.3e1) - 0.144e3 * v0 * j * amax * a0 + 0.144e3 * pow(amax, 0.3e1) * j + 0.72e2 * amax * amax * j * j - 0.288e3 * amax * amax * a0 * a0 * d_a - 0.72e2 * pow(a0, 0.4e1) * d_a + 0.240e3 * pow(a0, 0.3e1) * amax * dir * d_a + 0.72e2 * v0 * v0 * j * j + 0.72e2 * a0 * a0 * j * dir * v0 + 0.324e3 * amax * amax * a0 * a0 - 0.144e3 * dir * pow(amax, 0.3e1) * a0 + 0.288e3 * v0 * j * d_a * a0 * amax) / 0.12e2;
+    double sq2 = -v0 * dir * j - 0.3e1 / 0.2e1 * amax * amax - a0 * d_a * dir * amax + dir * amax * a0 - a0 * a0 / 0.2e1 + a0 * a0 * d_a - sqrt(-0.24e2 * pow(amax, 0.4e1) * d_a + 0.114e3 * pow(amax, 0.4e1) + 0.144e3 * dir * pow(amax, 0.3e1) * a0 * d_a - 0.144e3 * x0 * j * j * dir * amax - 0.144e3 * v0 * dir * j * d_a * amax * amax + 0.144e3 * xTarget * j * j * dir * amax + 0.72e2 * v0 * dir * j * amax * amax + 0.90e2 * pow(a0, 0.4e1) - 0.144e3 * v0 * dir * j * d_a * a0 * a0 - 0.288e3 * dir * amax * pow(a0, 0.3e1) - 0.144e3 * v0 * j * amax * a0 + 0.144e3 * pow(amax, 0.3e1) * j + 0.72e2 * amax * amax * j * j - 0.288e3 * amax * amax * a0 * a0 * d_a - 0.72e2 * pow(a0, 0.4e1) * d_a + 0.240e3 * pow(a0, 0.3e1) * amax * dir * d_a + 0.72e2 * v0 * v0 * j * j + 0.72e2 * a0 * a0 * j * dir * v0 + 0.324e3 * amax * amax * a0 * a0 - 0.144e3 * dir * pow(amax, 0.3e1) * a0 + 0.288e3 * v0 * j * d_a * a0 * amax) / 0.12e2;
+    t[1] = -(-dir * amax + a0) / dir / d_a / j;
+    t[2] = sq/(j*amax);
+    t[3] = amax / j;
+    t[4] = 0;
+    t[5] = amax / j;
+    t[6] = -(double) ((-2 * amax * j - 2 * sq - 2 * v0 * dir * j - 2 * a0 * d_a * dir * amax + 2 * a0 * a0 * d_a - amax * amax + 2 * dir * amax * a0 - a0 * a0) / amax / j) / 0.2e1;
+    t[7] = amax / j;
 }
 
 string Stp7::getProfileString(double t[8]) {
@@ -566,7 +580,7 @@ std::string Stp7::toString() const {
         oss << ", j=";
         writedArrayToStream(oss, _j, 1, 7);
         oss << ", x0 = " << _x[0] << ", xTarget = " << _x[7] << ", v0 = ";
-        oss << _v[0] << ", vmax = " << _vmax << ", a0 = " << _amax;
+        oss << _v[0] << ", vmax = " << _vmax << ", a0 = " << _a[0];
         oss << ", amax = " << _amax << ")";
     } else {
         oss << "unplanned profile";
