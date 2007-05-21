@@ -23,12 +23,16 @@ private:
 protected:
     
 public:
-    Polynomial(int degree, Complex coeff[]): degree(degree), foundRoots(false) {
+    Polynomial(int degree, Complex coeff[]): foundRoots(false) {
+        while (coeff[degree].abs() == 0) degree--;
+        this->degree = degree;
         this->coeff = new Complex[degree+1];
         for (int i=0; i<=degree; i++) this->coeff[i] = coeff[i];
     };
     
-    Polynomial(int degree, double coeff[]): degree(degree), foundRoots(false) {
+    Polynomial(int degree, double coeff[]): foundRoots(false) {
+        while (coeff[degree] == 0) degree--;
+        this->degree = degree;
         this->coeff = new Complex[degree+1];
         for (int i=0; i<=degree; i++) {
             this->coeff[i].r = coeff[i];
@@ -48,7 +52,10 @@ public:
     Complex getCoeff(int i);
     double value(Complex x);
     
+    int getDegree() { return degree;};
+    
     double Polynomial::getSmallestPositiveRealRoot();
+    double Polynomial::getSmallestRealRoot();
     
     std::string toString() const;
     

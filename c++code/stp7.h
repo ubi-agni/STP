@@ -103,11 +103,17 @@ private:
                                   double &tDelta, double &t5, double &t7);
     static string getProfileString(double t[8]);
     
-    static void solveProfileWW(double t[8], double x0, double xTarget,
-                               double v0, double a0, double j, int dir);
+    static void solveProfileWW(double t[8], double x0, double xTarget, double v0,
+                                      double a0, double j, double da, double dc);
     
-    static void solveProfileTT(double t[8], double x0, double xTarget,
-                        double v0, double a0, double amax, double j, int dir);
+    static void solveProfileTT(double t[8], double x0, double xTarget, double v0,
+                      double a0, double amax, double jmax, double da, double dc);
+    
+    static void solveProfileTW(double t[8], double x0, double xTarget, double v0,
+                      double a0, double amax, double jmax, double da, double dc);
+    
+    static void solveProfileWT(double t[8], double x0, double xTarget, double v0,
+                      double a0, double amax, double jmax, double da, double dc);
 
 };
 

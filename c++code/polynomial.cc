@@ -133,13 +133,27 @@ double Polynomial::getSmallestPositiveRealRoot() {
     mayComputeRoots();
     bool found = false;
     int mini;
-    for (int i = 1; i <= degree; i++) {
+    for (int i = 0; i < degree; i++) {
         if (roots[i].r > 0 && roots[i].i == 0) {
             if (!found) { mini = i; found = true;}
             else if (roots[i].r < roots[mini].r) mini = i;
         }
     }
     if (!found) throw range_error("No positive real root!");
+    return roots[mini].r;
+}
+
+double Polynomial::getSmallestRealRoot() {
+    mayComputeRoots();
+    bool found = false;
+    int mini;
+    for (int i = 0; i < degree; i++) {
+        if (roots[i].i == 0) {
+            if (!found) { mini = i; found = true;}
+            else if (fabs(roots[i].r) < fabs(roots[mini].r)) mini = i;
+        }
+    }
+    if (!found) throw range_error("No real root!");
     return roots[mini].r;
 }
 

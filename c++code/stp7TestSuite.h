@@ -81,25 +81,23 @@ public:
     
     void testNoCruiseProfilesStandard(void) {
         Stp7 stp;
-        TS_WARN("Test checks for the right *type* of profile only!");
         
         // WW profile
         stp.planFastestProfile(4,-4,0,3,0,2,1);
-        // TS_ASSERT_DELTA(stp.getDuration(),6.3496,0.0001);
+        TS_ASSERT_DELTA(stp.getDuration(),6.3496,0.0001);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WW);
         TS_ASSERT(!stp.hasCruisingPhase());
         TS_ASSERT(!stp.isDoubleDecProfile());
         
         // TW profile
         stp.planFastestProfile(0,10,15,12,-5,8,4);
-        // TS_ASSERT_DELTA(stp.getDuration(),6.3496,0.0001);
+        TS_ASSERT_DELTA(stp.getDuration(),5.291,0.0001);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
         TS_ASSERT(!stp.hasCruisingPhase());
         TS_ASSERT(!stp.isDoubleDecProfile());
         
         // TT profile
         stp.planFastestProfile(-4,4,0,4,0,3,4);
-        cout << stp.toString() << endl;
         // calc7st(4,4,3,4,0,0,-4,true);
         TS_ASSERT_DELTA(stp.getDuration(),4.1010,0.0001);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TT);
@@ -108,7 +106,7 @@ public:
         
         // WT profile
         stp.planFastestProfile(-10,4,4.5,5,0.2,2,1);
-        // TS_ASSERT_DELTA(stp.getDuration(),6.3496,0.0001);
+        TS_ASSERT_DELTA(stp.getDuration(),5.1591,0.0001);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WT);
         TS_ASSERT(!stp.hasCruisingPhase());
         TS_ASSERT(!stp.isDoubleDecProfile());
