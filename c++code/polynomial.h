@@ -54,8 +54,8 @@ public:
     
     int getDegree() { return degree;};
     
-    double Polynomial::getSmallestPositiveRealRoot();
-    double Polynomial::getSmallestRealRoot();
+    double getSmallestPositiveRealRoot();
+    double getSmallestRealRoot();
     
     std::string toString() const;
     

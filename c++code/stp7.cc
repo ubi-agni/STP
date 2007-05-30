@@ -201,7 +201,7 @@ void Stp7::planProfileNoCruise(int dir) {
         
         // TODO: call solver for double decleration case!
         // t[1], t[2] and j[0..7] already have their correct values!
-        TS_WARN("ddec - TODO");
+        //TS_WARN("ddec - TODO");
         
         _sProfileType = getProfileString(_t);
         _bIsddec = true;
