@@ -16,23 +16,14 @@ N=length(t);
 bUseDir = false; dir = dirVal;
 if (nargin == 4) bUseDir=true; dir = sym('d'); end
 
-%% new: use 2 different dir variables:
-%% cruise dir
-%% reduce acc first due to broken amax limit (yes->-1), (no->1)
-d_cruise = sym('d_c');
-d_amax = sym('d_a');
-d_ddec = sym('d_dec');
-
 if (N == 7) % these things work only for "correct" 7-phases profiles
     if (sign(j(3)) ~= sign (j(5)))
         % double deceleration
         bDoubleDec = true;
-        d_ddec_val = -1;
     else
         % for normal profiles we combine phases 3 and 5, if t(4)=0
         bDoubleDec = false;
         if (t(4) == 0) t(5)=0; end
-        d_ddec_val = 1;
     end
 end
 
@@ -69,15 +60,8 @@ for i=1:N
         T = sym(sprintf('t%d', i), 'real'); 
         J = j(i);
         if (bUseDir && (j(i) ~= 0))
-            %if (dirVal == sign(j(i))) J = sym('d*jmax');
-            %else J=sym('(-d*jmax)'); end
-            if (i==1) J = sym('(d_c*d_ddec*d_a*jmax)');
-            elseif (i==2) J = 0;
-            elseif (i==3) J = sym('(-d_c*d_ddec*jmax)');
-            elseif (i==4) J = 0;
-            elseif (i==5) J = sym('(-d_c*jmax)');
-            elseif (i==6) J = 0;
-            elseif (i==7) J = sym('(d_c*jmax)'); end;
+            if (dirVal == sign(j(i))) J = sym('d*jmax');
+            else J=sym('(-d*jmax)'); end
         end
 
         % new time variable t_i
@@ -112,8 +96,7 @@ pEQ=addEQ ([], ptarget, p(N)); % reach target
 aEQ = addEQ (aEQ, 0, a(7));
 vEQ = addEQ (vEQ, 0, v(7));
 
-%if (bUseDir) VARS = addEQ (VARS, dir, dirVal); end
-VARS = addEQ (VARS, d_ddec, d_ddec_val);
+if (bUseDir) VARS = addEQ (VARS, dir, dirVal); end
 
 % the following things work only for "correct" 7-phases profiles
 if (N==7)
@@ -128,18 +111,16 @@ if (N==7)
 
     if (bDoubleDec) % double deceleration
         % add max limits for second trapezoidal profile
-        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -d_cruise*amax); end
+        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end
         % for first trapezoidal profile we add the limit as an equation
         % for t(1) because it actually fixes t(1)
         % this can be overwritten by calling routine if neccessary
-        if (t(2) ~= 0) TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(d_cruise*amax)))); end
+        if (t(2) ~= 0) TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(dir*amax)))); end
     else % normal profile
         % add max limits for trapezoidal profiles (and remove corr. variable)
-        if (t(2) ~= 0 && t(1) ~= 0) aEQ = addEQ (aEQ, a1,  d_cruise*amax); end
-        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -d_cruise*amax); end
+        if (t(2) ~= 0 && t(1) ~= 0) aEQ = addEQ (aEQ, a1,  dir*amax); end
+        if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -dir*amax); end
     end
-    %if (t(6) ~= 0) aEQ = addEQ (aEQ, a5, -d_cruise*amax); end
-    %if (t(2) ~= 0 && t(1) ~= 0) aEQ = addEQ (aEQ, a1,  d_cruise*amax); end
 end
 return
 
