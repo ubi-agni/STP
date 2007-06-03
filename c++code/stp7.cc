@@ -159,6 +159,9 @@ void Stp7::planProfileNoCruise(int dir) {
         }
     }
 
+    double da;
+    da = _j[1] == _j[3] ? -1 : 1;
+
     // (1)
     // check if we have a double deceleration profile
     if (sign(_j[3]) != sign (_j[5])) {
@@ -192,8 +195,10 @@ void Stp7::planProfileNoCruise(int dir) {
         if (bSecondTrapezoidal) {
             // actually, we only know its a ?-T profile, but for the sake of
             // testing before we finish the solving algorithm we set it to WT...
+            solveProfileDD_T(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
             _sProfileType = Stp7::PROFILE_WT;
         } else {
+            solveProfileDD_W(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
             _sProfileType = Stp7::PROFILE_WW; // could also be TW...
         }
         // Calculate exact phase duration from given profile t, j
@@ -201,8 +206,7 @@ void Stp7::planProfileNoCruise(int dir) {
         
         // TODO: call solver for double decleration case!
         // t[1], t[2] and j[0..7] already have their correct values!
-        //TS_WARN("ddec - TODO");
-        
+                
         _sProfileType = getProfileString(_t);
         _bIsddec = true;
         convertTimeIntervallsToPoints();
@@ -216,8 +220,6 @@ void Stp7::planProfileNoCruise(int dir) {
     _sProfileType = Stp7::findProfileTimeInt(_t, _j, dir, _x[0], _x[7], _v[0], _a[0],
                                      _amax, _jmax);
     
-    double da;
-    da = _j[1] == _j[3] ? -1 : 1;
     // Calculate exact phase duration for choosen profile t, j
     // j[0..7] are already the correct values!
     if (_sProfileType == Stp7::PROFILE_TT) {
@@ -239,7 +241,7 @@ void Stp7::planProfileNoCruise(int dir) {
 }
 
 void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, double a0, double jmax, double da, double dc) {
-    double root;
+    double coeffs[5];
     double a2 = a0 * a0;
     double jmax2 = jmax * jmax;
     {
@@ -270,7 +272,6 @@ void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, dou
         double t113 = dc * a0;
         double t127 = xTarget * xTarget;
         double t130 = x0 * x0;
-        double coeffs[5];
         coeffs[4] = -0.18e2 * t2 + 0.36e2 * v0 * dc * jmax - 0.18e2 * a2 + 0.36e2 * t8 * v0 * da;
         coeffs[3] = 0.72e2 * t14 * t8 + 0.72e2 * t8 * t14 * da - 0.72e2 * jmax2 * xTarget
                     - 0.48e2 * t23 - 0.48e2 * t23 * da - 0.72e2 * t27 * xTarget
@@ -285,12 +286,52 @@ void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, dou
                     - 0.72e2 * t65 * t43 * v0 * dc - 0.48e2 * t23 * xTarget * jmax2
                     + 0.72e2 * t127 * t109 + 0.72e2 * t130 * t109 - 0.36e2 * a2 * t43 * jmax2
                     + 0.48e2 * t23 * x0 * jmax2 - t36 * a2;
-        Polynomial p(4, coeffs);
-        root = p.getSmallestRealRoot();
     }
+    Polynomial p(4, coeffs);
+    double bestDuration;
+    double bestRoot;
+    double root;
+    double duration;
+    bool found = false;
+    // iterate through all real roots to find the best valid solution
+    for (int i=0; i<p.getDegree(); i++) {
+        Complex c = p.getRoot(i);
+        if (c.i != 0) continue;
+        root = c.r;
+        double root2 = root*root;
+        t[1] = root / dc / jmax;
+        if (t[1] < 0) continue;
+        {
+            double t22 = 0.3e1 * root2 * jmax;
+            double t25 = 0.6e1 * jmax * a0 * root;
+            t[3] = (a2 * a0 + 0.3e1 * a2 * da * root - 0.6e1 * jmax2 * x0 - 0.6e1 * root * dc * jmax * v0 + 0.6e1 * jmax2 * xTarget)
+                / (0.6e1 * jmax2 * v0 + (0.3e1 * jmax * a2 + t22 + t25) * dc + (t25 + t22) * dc * da);
+            if (t[3] < 0) continue;
+        }
+        {
+            double t6 = 0.9e1 * a0 * root2;
+            double t8 = 0.6e1 * root * a2;
+            double t10 = 0.3e1 * root2 * root;
+            double t19 = jmax * root * v0;
+            double t34 = 0.3e1 * jmax * root2;
+            double t37 = 0.6e1 * jmax * a0 * root;
+            t[7] = (-0.2e1 * a2 * a0 - t6 - t8 - t10 - 0.6e1 * jmax2 * x0 + 0.6e1 * jmax2 * xTarget
+                + (-0.6e1 * a0 * v0 * jmax - 0.6e1 * t19) * dc + (-t8 - t6 - t10) * da - 0.6e1 * da * dc * t19)
+                / (0.6e1 * jmax2 * v0 + (0.3e1 * jmax * a2 + t34 + t37) * dc + (t37 + t34) * dc * da);
+            if (t[7] < 0) continue;
+            duration = t[1]+t[3]+t[7];
+            if ((!found) || (duration < bestDuration)) {
+                bestRoot = root;
+                bestDuration = duration;
+                found = true;
+            }
+        }
+    }
+    if (!found) throw logic_error("No solution found for WW profile!");
+    root = bestRoot;
+    double root2 = root*root;
     t[1] = root / dc / jmax;
     t[2] = 0;
-    double root2 = root*root;
     {
         double t22 = 0.3e1 * root2 * jmax;
         double t25 = 0.6e1 * jmax * a0 * root;
@@ -312,6 +353,7 @@ void Stp7::solveProfileWW(double t[8], double x0, double xTarget, double v0, dou
                 / (0.6e1 * jmax2 * v0 + (0.3e1 * jmax * a2 + t34 + t37) * dc + (t37 + t34) * dc * da);
     }
 }
+
 void Stp7::solveProfileWT(double t[8], double x0, double xTarget, double v0, double a0, double amax, double jmax, double da, double dc) {
     double coeffs[5];
     double a2 = a0 * a0;
@@ -450,10 +492,8 @@ void Stp7::solveProfileTW(double t[8], double x0, double xTarget, double v0, dou
     t[7] = (-dc * amax + root) / dc / jmax; 
 }
 
-
-
 void Stp7::solveProfileTT(double t[8], double x0, double xTarget, double v0, double a0, double amax, double jmax, double da, double dc) {
-    double root;
+    double coeffs[3];
     double a2 = a0 * a0;
     double amax2 = amax * amax;
     {
@@ -465,19 +505,45 @@ void Stp7::solveProfileTT(double t[8], double x0, double xTarget, double v0, dou
         double t35 = jmax * jmax;
         double t36 = t35 * amax;
         double t43 = v0 * v0;
-        double coeff[3];
-        coeff[2] = 0.24e2;
-        coeff[1] = -0.24e2 * a2 + 0.48e2 * t4 * t5 + 0.24e2 * amax2 + 0.48e2 * t10;
-        coeff[0] = 0.24e2 * t14 * da + 0.24e2 * t14 + 0.48e2 * jmax * amax2 * dc * v0
+        coeffs[2] = 0.24e2;
+        coeffs[1] = -0.24e2 * a2 + 0.48e2 * t4 * t5 + 0.24e2 * amax2 + 0.48e2 * t10;
+        coeffs[0] = 0.24e2 * t14 * da + 0.24e2 * t14 + 0.48e2 * jmax * amax2 * dc * v0
                    - 0.24e2 * t4 * da * a0 * amax - 0.12e2 * t4 * t5 * a2
                    + 0.8e1 * a2 * a0 * dc * amax + 0.3e1 * t33
                    - 0.24e2 * t36 * dc * xTarget + 0.24e2 * t36 * dc * x0
                    + 0.12e2 * t35 * t43 + 0.36e2 * amax2 * v0 * jmax * da * dc
                    - 0.18e2 * amax2 * a2 - 0.24e2 * t10 * a2;
-        Polynomial p(2,coeff);
-        root = p.getSmallestRealRoot();
     }
-    
+    Polynomial p(2,coeffs);
+    double bestDuration;
+    double bestRoot;
+    double root;
+    double duration;
+    bool found = false;
+    // iterate through all real roots to find the best valid solution
+    for (int i=0; i<p.getDegree(); i++) {
+        Complex c = p.getRoot(i);
+        if (c.i != 0) continue;
+        root = c.r;
+        t[1] = 0.1e1 / da / dc / jmax * (dc * amax - a0);
+        if (t[1] < 0) continue;
+        t[2] = root / amax / jmax / da;
+        if (t[2] < 0) continue;
+        t[3] = 0.1e1 / jmax * amax;
+        if (t[3] < 0) continue;
+        t[5] = t[3];
+        t[6] = (-amax2 * da + 0.2e1 * root + 0.2e1 * jmax * v0 * da * dc - a2 + amax2) / amax / jmax / da / 0.2e1;
+        if (t[6] < 0) continue;
+        t[7] = t[3];
+        duration = t[1]+t[2]+t[3]+t[5]+t[6]+t[7];
+        if ((!found) || (duration < bestDuration)) {
+            bestRoot = root;
+            bestDuration = duration;
+            found = true;
+        }
+    }
+    if (!found) throw logic_error("No solution found for TT profile!");
+    root = bestRoot;
     t[1] = 0.1e1 / da / dc / jmax * (dc * amax - a0);
     t[2] = root / amax / jmax / da;
     t[3] = 0.1e1 / jmax * amax;
@@ -485,6 +551,291 @@ void Stp7::solveProfileTT(double t[8], double x0, double xTarget, double v0, dou
     t[5] = t[3];
     t[6] = (-amax2 * da + 0.2e1 * root + 0.2e1 * jmax * v0 * da * dc - a2 + amax2) / amax / jmax / da / 0.2e1;
     t[7] = t[3];
+}
+
+/**
+ * t[1] and t[2] must be set to the correct values already.
+ */
+void Stp7::solveProfileDD_T(double t[8], double x0, double xTarget, double v0, double a0, double amax, double jmax, double da, double dc) {
+    double coeffs[5];
+    {
+        double t1 = a0 * da;
+        double t2 = jmax * jmax;
+        double t3 = t[1];
+        double t4 = t2 * t3;
+        double t8 = a0 * a0;
+        double t9 = t8 * t8;
+        double t11 = t[2];
+        double t12 = t8 * t11;
+        double t13 = da * t2;
+        double t14 = t13 * t3;
+        double t17 = t11 * t11;
+        double t19 = t2 * jmax;
+        double t24 = t11 * da;
+        double t25 = t3 * t3;
+        double t26 = t19 * t25;
+        double t30 = dc * jmax;
+        double t31 = amax * amax;
+        double t32 = t31 * t11;
+        double t36 = dc * da;
+        double t37 = jmax * t3;
+        double t40 = dc * amax;
+        double t45 = t36 * t19;
+        double t52 = t11 * a0;
+        double t55 = t30 * t3;
+        double t61 = t3 * a0;
+        double t69 = v0 * jmax;
+        double t72 = t2 * t25;
+        double t77 = 0.24e2 * t52 * t30 - 0.120e3 * t1 * t55 + 0.72e2 * amax * da * t37 + 0.24e2 * t61 * t30 - 0.24e2 * t24 * t4 - 0.12e2 * t13 * t25 + 0.12e2 * t31 + 0.24e2 * t69 * dc + 0.60e2 * t72 + 0.60e2 * t8 - 0.72e2 * t40 * a0;
+        double t79 = t36 * t2;
+        double t80 = t3 * v0;
+        double t81 = t80 * amax;
+        double t84 = t25 * t11;
+        double t85 = t84 * a0;
+        double t88 = dc * t2;
+        double t93 = t8 * a0;
+        double t97 = -0.24e2 * t1 * t4 * v0 + 0.3e1 * t9 - 0.36e2 * t12 * t14 + 0.12e2 * t17 * da * t19 * t3 * amax + 0.12e2 * t24 * t26 * amax + 0.12e2 * t30 * t32 * a0- 0.24e2 * t45 * t3 * t17 * a0 - 0.12e2 * t32 * t14 + 0.24e2 * t79 * t81 - 0.36e2 * t45 * t85 - 0.24e2 * t88 * t11 * v0 * amax - 0.8e1 * t93 * dc * amax;
+        double t98 = t2 * t2;
+        double t99 = t25 * t25;
+        double t100 = t98 * t99;
+        double t103 = t25 * t3;
+        double t104 = t19 * t103;
+        double t107 = t98 * t103;
+        double t110 = amax * t8;
+        double t113 = t8 * da;
+        double t122 = t25 * a0;
+        double t123 = t122 * amax;
+        double t126 = t3 * t11;
+        double t132 = dc * t19;
+        double t149 = -0.6e1 * t100 * da - 0.12e2 * t104 * amax + 0.12e2 * t107 * t11 - 0.24e2 * t110 * t37 - 0.30e2 * t113 * t72 + 0.12e2 * t93 * t11 * t30 - 0.24e2 * amax * t19 * t84 + 0.36e2 * t79 * t123 - 0.24e2 * t45 * t126 * v0 - 0.12e2 * t107 * t24 + 0.12e2 * t132 * t25 * v0 + 0.24e2 * t88 * xTarget * amax - 0.24e2 * t88 * x0 * amax + 0.12e2 * t30 * t31 * v0 + 0.12e2 * da * t19 * t103 * amax;
+        double t151 = amax * a0;
+        double t168 = t31 * t3 * a0;
+        double t172 = v0 * v0;
+        double t180 = t11 * jmax;
+        double t186 = v0 * t2;
+        double t189 = t3 * t8;
+        double t193 = -0.24e2 * t151 * t69 + 0.6e1 * t31 * t2 * t25 + 0.12e2 * t17 * t98 * t25 + 0.30e2 * t25 * t8 * t2 + 0.12e2 * t17 * t8 * t2 + 0.12e2 * t30 * t168 + 0.6e1 * t100 + 0.12e2 * t172 * t2 - 0.24e2 * t88 * t81 + 0.24e2 * t132 * a0 * t103 - 0.24e2 * t110 * t180 + 0.12e2 * t8 * v0 * t30 + 0.24e2 * t186 * t61 + 0.24e2 * t189 * t2 * t11;
+        double t215 = t2 * a0;
+        double t233 = 0.24e2 * t93 + 0.24e2 * t36 * t72 * amax - 0.48e2 * t37 * t151 - 0.72e2 * t113 * t55 - 0.48e2 * t180 * t151 - 0.96e2 * t215 * t24 * t3 - 0.48e2 * t13 * t80 + 0.48e2 * t132 * t84 - 0.72e2 * t215 * da * t25 + 0.96e2 * jmax * a0 * da * t3 * amax + 0.24e2 * t31 * a0;
+        double t261 = -0.48e2 * t88 * t25 * amax + 0.24e2 * t132 * t103 + 0.48e2 * t79 * t126 * amax - 0.24e2 * t36 * t104 + 0.72e2 * t122 * t2 - 0.48e2 * t69 * amax + 0.48e2 * t30 * t12 + 0.48e2 * t30 * a0 * v0 - 0.48e2 * dc * t8 * amax + 0.48e2 * t30 * t189 - 0.24e2 * t36 * t37 * t31;
+        double t293 = 0.24e2 * t186 * t52 - 0.6e1 * t31 * da * t72 + 0.12e2 * t93 * t3 * t30 - 0.24e2 * t36 * t104 * a0 - 0.24e2 * t88 * t11 * t61 * amax + 0.6e1 * t31 * t8 - 0.12e2 * t88 * t17 * a0 * amax - 0.12e2 * t36 * t26 * v0 - 0.12e2 * t93 * da * t55 - 0.36e2 * t88 * t123 - 0.12e2 * t36 * jmax * t168 + 0.24e2 * t113 * t37 * amax + 0.36e2 * t132 * t85 + 0.48e2 * t79 * t126 * t151;
+        coeffs[0] = t97 + t149 + t193 + t293;
+        coeffs[1] = t233 + t261;
+        coeffs[2] = t77;
+        coeffs[3] = -0.48e2 * t36 * t37 - 0.24e2 * t40 + 0.48e2 * a0;
+        coeffs[4] = 0.12e2;
+    }
+    Polynomial p(4, coeffs);
+    double bestDuration;
+    double bestRoot;
+    double root;
+    double duration;
+    bool found = false;
+    // iterate through all real roots to find the best valid solution
+    for (int i=0; i<p.getDegree(); i++) {
+        Complex c = p.getRoot(i);
+        if (c.i != 0) continue;
+        root = c.r;
+        
+        t[3] = root / dc / jmax;
+        if (t[3] < 0) continue;
+        t[5] = (-dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
+        if (t[5] < 0) continue;
+        {
+            double t1 = amax * amax;
+            double t3 = a0 * a0;
+            double t6 = jmax * jmax;
+            double t7 = t[1];
+            double t8 = t7 * t7;
+            double t9 = t6 * t8;
+            double t10 = pow(root, 0.2e1);
+            double t14 = t7 * a0 * jmax;
+            double t15 = t[2];
+            t[6] = (0.2e1 * t1 - t3 - 0.4e1 * a0 * root - t9 - 0.2e1 * t10 +
+                    (-0.2e1 * v0 * jmax - 0.2e1 * t14 - 0.2e1 * t15 * a0 * jmax) * dc
+                    + (t9 + 0.2e1 * t15 * t6 * t7) * da +
+                    (0.2e1 * t14 + 0.4e1 * jmax * t7 * root) * da * dc) / jmax / amax / 0.2e1;
+            if (t[6] < 0) continue;
+        }
+        t[7] = -amax / jmax;
+        if (t[7] < 0) continue;
+        duration = t[1]+t[3]+t[5]+t[6]+t[7];
+        if ((!found) || (duration < bestDuration)) {
+            bestRoot = root;
+            bestDuration = duration;
+            found = true;
+        }
+    }
+    if (!found) throw logic_error("No solution found for ddec ?T profile!");
+    root = bestRoot;
+    t[3] = root / dc / jmax;
+    t[5] = (-dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
+    {
+        double t1 = amax * amax;
+        double t3 = a0 * a0;
+        double t6 = jmax * jmax;
+        double t7 = t[1];
+        double t8 = t7 * t7;
+        double t9 = t6 * t8;
+        double t10 = pow(root, 0.2e1);
+        double t14 = t7 * a0 * jmax;
+        double t15 = t[2];
+        t[6] = (0.2e1 * t1 - t3 - 0.4e1 * a0 * root - t9 - 0.2e1 * t10 +
+                (-0.2e1 * v0 * jmax - 0.2e1 * t14 - 0.2e1 * t15 * a0 * jmax) * dc
+                + (t9 + 0.2e1 * t15 * t6 * t7) * da +
+                (0.2e1 * t14 + 0.4e1 * jmax * t7 * root) * da * dc) / jmax / amax / 0.2e1;
+    }
+    t[7] = -amax / jmax;
+}
+
+/**
+ * t[1] and t[2] must be set to the correct values already.
+ */
+void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, double a0, double amax, double jmax, double da, double dc) {
+    double coeffs[5];
+    {
+        double t1 = jmax * jmax;
+        double t2 = t1 * t1;
+        double t3 = t[1];
+        double t4 = t3 * t3;
+        double t5 = t4 * t4;
+        double t6 = t2 * t5;
+        double t9 = t4 * t3;
+        double t10 = t2 * t9;
+        double t11 = t[2];
+        double t14 = t11 * t11;
+        double t18 = a0 * a0;
+        double t22 = t1 * jmax;
+        double t23 = t22 * t4;
+        double t25 = dc * t11;
+        double t26 = t25 * a0;
+        double t30 = t18 * a0;
+        double t32 = dc * jmax;
+        double t38 = v0 * t1;
+        double t39 = t11 * a0;
+        double t45 = da * t11;
+        double t48 = t4 * t1;
+        double t49 = da * t18;
+        double t52 = dc * v0;
+        double t55 = t22 * t9;
+        double t60 = t32 * t3;
+        double t63 = -0.6e1 * t6 * da - 0.12e2 * t10 * t11 - 0.12e2 * t14 * t2 * t4
+                    - 0.12e2 * t14 * t18 * t1 + 0.36e2 * t23 * da * 
+                    + 0.12e2 * t30 * t11 * t32 + 0.12e2 * t18 * v0 * t32
+                    - 0.24e2 * t38 * t39 + 0.12e2 * t30 * t3 * t32 - 0.12e2 * t10 * t45
+                    - 0.30e2 * t48 * t49 + 0.12e2 * t23 * t52 + 0.24e2 * t55 * dc * 
+                    + 0.12e2 * t30 * da * t60;
+        double t64 = da * dc;
+        double t68 = t3 * t1;
+        double t69 = da * v0;
+        double t73 = a0 * da;
+        double t85 = t3 * a0;
+        double t93 = v0 * v0;
+        double t99 = t3 * t18;
+        double t111 = a0 * t1;
+        double t143 = t22 * t3;
+        double t157 = t143 * da;
+        double t170 = t18 * t18;
+        double t172 = 0.24e2 * t55 * t64 * a0 - 0.24e2 * t68 * t69 * a0 + 0.36e2 * t23 * t26
+                      - 0.12e2 * t93 * t1 - 0.30e2 * t4 * t18 * t1 - 0.24e2 * t99 * t1 * t11
+                      - 0.6e1 * t6 + 0.12e2 * t23 * t64 * v0 + 0.24e2 * t157 * t25 * v0
+                      - 0.24e2 * t38 * t85 + 0.24e2 * t157 * dc * t14 * a0
+                      - 0.36e2 * t68 * t49 * t11 - 0.3e1 * t170;
+        coeffs[0] = t63 + t172;
+        coeffs[1] = 0.72e2 * t48 * t73 + 0.48e2 * t38 * t11 - 0.24e2 * t55 * dc
+                    + 0.48e2 * t68 * t69 + 0.48e2 * t111 * t3 * t11 - 0.48e2 * xTarget * t1
+                    + 0.96e2 * t68 * t45 * a0 - 0.48e2 * t23 * t25 - 0.48e2 * t49 * t60
+                    + 0.72e2 * t111 * t4 + 0.48e2 * t68 * v0 - 0.24e2 * t23 * t64 * t11
+                    - 0.48e2 * t32 * t18 * t11 + 0.24e2 * t14 * a0 * t1 + 0.16e2 * t30
+                    - 0.48e2 * t32 * a0 * v0 + 0.48e2 * x0 * t1 - 0.24e2 * t143 * t64 * t14 
+                    - 0.48e2 * t32 * t99 - 0.24e2 * t55 * t64;
+        coeffs[2] = (0.48e2 * t73 * t60 - 0.24e2 * t48 * da - 0.48e2 * t68 * t45
+                    + 0.48e2 * t39 * t32 - 0.24e2 * t18 + 0.48e2 * t52 * jmax
+                    + 0.48e2 * t85 * t32 - 0.24e2 * t48);
+        coeffs[3] = 0;
+        coeffs[4] = 0.12e2;
+    }
+    Polynomial p(4, coeffs);
+    double bestDuration;
+    double bestRoot;
+    double root;
+    double duration;
+    bool found = false;
+    // iterate through all real roots to find the best valid solution
+    for (int i=0; i<p.getDegree(); i++) {
+        Complex c = p.getRoot(i);
+        if (c.i != 0) continue;
+        root = c.r;
+        {
+            double t1 = pow(root, 0.2e1);
+            double t5 = a0 * a0;
+            double t6 = t[1];
+            double t7 = t6 * t6;
+            double t8 = jmax * jmax;
+            double t9 = t7 * t8;
+            double t10 = t[2];
+            double t18 = t6 * a0 * jmax;
+            t[3] = (0.2e1 * t1 - 0.4e1 * root * a0 + t5 + t9 +
+                    (t9 + 0.2e1 * t10 * t8 * t6) * da + (-0.2e1 * v0 * jmax -
+                     0.2e1 * t18 - 0.2e1 * t10 * a0 * jmax) * dc +
+                     (0.4e1 * jmax * root * t6 - 0.2e1 * t18) * dc * da)
+                   / dc / jmax / root / 0.4e1;
+            if (t[3] < 0) continue;
+        }
+        t[5] = root / dc / jmax;
+        if (t[5] < 0) continue;
+        {
+            double t1 = pow(root, 0.2e1);
+            double t3 = a0 * a0;
+            double t4 = t[1];
+            double t5 = t4 * t4;
+            double t6 = jmax * jmax;
+            double t7 = t5 * t6;
+            double t8 = t[2];
+            t[7] = (0.2e1 * t1 - t3 - t7 + (-t7 - 0.2e1 * t8 * t6 * t4) * da
+            + (0.2e1 * v0 * jmax + 0.2e1 * t4 * a0 * jmax + 0.2e1 * t8 * a0 * jmax) * dc
+            + 0.2e1 * a0 * da * dc * jmax * t4) / dc / jmax / root / 0.4e1;
+            if (t[7] < 0) continue;
+        }
+        duration = t[1]+t[2]+t[3]+t[5]+t[7];
+        if ((!found) || (duration < bestDuration)) {
+            bestRoot = root;
+            bestDuration = duration;
+            found = true;
+        }
+    }
+    if (!found) throw logic_error("No solution found for ddec ?W profile!");
+    root = bestRoot;
+    {
+        double t1 = pow(root, 0.2e1);
+        double t5 = a0 * a0;
+        double t6 = t[1];
+        double t7 = t6 * t6;
+        double t8 = jmax * jmax;
+        double t9 = t7 * t8;
+        double t10 = t[2];
+        double t18 = t6 * a0 * jmax;
+        t[3] = (0.2e1 * t1 - 0.4e1 * root * a0 + t5 + t9 +
+                (t9 + 0.2e1 * t10 * t8 * t6) * da + (-0.2e1 * v0 * jmax -
+                 0.2e1 * t18 - 0.2e1 * t10 * a0 * jmax) * dc +
+                 (0.4e1 * jmax * root * t6 - 0.2e1 * t18) * dc * da)
+               / dc / jmax / root / 0.4e1;
+    }
+    t[4] = 0;
+    t[5] = root / dc / jmax;
+    t[6] = 0;
+    {
+        double t1 = pow(root, 0.2e1);
+        double t3 = a0 * a0;
+        double t4 = t[1];
+        double t5 = t4 * t4;
+        double t6 = jmax * jmax;
+        double t7 = t5 * t6;
+        double t8 = t[2];
+        t[7] = (0.2e1 * t1 - t3 - t7 + (-t7 - 0.2e1 * t8 * t6 * t4) * da
+        + (0.2e1 * v0 * jmax + 0.2e1 * t4 * a0 * jmax + 0.2e1 * t8 * a0 * jmax) * dc
+        + 0.2e1 * a0 * da * dc * jmax * t4) / dc / jmax / root / 0.4e1;
+    }
 }
 
 string Stp7::getProfileString(double t[8]) {

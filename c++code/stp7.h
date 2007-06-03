@@ -114,6 +114,12 @@ private:
     
     static void solveProfileWT(double t[8], double x0, double xTarget, double v0,
                       double a0, double amax, double jmax, double da, double dc);
+    
+    static void solveProfileDD_W(double t[8], double x0, double xTarget, double v0,
+                        double a0, double amax, double jmax, double da, double dc);
+    
+    static void solveProfileDD_T(double t[8], double x0, double xTarget, double v0,
+                        double a0, double amax, double jmax, double da, double dc);
 
 };
 

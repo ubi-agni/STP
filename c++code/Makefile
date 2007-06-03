@@ -29,12 +29,12 @@
 #
 # NOCDDL
 
-
 # Environment 
 MKDIR=mkdir
 CP=cp
 CCADMIN=CCadmin
 RANLIB=ranlib
+
 
 # build
 build: .build-pre .build-impl .build-post
@@ -45,9 +45,9 @@ build: .build-pre .build-impl .build-post
 .build-post:
 # Add your post 'build' code here...
 
+# How to generate the test runner
 runner.cc: *.h
-	cxxtestgen.pl --error-printer -o $@ $^
-	
+	perl -w cxxtest/cxxtestgen.pl -o $@ --error-printer $^
 
 # clean
 clean: .clean-pre .clean-impl .clean-post
