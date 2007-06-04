@@ -15,13 +15,13 @@
 
 /*** DEFINES for Polynomial::findRoots ***/
 // fraction for rounding off imaginary part to zero
-#define EPS 2.0e-8
+#define EPS 2.0e-10
 
 /*** DEFINES for Polynomial::laguer ***/
 // estimated fractional roundoff error
 #define EPSS 1.0e-15
 // try to break (rare) limit cycles with...
-#define MR 8
+#define MR 10
 // ...different fractional values, once every...
 #define MT 10
 // ...steps for...

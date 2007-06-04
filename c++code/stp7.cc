@@ -193,13 +193,13 @@ void Stp7::planProfileNoCruise(int dir) {
         }
         
         if (bSecondTrapezoidal) {
-            // actually, we only know its a ?-T profile, but for the sake of
-            // testing before we finish the solving algorithm we set it to WT...
             solveProfileDD_T(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
-            _sProfileType = Stp7::PROFILE_WT;
+            if (_t[2] != 0) _sProfileType = Stp7::PROFILE_TT;
+            else _sProfileType = Stp7::PROFILE_WT;
         } else {
             solveProfileDD_W(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
-            _sProfileType = Stp7::PROFILE_WW; // could also be TW...
+            if (_t[2] != 0) _sProfileType = Stp7::PROFILE_TW;
+            else _sProfileType = Stp7::PROFILE_WW;
         }
         // Calculate exact phase duration from given profile t, j
         
@@ -559,70 +559,71 @@ void Stp7::solveProfileTT(double t[8], double x0, double xTarget, double v0, dou
 void Stp7::solveProfileDD_T(double t[8], double x0, double xTarget, double v0, double a0, double amax, double jmax, double da, double dc) {
     double coeffs[5];
     {
-        double t1 = a0 * da;
-        double t2 = jmax * jmax;
+        double t1 = jmax * jmax;
+        double t2 = t1 * jmax;
         double t3 = t[1];
-        double t4 = t2 * t3;
-        double t8 = a0 * a0;
-        double t9 = t8 * t8;
-        double t11 = t[2];
-        double t12 = t8 * t11;
-        double t13 = da * t2;
-        double t14 = t13 * t3;
-        double t17 = t11 * t11;
-        double t19 = t2 * jmax;
-        double t24 = t11 * da;
-        double t25 = t3 * t3;
-        double t26 = t19 * t25;
-        double t30 = dc * jmax;
-        double t31 = amax * amax;
-        double t32 = t31 * t11;
-        double t36 = dc * da;
-        double t37 = jmax * t3;
-        double t40 = dc * amax;
-        double t45 = t36 * t19;
-        double t52 = t11 * a0;
-        double t55 = t30 * t3;
-        double t61 = t3 * a0;
-        double t69 = v0 * jmax;
-        double t72 = t2 * t25;
-        double t77 = 0.24e2 * t52 * t30 - 0.120e3 * t1 * t55 + 0.72e2 * amax * da * t37 + 0.24e2 * t61 * t30 - 0.24e2 * t24 * t4 - 0.12e2 * t13 * t25 + 0.12e2 * t31 + 0.24e2 * t69 * dc + 0.60e2 * t72 + 0.60e2 * t8 - 0.72e2 * t40 * a0;
-        double t79 = t36 * t2;
-        double t80 = t3 * v0;
-        double t81 = t80 * amax;
-        double t84 = t25 * t11;
-        double t85 = t84 * a0;
-        double t88 = dc * t2;
-        double t93 = t8 * a0;
-        double t97 = -0.24e2 * t1 * t4 * v0 + 0.3e1 * t9 - 0.36e2 * t12 * t14 + 0.12e2 * t17 * da * t19 * t3 * amax + 0.12e2 * t24 * t26 * amax + 0.12e2 * t30 * t32 * a0- 0.24e2 * t45 * t3 * t17 * a0 - 0.12e2 * t32 * t14 + 0.24e2 * t79 * t81 - 0.36e2 * t45 * t85 - 0.24e2 * t88 * t11 * v0 * amax - 0.8e1 * t93 * dc * amax;
-        double t98 = t2 * t2;
-        double t99 = t25 * t25;
-        double t100 = t98 * t99;
-        double t103 = t25 * t3;
-        double t104 = t19 * t103;
-        double t107 = t98 * t103;
-        double t110 = amax * t8;
-        double t113 = t8 * da;
-        double t122 = t25 * a0;
-        double t123 = t122 * amax;
-        double t126 = t3 * t11;
-        double t132 = dc * t19;
-        double t149 = -0.6e1 * t100 * da - 0.12e2 * t104 * amax + 0.12e2 * t107 * t11 - 0.24e2 * t110 * t37 - 0.30e2 * t113 * t72 + 0.12e2 * t93 * t11 * t30 - 0.24e2 * amax * t19 * t84 + 0.36e2 * t79 * t123 - 0.24e2 * t45 * t126 * v0 - 0.12e2 * t107 * t24 + 0.12e2 * t132 * t25 * v0 + 0.24e2 * t88 * xTarget * amax - 0.24e2 * t88 * x0 * amax + 0.12e2 * t30 * t31 * v0 + 0.12e2 * da * t19 * t103 * amax;
-        double t151 = amax * a0;
-        double t168 = t31 * t3 * a0;
-        double t172 = v0 * v0;
-        double t180 = t11 * jmax;
-        double t186 = v0 * t2;
-        double t189 = t3 * t8;
-        double t193 = -0.24e2 * t151 * t69 + 0.6e1 * t31 * t2 * t25 + 0.12e2 * t17 * t98 * t25 + 0.30e2 * t25 * t8 * t2 + 0.12e2 * t17 * t8 * t2 + 0.12e2 * t30 * t168 + 0.6e1 * t100 + 0.12e2 * t172 * t2 - 0.24e2 * t88 * t81 + 0.24e2 * t132 * a0 * t103 - 0.24e2 * t110 * t180 + 0.12e2 * t8 * v0 * t30 + 0.24e2 * t186 * t61 + 0.24e2 * t189 * t2 * t11;
-        double t215 = t2 * a0;
-        double t233 = 0.24e2 * t93 + 0.24e2 * t36 * t72 * amax - 0.48e2 * t37 * t151 - 0.72e2 * t113 * t55 - 0.48e2 * t180 * t151 - 0.96e2 * t215 * t24 * t3 - 0.48e2 * t13 * t80 + 0.48e2 * t132 * t84 - 0.72e2 * t215 * da * t25 + 0.96e2 * jmax * a0 * da * t3 * amax + 0.24e2 * t31 * a0;
-        double t261 = -0.48e2 * t88 * t25 * amax + 0.24e2 * t132 * t103 + 0.48e2 * t79 * t126 * amax - 0.24e2 * t36 * t104 + 0.72e2 * t122 * t2 - 0.48e2 * t69 * amax + 0.48e2 * t30 * t12 + 0.48e2 * t30 * a0 * v0 - 0.48e2 * dc * t8 * amax + 0.48e2 * t30 * t189 - 0.24e2 * t36 * t37 * t31;
-        double t293 = 0.24e2 * t186 * t52 - 0.6e1 * t31 * da * t72 + 0.12e2 * t93 * t3 * t30 - 0.24e2 * t36 * t104 * a0 - 0.24e2 * t88 * t11 * t61 * amax + 0.6e1 * t31 * t8 - 0.12e2 * t88 * t17 * a0 * amax - 0.12e2 * t36 * t26 * v0 - 0.12e2 * t93 * da * t55 - 0.36e2 * t88 * t123 - 0.12e2 * t36 * jmax * t168 + 0.24e2 * t113 * t37 * amax + 0.36e2 * t132 * t85 + 0.48e2 * t79 * t126 * t151;
-        coeffs[0] = t97 + t149 + t193 + t293;
-        coeffs[1] = t233 + t261;
-        coeffs[2] = t77;
-        coeffs[3] = -0.48e2 * t36 * t37 - 0.24e2 * t40 + 0.48e2 * a0;
+        double t4 = t3 * t3;
+        double t5 = t4 * t3;
+        double t6 = t2 * t5;
+        double t9 = t1 * t1;
+        double t10 = t4 * t4;
+        double t11 = t9 * t10;
+        double t13 = v0 * v0;
+        double t16 = t1 * a0;
+        double t20 = dc * t1;
+        double t24 = t[2];
+        double t25 = t24 * a0;
+        double t26 = jmax * amax;
+        double t29 = amax * amax;
+        double t32 = dc * t2;
+        double t33 = t4 * t24;
+        double t36 = da * dc;
+        double t39 = jmax * t3;
+        double t43 = t1 * da;
+        double t44 = t3 * v0;
+        double t47 = t4 * a0;
+        double t50 = t36 * t1;
+        double t51 = t3 * t24;
+        double t55 = a0 * a0;
+        double t56 = t55 * a0;
+        double t58 = -0.72e2 * t16 * da * t4 + 0.48e2 * t20 * t4 * amax + 0.48e2 * t25 * t26 + 0.24e2 * t29 * a0 + 0.48e2 * t32 * t33 - 0.24e2 * t36 * t6 - 0.24e2 * t36 * t39 * t29 - 0.48e2 * t43 * t44 + 0.72e2 * t47 * t1 - 0.48e2 * t50 * t51 * amax + 0.24e2 * t56;
+        double t59 = t1 * t4;
+        double t63 = t24 * da;
+        double t67 = dc * jmax;
+        double t76 = v0 * jmax;
+        double t84 = t3 * a0;
+        double t87 = t55 * da;
+        double t88 = t67 * t3;
+        double t91 = t55 * t3;
+        double t94 = t55 * t24;
+        double t97 = -0.24e2 * t36 * t59 * amax - 0.96e2 * t16 * t63 * t3 + 0.48e2 * t67 * a0 * v0 - 0.96e2 * jmax * a0 * da * t3 * amax + 0.48e2 * t76 * amax + 0.48e2 * dc * t55 * amax + 0.24e2 * t32 * t5 + 0.48e2 * t84 * t26 - 0.72e2 * t87 * t88 + 0.48e2 * t67 * t91 + 0.48e2 * t67 * t94;
+        double t103 = t24 * t24;
+        double t112 = t9 * t5;
+        double t131 = 0.12e2 * t6 * amax + 0.6e1 * t11 + 0.12e2 * t13 * t1 + 0.8e1 * t56 * dc * amax + 0.12e2 * t103 * t9 * t4 + 0.6e1 * t29 * t1 * t4 - 0.6e1 * t11 * da + 0.12e2 * t112 * t24 + 0.30e2 * t4 * t55 * t1 + 0.12e2 * t67 * t29 * v0 - 0.24e2 * t20 * xTarget * amax - 0.12e2 * da * t2 * t5 * amax - 0.6e1 * t29 * da * t59;
+        double t141 = amax * a0;
+        double t144 = amax * t55;
+        double t150 = v0 * t1;
+        double t165 = t29 * t3 * a0;
+        double t168 = t2 * t4;
+        double t175 = a0 * da;
+        double t176 = t1 * t3;
+        double t180 = t36 * t2;
+        double t181 = t33 * a0;
+        double t184 = 0.12e2 * t56 * t3 * t67 + 0.12e2 * t56 * t24 * t67 + 0.24e2 * t91 * t1 * t24 + 0.24e2 * t141 * t76 + 0.24e2 * t144 * t39 + 0.24e2 * t144 * t24 * jmax + 0.24e2 * t150 * t84 - 0.30e2 * t87 * t59 - 0.12e2 * t103 * da * t2 * t3 * amax + 0.12e2 * t20 * t103 * a0 * amax + 0.12e2 * t67 * t165 - 0.12e2 * t63 * t168 * amax - 0.24e2 * t87 * t39 * amax - 0.24e2 * t175 * t176 * v0 - 0.36e2 * t180 * t181;
+        double t198 = dc * amax;
+        double t212 = 0.60e2 * t59 + 0.24e2 * t84 * t67 - 0.120e3 * t175 * t88 + 0.24e2 * t76 * dc + 0.72e2 * t198 * a0 + 0.12e2 * t29 - 0.24e2 * t63 * t176 + 0.60e2 * t55 - 0.72e2 * amax * da * t39 + 0.24e2 * t25 * t67 - 0.12e2 * t43 * t4;
+        double t214 = t43 * t3;
+        double t217 = t29 * t24;
+        double t230 = t47 * amax;
+        double t236 = t55 * t55;
+        double t250 = 0.24e2 * amax * t2 * t33 - 0.12e2 * t112 * t63 - 0.36e2 * t94 * t214 - 0.12e2 * t217 * t214 - 0.12e2 * t36 * jmax * t165 + 0.12e2 * t67 * t217 * a0 + 0.36e2 * t32 * t181 + 0.6e1 * t29 * t55 - 0.36e2 * t50 * t230 - 0.48e2 * t50 * t51 * t141 + 0.3e1 * t236 - 0.12e2 * t56 * da * t88 - 0.24e2 * t36 * t6 * a0;
+        double t258 = t44 * amax;
+        double t294 = -0.24e2 * t180 * t51 * v0 - 0.24e2 * t180 * t3 * t103 * a0 + 0.24e2 * t20 * t258 + 0.36e2 * t20 * t230 + 0.12e2 * t32 * t4 * v0 + 0.24e2 * t20 * x0 * amax + 0.24e2 * t32 * a0 * t5 + 0.24e2 * t150 * t25 + 0.12e2 * t55 * v0 * t67 + 0.12e2 * t103 * t55 * t1 + 0.24e2 * t20 * t24 * v0 * amax - 0.12e2 * t36 * t168 * v0 + 0.24e2 * t20 * t24 * t84 * amax - 0.24e2 * t50 * t258;
+        
+        coeffs[0] = t131 + t184 + t250 + t294;
+        coeffs[1] = t58 + t97;
+        coeffs[2] = t212;
+        coeffs[3] = -0.48e2 * t36 * t39 + 0.24e2 * t198 + 0.48e2 * a0;
         coeffs[4] = 0.12e2;
     }
     Polynomial p(4, coeffs);
@@ -639,7 +640,7 @@ void Stp7::solveProfileDD_T(double t[8], double x0, double xTarget, double v0, d
         
         t[3] = root / dc / jmax;
         if (t[3] < 0) continue;
-        t[5] = (-dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
+        t[5] = (dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
         if (t[5] < 0) continue;
         {
             double t1 = amax * amax;
@@ -651,15 +652,12 @@ void Stp7::solveProfileDD_T(double t[8], double x0, double xTarget, double v0, d
             double t10 = pow(root, 0.2e1);
             double t14 = t7 * a0 * jmax;
             double t15 = t[2];
-            t[6] = (0.2e1 * t1 - t3 - 0.4e1 * a0 * root - t9 - 0.2e1 * t10 +
-                    (-0.2e1 * v0 * jmax - 0.2e1 * t14 - 0.2e1 * t15 * a0 * jmax) * dc
-                    + (t9 + 0.2e1 * t15 * t6 * t7) * da +
-                    (0.2e1 * t14 + 0.4e1 * jmax * t7 * root) * da * dc) / jmax / amax / 0.2e1;
+            t[6] = (-0.2e1 * t1 + t3 + 0.4e1 * a0 * root + t9 + 0.2e1 * t10 + (0.2e1 * v0 * jmax + 0.2e1 * t14 + 0.2e1 * t15 * a0 * jmax) * dc + (-t9 - 0.2e1 * t6 * t7 * t15) * da + (-0.2e1 * t14 - 0.4e1 * jmax * t7 * root) * da * dc) / amax / jmax / 0.2e1;
             if (t[6] < 0) continue;
         }
-        t[7] = -amax / jmax;
+        t[7] = amax / jmax;
         if (t[7] < 0) continue;
-        duration = t[1]+t[3]+t[5]+t[6]+t[7];
+        duration = t[1]+t[2]+t[3]+t[5]+t[6]+t[7];
         if ((!found) || (duration < bestDuration)) {
             bestRoot = root;
             bestDuration = duration;
@@ -669,23 +667,21 @@ void Stp7::solveProfileDD_T(double t[8], double x0, double xTarget, double v0, d
     if (!found) throw logic_error("No solution found for ddec ?T profile!");
     root = bestRoot;
     t[3] = root / dc / jmax;
-    t[5] = (-dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
+    t[4] = 0;
+    t[5] = (dc * amax + a0 - da * dc * jmax * t[1] + root) / dc / jmax;
     {
-        double t1 = amax * amax;
-        double t3 = a0 * a0;
-        double t6 = jmax * jmax;
-        double t7 = t[1];
-        double t8 = t7 * t7;
-        double t9 = t6 * t8;
-        double t10 = pow(root, 0.2e1);
-        double t14 = t7 * a0 * jmax;
-        double t15 = t[2];
-        t[6] = (0.2e1 * t1 - t3 - 0.4e1 * a0 * root - t9 - 0.2e1 * t10 +
-                (-0.2e1 * v0 * jmax - 0.2e1 * t14 - 0.2e1 * t15 * a0 * jmax) * dc
-                + (t9 + 0.2e1 * t15 * t6 * t7) * da +
-                (0.2e1 * t14 + 0.4e1 * jmax * t7 * root) * da * dc) / jmax / amax / 0.2e1;
+            double t1 = amax * amax;
+            double t3 = a0 * a0;
+            double t6 = jmax * jmax;
+            double t7 = t[1];
+            double t8 = t7 * t7;
+            double t9 = t6 * t8;
+            double t10 = pow(root, 0.2e1);
+            double t14 = t7 * a0 * jmax;
+            double t15 = t[2];
+            t[6] = (-0.2e1 * t1 + t3 + 0.4e1 * a0 * root + t9 + 0.2e1 * t10 + (0.2e1 * v0 * jmax + 0.2e1 * t14 + 0.2e1 * t15 * a0 * jmax) * dc + (-t9 - 0.2e1 * t6 * t7 * t15) * da + (-0.2e1 * t14 - 0.4e1 * jmax * t7 * root) * da * dc) / amax / jmax / 0.2e1;
     }
-    t[7] = -amax / jmax;
+    t[7] = amax / jmax;
 }
 
 /**
@@ -696,64 +692,145 @@ void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, d
     {
         double t1 = jmax * jmax;
         double t2 = t1 * t1;
-        double t3 = t[1];
-        double t4 = t3 * t3;
-        double t5 = t4 * t4;
-        double t6 = t2 * t5;
-        double t9 = t4 * t3;
-        double t10 = t2 * t9;
-        double t11 = t[2];
-        double t14 = t11 * t11;
-        double t18 = a0 * a0;
-        double t22 = t1 * jmax;
-        double t23 = t22 * t4;
-        double t25 = dc * t11;
-        double t26 = t25 * a0;
-        double t30 = t18 * a0;
-        double t32 = dc * jmax;
-        double t38 = v0 * t1;
-        double t39 = t11 * a0;
-        double t45 = da * t11;
-        double t48 = t4 * t1;
-        double t49 = da * t18;
-        double t52 = dc * v0;
-        double t55 = t22 * t9;
-        double t60 = t32 * t3;
-        double t63 = -0.6e1 * t6 * da - 0.12e2 * t10 * t11 - 0.12e2 * t14 * t2 * t4
-                    - 0.12e2 * t14 * t18 * t1 + 0.36e2 * t23 * da * 
-                    + 0.12e2 * t30 * t11 * t32 + 0.12e2 * t18 * v0 * t32
-                    - 0.24e2 * t38 * t39 + 0.12e2 * t30 * t3 * t32 - 0.12e2 * t10 * t45
-                    - 0.30e2 * t48 * t49 + 0.12e2 * t23 * t52 + 0.24e2 * t55 * dc * 
-                    + 0.12e2 * t30 * da * t60;
-        double t64 = da * dc;
-        double t68 = t3 * t1;
-        double t69 = da * v0;
-        double t73 = a0 * da;
-        double t85 = t3 * a0;
-        double t93 = v0 * v0;
-        double t99 = t3 * t18;
-        double t111 = a0 * t1;
-        double t143 = t22 * t3;
-        double t157 = t143 * da;
-        double t170 = t18 * t18;
-        double t172 = 0.24e2 * t55 * t64 * a0 - 0.24e2 * t68 * t69 * a0 + 0.36e2 * t23 * t26
-                      - 0.12e2 * t93 * t1 - 0.30e2 * t4 * t18 * t1 - 0.24e2 * t99 * t1 * t11
-                      - 0.6e1 * t6 + 0.12e2 * t23 * t64 * v0 + 0.24e2 * t157 * t25 * v0
-                      - 0.24e2 * t38 * t85 + 0.24e2 * t157 * dc * t14 * a0
-                      - 0.36e2 * t68 * t49 * t11 - 0.3e1 * t170;
-        coeffs[0] = t63 + t172;
-        coeffs[1] = 0.72e2 * t48 * t73 + 0.48e2 * t38 * t11 - 0.24e2 * t55 * dc
-                    + 0.48e2 * t68 * t69 + 0.48e2 * t111 * t3 * t11 - 0.48e2 * xTarget * t1
-                    + 0.96e2 * t68 * t45 * a0 - 0.48e2 * t23 * t25 - 0.48e2 * t49 * t60
-                    + 0.72e2 * t111 * t4 + 0.48e2 * t68 * v0 - 0.24e2 * t23 * t64 * t11
-                    - 0.48e2 * t32 * t18 * t11 + 0.24e2 * t14 * a0 * t1 + 0.16e2 * t30
-                    - 0.48e2 * t32 * a0 * v0 + 0.48e2 * x0 * t1 - 0.24e2 * t143 * t64 * t14 
-                    - 0.48e2 * t32 * t99 - 0.24e2 * t55 * t64;
-        coeffs[2] = (0.48e2 * t73 * t60 - 0.24e2 * t48 * da - 0.48e2 * t68 * t45
-                    + 0.48e2 * t39 * t32 - 0.24e2 * t18 + 0.48e2 * t52 * jmax
-                    + 0.48e2 * t85 * t32 - 0.24e2 * t48);
-        coeffs[3] = 0;
-        coeffs[4] = 0.12e2;
+        double t3 = t2 * jmax;
+        double t4 = t3 * dc;
+        double t5 = t[2];
+        double t6 = t5 * v0;
+        double t7 = t[1];
+        double t8 = t7 * t7;
+        double t9 = t8 * t7;
+        double t13 = t1 * jmax;
+        double t14 = t13 * dc;
+        double t15 = v0 * v0;
+        double t16 = a0 * t15;
+        double t20 = a0 * t5;
+        double t21 = t20 * da;
+        double t22 = t2 * t7;
+        double t26 = t13 * t7;
+        double t27 = t26 * dc;
+        double t28 = a0 * a0;
+        double t29 = da * t28;
+        double t33 = t8 * t5;
+        double t41 = t3 * t7 * dc;
+        double t43 = t5 * t5;
+        double t50 = t8 * t8;
+        double t52 = dc * da;
+        double t53 = t52 * v0;
+        double t56 = xTarget * t1;
+        double t58 = a0 * v0;
+        double t59 = dc * jmax;
+        double t62 = t13 * t9;
+        double t67 = x0 * t1;
+        double t69 = t13 * t8;
+        double t78 = t59 * t7;
+        double t81 = t7 * v0;
+        double t84 = t43 * a0;
+        double t87 = t28 * a0;
+        double t89 = da * t1;
+        double t92 = a0 * da;
+        double t93 = t1 * t8;
+        double t96 = t5 * t7;
+        double t102 = t8 * a0;
+        double t105 = t7 * t28;
+        double t108 = t89 * t7;
+        double t111 = t5 * t28;
+        double t114 = 0.144e3 * t56 + 0.144e3 * t58 * t59 + 0.72e2 * t62 * t52 - 0.144e3 * t6 * t1
+                - 0.144e3 * t67 + 0.72e2 * t69 * t52 * t5 + 0.72e2 * t26 * t52 * t43
+                + 0.144e3 * t14 * t33 + 0.144e3 * t29 * t78 - 0.144e3 * t81 * t1
+                - 0.72e2 * t84 * t1 - 0.48e2 * t87 - 0.144e3 * t89 * t81
+                - 0.216e3 * t92 * t93 - 0.144e3 * t96 * a0 * t1 + 0.72e2 * t14 * t9
+                - 0.216e3 * t102 * t1 + 0.144e3 * t105 * t59 - 0.288e3 * t20 * t108
+                + 0.144e3 * t111 * t59;
+        double t116 = da * t2;
+        double t120 = t7 * t15;
+        double t124 = 0.72e2 * t4 * t6 * t9 - 0.72e2 * t14 * t16 * t7 - 0.288e3 * t21 * t22 * x0
+                + 0.144e3 * t27 * t29 * x0 + 0.144e3 * t4 * t33 * x0 - 0.144e3 * t27 * t29 * xTarget
+                + 0.72e2 * t41 * da * x0 * t43 + 0.288e3 * t21 * t22 * xTarget + 0.36e2 * t3 * t50 * t53
+                + 0.36e2 * t111 * t116 * t9 + 0.72e2 * t116 * t120 * t5;
+        double t125 = t2 * t1;
+        double t129 = t43 * t5;
+        double t133 = t43 * t43;
+        double t143 = t28 * t28;
+        double t154 = t69 * dc;
+        double t155 = da * t87;
+        double t159 = t3 * t9;
+        double t164 = t3 * t8 * dc;
+        double t165 = da * t5;
+        double t169 = -0.18e2 * t125 * t50 * t43 - 0.36e2 * t129 * t125 * t9 - 0.18e2 * t133 * t125 * t8
+                - 0.72e2 * t14 * t15 * v0 + 0.36e2 * t28 * t15 * t1 + 0.12e2 * t43 * t143 * t1
+                - 0.48e2 * t67 * t87 + 0.48e2 * t56 * t87 + 0.27e2 * t8 * t143 * t1
+                - 0.84e2 * t154 * t155 * t5 + 0.72e2 * t159 * t52 * x0 - 0.72e2 * t164 * t165 * xTarget;
+        double t183 = t143 * a0;
+        double t190 = t2 * t8;
+        double t194 = t9 * v0;
+        double t198 = t8 * t15;
+        double t210 = -0.144e3 * t116 * t81 * x0 - 0.72e2 * t159 * t52 * xTarget
+                + 0.144e3 * t116 * t81 * xTarget - 0.144e3 * t4 * t33 * xTarget
+                - 0.6e1 * t183 * da * t78 - 0.72e2 * t14 * t16 * t5 - 0.72e2 * t21 * t190 * v0
+                - 0.72e2 * t116 * t194 * a0 - 0.36e2 * t198 * t2 + 0.18e2 * t50 * t28 * t2
+                - 0.72e2 * t43 * t15 * t2 - 0.18e2 * t133 * t28 * t2;
+        double t214 = t8 * v0;
+        double t218 = xTarget * t2;
+        double t219 = t96 * a0;
+        double t222 = t87 * t5;
+        double t229 = x0 * t2;
+        double t235 = t2 * t43;
+        double t252 = t2 * t5;
+        double t255 = 0.72e2 * t164 * t165 * x0 - 0.36e2 * t14 * t214 * t28
+                + 0.144e3 * t218 * t219 - 0.60e2 * t14 * t222 * t8
+                + 0.144e3 * t14 * t111 * x0 - 0.144e3 * t229 * t219
+                + 0.144e3 * t14 * t105 * x0 - 0.216e3 * t81 * t235 * a0
+                + 0.36e2 * t4 * t50 * v0 - 0.144e3 * t14 * t105 * xTarget
+                + 0.72e2 * t4 * x0 * t9 - 0.48e2 * t14 * t9 * t87 + 0.36e2 * t9 * t28 * t252;
+        double t271 = t2 * a0;
+        double t279 = t50 * t2;
+        double t287 = da * t43;
+        double t291 = -0.6e1 * t7 * t183 * t59 + 0.144e3 * t218 * t81 + 0.216e3 * t218 * t102
+                - 0.6e1 * t5 * t183 * t59 - 0.6e1 * t143 * v0 * t59 - 0.72e2 * t194 * t271
+                - 0.144e3 * t120 * t252 - 0.36e2 * t8 * t28 * t235 + 0.18e2 * t29 * t279
+                - 0.72e2 * t229 * t84 - 0.48e2 * t62 * t52 * t87 - 0.48e2 * t27 * t287 * t87;
+        double t296 = da * v0;
+        double t311 = t143 * t5;
+        double t316 = t1 * t87;
+        double t324 = -0.144e3 * t229 * t6 + 0.72e2 * t218 * t84 - 0.36e2 * t154 * t296 * t28
+                - 0.72e2 * t4 * xTarget * t9 - 0.72e2 * t129 * v0 * t271 - 0.36e2 * t116 * t198
+                - 0.72e2 * t129 * t28 * t22 + 0.30e2 * t311 * t108 - 0.216e3 * t229 * t102
+                + 0.24e2 * t6 * t316 + 0.27e2 * t143 * da * t93 + 0.144e3 * t218 * t6;
+        double t328 = t7 * t1;
+        double t333 = t159 * dc;
+        double t334 = t165 * v0;
+        double t342 = t287 * a0;
+        double t350 = t1 * t28;
+        double t371 = t28 * v0;
+        double t374 = 0.216e3 * t154 * t21 + 0.144e3 * t27 * t342 + 0.144e3 * t27 * t334
+                - 0.144e3 * t89 * t81 * a0 - 0.216e3 * t350 * t165 * t7 + 0.216e3 * t14 * t20 * t8
+                - 0.72e2 * t1 * t15 - 0.144e3 * t1 * t5 * t58 - 0.144e3 * t328 * t58
+                - 0.144e3 * t350 * t96 + 0.72e2 * t59 * t7 * t87 + 0.72e2 * t59 * t222
+                + 0.72e2 * t59 * t371;
+        double t375 = t9 * t2;
+        double t407 = -0.72e2 * t375 * t165 + 0.72e2 * t14 * t214 + 0.144e3 * t14 * t9 * a0
+                - 0.180e3 * t350 * da * t8 - 0.36e2 * t279 + 0.144e3 * t62 * t52 * a0
+                + 0.72e2 * t59 * t155 * t7 - 0.18e2 * t143 + 0.72e2 * t69 * t53
+                - 0.72e2 * t375 * t5 - 0.72e2 * t190 * t43 - 0.180e3 * t93 * t28
+                - 0.72e2 * t1 * t43 * t28 - 0.36e2 * t279 * da;
+        double t413 = x0 * x0;
+        double t428 = -0.144e3 * t229 * t81 + 0.24e2 * t311 * t328 + 0.24e2 * t81 * t316
+                + 0.72e2 * t333 * t334 - 0.144e3 * t14 * t111 * xTarget + 
+                + 0.24e2 * t89 * t81 * t87 - 0.72e2 * t413 * t2 + 0.72e2 * t333 * t342
+                - 0.72e2 * t41 * da * xTarget * t43 + 0.144e3 * t14 * t58 * x0 - 0.72e2 * t27 * t165 * t371;
+        double t435 = da * t129;
+        double t442 = xTarget * xTarget;
+        double t482 = 0.144e3 * t164 * t296 * t43 - 0.144e3 * t14 * t58 * xTarget + 0.72e2 * t41 * t435 * v0
+                - 0.216e3 * t92 * t190 * x0 - 0.72e2 * t442 * t2 +  
+                + 0.108e3 * t164 * t435 * a0 - 0.72e2 * t27 * t92 * t15 + 0.216e3 * t92 * t190 * xTarget
+                + 0.36e2 * t41 * da * t133 * a0 + 0.144e3 * t229 * xTarget - 0.144e3 * t214 * t252 * a0 + t143 * t28;
+        coeffs[0] = t124 + t169 + t210 + t255 + t291 + t324 + t428 + t482;
+        coeffs[1] = 0.;
+        coeffs[2] = t374 + t407;
+        coeffs[3] = t114;
+        coeffs[4] = (0.72e2 * t20 * t59
+                + 0.72e2 * t92 * t78 + 0.72e2 * v0 * dc * jmax - 0.36e2 * t93
+                - 0.72e2 * t165 * t328 - 0.36e2 * t89 * t8 + 0.72e2 * t7 * a0 * t59 - 0.36e2 * t28);
     }
     Polynomial p(4, coeffs);
     double bestDuration;
@@ -768,36 +845,63 @@ void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, d
         root = c.r;
         {
             double t1 = pow(root, 0.2e1);
-            double t5 = a0 * a0;
-            double t6 = t[1];
-            double t7 = t6 * t6;
-            double t8 = jmax * jmax;
-            double t9 = t7 * t8;
-            double t10 = t[2];
-            double t18 = t6 * a0 * jmax;
-            t[3] = (0.2e1 * t1 - 0.4e1 * root * a0 + t5 + t9 +
-                    (t9 + 0.2e1 * t10 * t8 * t6) * da + (-0.2e1 * v0 * jmax -
-                     0.2e1 * t18 - 0.2e1 * t10 * a0 * jmax) * dc +
-                     (0.4e1 * jmax * root * t6 - 0.2e1 * t18) * dc * da)
-                   / dc / jmax / root / 0.4e1;
+            double t4 = jmax * jmax;
+            double t9 = t[1];
+            double t13 = t[2];
+            double t17 = t13 * t13;
+            double t23 = a0 * a0;
+            double t26 = a0 * t4;
+            double t29 = jmax * t1;
+            double t35 = t4 * jmax;
+            double t36 = t9 * t9;
+            double t37 = t35 * t36;
+            double t58 = 0.3e1 * t37;
+            t[3] = (0.6e1 * t1 * root + 0.6e1 * x0 * t4 - 0.6e1 * xTarget * t4 + 0.6e1 * t9 * v0 * t4
+                    + 0.6e1 * t13 * v0 * t4 + 0.3e1 * t17 * a0 * t4 + 0.6e1 * t1 * a0 - t23 * a0
+                    + 0.6e1 * t13 * t9 * t26 + (-0.6e1 * t29 * t9 + 0.3e1 * t9 * t23 * jmax
+                    - 0.3e1 * t37 * t13 - 0.3e1 * t17 * t35 * t9) * da * dc)
+                    / (-0.6e1 * t4 * v0 - 0.6e1 * t4 * t9 * a0 - 0.6e1 * t4 * t13 * a0
+                    + (-0.6e1 * t29 + 0.3e1 * jmax * t23 + t58) * dc - 0.6e1 * t26 * da * t9
+                    + (t58 + 0.6e1 * t35 * t13 * t9) * dc * da);
             if (t[3] < 0) continue;
         }
-        t[5] = root / dc / jmax;
-        if (t[5] < 0) continue;
         {
-            double t1 = pow(root, 0.2e1);
-            double t3 = a0 * a0;
-            double t4 = t[1];
-            double t5 = t4 * t4;
-            double t6 = jmax * jmax;
-            double t7 = t5 * t6;
-            double t8 = t[2];
-            t[7] = (0.2e1 * t1 - t3 - t7 + (-t7 - 0.2e1 * t8 * t6 * t4) * da
-            + (0.2e1 * v0 * jmax + 0.2e1 * t4 * a0 * jmax + 0.2e1 * t8 * a0 * jmax) * dc
-            + 0.2e1 * a0 * da * dc * jmax * t4) / dc / jmax / root / 0.4e1;
-            if (t[7] < 0) continue;
+            double t1 = jmax * jmax;
+            double t2 = t1 * root;
+            double t3 = t[1];
+            double t4 = t3 * t3;
+            double t6 = 0.3e1 * t2 * t4;
+            double t7 = a0 * a0;
+            double t18 = 0.9e1 * t4 * a0 * t1;
+            double t19 = t[2];
+            double t25 = 0.6e1 * t3 * v0 * t1;
+            double t26 = t19 * t19;
+            double t30 = t19 * t3;
+            double t31 = t1 * a0;
+            double t32 = t30 * t31;
+            double t36 = 0.6e1 * t3 * t7 * jmax;
+            double t43 = jmax * root;
+            double t46 = jmax * t1;
+            double t49 = 0.3e1 * t46 * t4 * t3;
+            double t50 = t46 * t4;
+            double t51 = t50 * t19;
+            double t55 = 0.6e1 * t43 * a0 * t3;
+            double t73 = t6 + 0.2e1 * t7 * a0 + 0.3e1 * root * t7 - 0.6e1 * xTarget * t1
+                    + 0.6e1 * x0 * t1 + t18 + 0.6e1 * t19 * v0 * t1 + t25 + 0.3e1 * t26 * a0 * t1
+                    + 0.6e1 * t32 + (-t36 - 0.6e1 * t19 * t7 * jmax - 0.6e1 * a0 * v0 * jmax
+                    - 0.6e1 * t43 * v0 - t49 - 0.6e1 * t51 - t55 - 0.6e1 * t43 * t19 * a0) * dc
+                    + (t25 + t18 + 0.12e2 * t32 + 0.6e1 * t2 * t30 + t6) * da 
+                    + (-t55 - t36 - t49 - 0.3e1 * t51 - 0.3e1 * t26 * t46 * t3) * dc * da;
+            double t82 = pow(root, 0.2e1);
+            double t87 = 0.3e1 * t50;
+            t[5] = t73 / (-0.6e1 * t1 * v0 - 0.6e1 * t1 * t3 * a0 - 0.6e1 * t1 * t19 * a0
+                    + (-0.6e1 * jmax * t82 + 0.3e1 * jmax * t7 + t87) * dc
+                    - 0.6e1 * t31 * da * t3 + (t87 + 0.6e1 * t46 * t19 * t3) * dc * da);
         }
-        duration = t[1]+t[2]+t[3]+t[5]+t[7];
+        if (t[5] < 0) continue;
+        t[7] = root / dc / jmax;
+        if (t[7] < 0) continue;
+        duration = t[1] +t[2] + t[3] + t[5] + t[7];
         if ((!found) || (duration < bestDuration)) {
             bestRoot = root;
             bestDuration = duration;
@@ -806,36 +910,63 @@ void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, d
     }
     if (!found) throw logic_error("No solution found for ddec ?W profile!");
     root = bestRoot;
-    {
-        double t1 = pow(root, 0.2e1);
-        double t5 = a0 * a0;
-        double t6 = t[1];
-        double t7 = t6 * t6;
-        double t8 = jmax * jmax;
-        double t9 = t7 * t8;
-        double t10 = t[2];
-        double t18 = t6 * a0 * jmax;
-        t[3] = (0.2e1 * t1 - 0.4e1 * root * a0 + t5 + t9 +
-                (t9 + 0.2e1 * t10 * t8 * t6) * da + (-0.2e1 * v0 * jmax -
-                 0.2e1 * t18 - 0.2e1 * t10 * a0 * jmax) * dc +
-                 (0.4e1 * jmax * root * t6 - 0.2e1 * t18) * dc * da)
-               / dc / jmax / root / 0.4e1;
-    }
     t[4] = 0;
-    t[5] = root / dc / jmax;
     t[6] = 0;
     {
-        double t1 = pow(root, 0.2e1);
-        double t3 = a0 * a0;
-        double t4 = t[1];
-        double t5 = t4 * t4;
-        double t6 = jmax * jmax;
-        double t7 = t5 * t6;
-        double t8 = t[2];
-        t[7] = (0.2e1 * t1 - t3 - t7 + (-t7 - 0.2e1 * t8 * t6 * t4) * da
-        + (0.2e1 * v0 * jmax + 0.2e1 * t4 * a0 * jmax + 0.2e1 * t8 * a0 * jmax) * dc
-        + 0.2e1 * a0 * da * dc * jmax * t4) / dc / jmax / root / 0.4e1;
-    }
+            double t1 = pow(root, 0.2e1);
+            double t4 = jmax * jmax;
+            double t9 = t[1];
+            double t13 = t[2];
+            double t17 = t13 * t13;
+            double t23 = a0 * a0;
+            double t26 = a0 * t4;
+            double t29 = jmax * t1;
+            double t35 = t4 * jmax;
+            double t36 = t9 * t9;
+            double t37 = t35 * t36;
+            double t58 = 0.3e1 * t37;
+            t[3] = (0.6e1 * t1 * root + 0.6e1 * x0 * t4 - 0.6e1 * xTarget * t4 + 0.6e1 * t9 * v0 * t4
+                    + 0.6e1 * t13 * v0 * t4 + 0.3e1 * t17 * a0 * t4 + 0.6e1 * t1 * a0 - t23 * a0
+                    + 0.6e1 * t13 * t9 * t26 + (-0.6e1 * t29 * t9 + 0.3e1 * t9 * t23 * jmax
+                    - 0.3e1 * t37 * t13 - 0.3e1 * t17 * t35 * t9) * da * dc)
+                    / (-0.6e1 * t4 * v0 - 0.6e1 * t4 * t9 * a0 - 0.6e1 * t4 * t13 * a0
+                    + (-0.6e1 * t29 + 0.3e1 * jmax * t23 + t58) * dc - 0.6e1 * t26 * da * t9
+                    + (t58 + 0.6e1 * t35 * t13 * t9) * dc * da);
+        }
+        {
+            double t1 = jmax * jmax;
+            double t2 = t1 * root;
+            double t3 = t[1];
+            double t4 = t3 * t3;
+            double t6 = 0.3e1 * t2 * t4;
+            double t7 = a0 * a0;
+            double t18 = 0.9e1 * t4 * a0 * t1;
+            double t19 = t[2];
+            double t25 = 0.6e1 * t3 * v0 * t1;
+            double t26 = t19 * t19;
+            double t30 = t19 * t3;
+            double t31 = t1 * a0;
+            double t32 = t30 * t31;
+            double t36 = 0.6e1 * t3 * t7 * jmax;
+            double t43 = jmax * root;
+            double t46 = jmax * t1;
+            double t49 = 0.3e1 * t46 * t4 * t3;
+            double t50 = t46 * t4;
+            double t51 = t50 * t19;
+            double t55 = 0.6e1 * t43 * a0 * t3;
+            double t73 = t6 + 0.2e1 * t7 * a0 + 0.3e1 * root * t7 - 0.6e1 * xTarget * t1
+                    + 0.6e1 * x0 * t1 + t18 + 0.6e1 * t19 * v0 * t1 + t25 + 0.3e1 * t26 * a0 * t1
+                    + 0.6e1 * t32 + (-t36 - 0.6e1 * t19 * t7 * jmax - 0.6e1 * a0 * v0 * jmax
+                    - 0.6e1 * t43 * v0 - t49 - 0.6e1 * t51 - t55 - 0.6e1 * t43 * t19 * a0) * dc
+                    + (t25 + t18 + 0.12e2 * t32 + 0.6e1 * t2 * t30 + t6) * da 
+                    + (-t55 - t36 - t49 - 0.3e1 * t51 - 0.3e1 * t26 * t46 * t3) * dc * da;
+            double t82 = pow(root, 0.2e1);
+            double t87 = 0.3e1 * t50;
+            t[5] = t73 / (-0.6e1 * t1 * v0 - 0.6e1 * t1 * t3 * a0 - 0.6e1 * t1 * t19 * a0
+                    + (-0.6e1 * jmax * t82 + 0.3e1 * jmax * t7 + t87) * dc
+                    - 0.6e1 * t31 * da * t3 + (t87 + 0.6e1 * t46 * t19 * t3) * dc * da);
+        }
+        t[7] = root / dc / jmax;
 }
 
 string Stp7::getProfileString(double t[8]) {
@@ -998,8 +1129,8 @@ double Stp7::planFastestProfile(double x0, double xtarget, double v0,
     
     
     // test, wether algorithm is correct
-    cout << this->getProfileType() << endl;
-    cout << "ist: " << _x[7] << " soll: " << xtarget << endl;
+    //cout << this->getProfileType() << endl;
+    //cout << "delta p: " << _x[7]-xtarget << endl;
     //if (_x[7] != xtarget)
       //  throw logic_error("The planned profile does not reach the goal!");
     
@@ -1160,16 +1291,3 @@ std::ostream& operator<<(std::ostream& os, const Stp7& c) {
     os << c.toString();
     return os;
 }
-
-////
-////
-////
-//int
-//main(int argc, char** argv) {
-//    double coeffs[] = {1, -0.5, -1, -2};
-//    Polynomial p(3, coeffs);
-//    cout << "Roots of " << p << ": " << endl;
-//    cout << p.getRoot(0) << ", "  << p.getRoot(1) << endl;
-//    return (EXIT_SUCCESS);
-//}
-//
