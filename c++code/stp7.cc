@@ -154,7 +154,7 @@ void Stp7::planProfileNoCruise(int dir) {
             // If we still overshoot after putting as much area under the acc
             // graph from the front to the back, the profile becomes double
             // deceleration.
-            if (stillOvershootsTimeInt(tNew, jNew, 7, dir, _x[0], _x[7], _v[0], _a[0]))
+            if (stillOvershootsTimeInt(tNew, jNew, dir, _x[0], _x[7], _v[0], _a[0]))
                 for (int i = 0; i < 8; i++) {_t[i] = tNew[i]; _j[i] = jNew[i]; }
         }
     }
@@ -179,7 +179,7 @@ void Stp7::planProfileNoCruise(int dir) {
                 // adapt profile by shortening t[3]
                 double tNew[] = {0, _t[1], _t[2], _t[3]-tDelta, _t[4], t5, 0, t7};
                 // if we still overshoot, the profile becomes trapezoidal
-                if (stillOvershootsTimeInt(tNew, _j, 7, dir, _x[0], _x[7], _v[0], _a[0])) {
+                if (stillOvershootsTimeInt(tNew, _j, dir, _x[0], _x[7], _v[0], _a[0])) {
                     for (int i = 0; i < 8; i++) _t[i] = tNew[i];
                     // allow trapez in second part when generating formulas:
                     _t[6] = 1;
@@ -969,6 +969,333 @@ void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, d
         t[7] = root / dc / jmax;
 }
 
+/**
+ * This function stretches the computed profile to a new (longer) duration.
+ */
+double Stp7::scaleToDuration(double newDuration) {
+    convertTimePointsToIntervalls();
+
+    double a_dummy, v_dummy, x_dummy;
+    
+    double v3;
+    calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v3, a_dummy);
+    double dir = sign(v3); // TODO: what happens when dir=0?
+    
+    // check whether we must use the double deceleration branch
+    bool useDDec = false;
+    {
+       // Tests for a given profile, whether stretching it to the time T would
+       // nead a double deceleration profile.    
+       // TODO TODO TODO:
+       // folgenden einfachen algorithmus verwenden:
+       // Profil erzeugen: erst a auf null, dann v auf null
+       // ist dieses profil zu langsam --> double deceleration / normal
+
+        if (sign(_j[3]) != sign(_j[5])) {
+            // that was easy - it already is a double dec. profile :)
+            useDDec = true;
+        } else {
+            // If the velocity change within the deceleration part is larger in magnitude than
+            // the velocity change within acceleration part (starting from max velocity,
+            // i.e. at a=0, the cutting process in findProfileNormal may lead to the
+            // situation, where no more area can be cut from the acceleration part,
+            // although the desired duration T is not yet reached. In this case we have
+            // to switch to the double deceleration branch as well.
+            // We check whether we are still too early at the target, when employing a
+            // full stop profile, reducing acceleration to zero immidiately in the first
+            // phase. 
+            double j1,t1;    
+            if (_a[0] == 0) {
+                j1 = _j[5]; // direction of double deceleration
+                t1 = 0;
+            } else {
+                // jerk to decrease acceleration to zero
+                j1 = -sign(_a[0]) * _jmax; 
+                // time needed to reach zero acceleration
+                t1 = fabs(_a[0]/j1); 
+            }
+
+            // position and velocity reached after this time
+            double a1, v1, x1;
+            calcjTrack(t1, _x[0], _v[0], _a[0], j1, x1, v1, a1); // a1 == 0
+            // profile to reach zero velocity, starting from v1
+            Stp3 stp3Dec;
+            stp3Dec.planFastestProfile(v1, 0, a1, _amax, _jmax);
+            double tdec[4], jdec[4];
+            stp3Dec.getTimeArray(tdec);
+            stp3Dec.getAccArray(jdec);
+            
+            // If the a(t) profile in deceleration part has the same direction as before,
+            // we may need to switch to a double deceleration profile. 
+            if (sign(jdec[1]) == sign(_j[5])) { // we may need to switch
+                if (j1 == jdec[3]) { 
+                    _t[1] = 0; _t[2] = 0; _t[3] = t1; _t[4] = 0;
+                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                    _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                } else {
+                    _t[1] = t1; _t[2] = 0; _t[3] = 0; _t[4] = 0;
+                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                    _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                }
+                // insert cruising phase, such that the target is still reached
+                adaptProfile (_t, _j, _x[7], _x[0], _v[0], _a[0]);
+                useDDec = stillTooShort (_t, newDuration);
+            } else {
+                useDDec = false;
+            }
+        }
+    }
+    
+    if (useDDec) {
+        // double deceleration branch
+        findProfileTypeStretchDoubleDec(newDuration);
+        // extend simple profile computed in useDoubleDeceleration() to
+        // wedge-shaped profile
+        if (_t[1] != 0 && _t[3] == 0) _t[3] = 1;
+        if (_t[1] == 0 && _t[3] != 0) _t[1] = 1;
+        _sProfileType = getProfileString(_t);
+        if (_sProfileType == Stp7::PROFILE_TT || _sProfileType == Stp7::PROFILE_WT) {
+            TS_WARN("stretch ddec ?T - TODO");
+            //solveProfileTT(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
+        } else if (_sProfileType == Stp7::PROFILE_TW || _sProfileType == Stp7::PROFILE_WW) {
+            TS_WARN("stretch ddec ?W - TODO");
+            //solveProfileTW(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
+        } else throw invalid_argument("Unknown profile!");
+    } else {
+        // normal profile branch
+        findProfileTypeStretchCanonical(newDuration);
+        _sProfileType = getProfileString(_t);
+        if (_sProfileType == Stp7::PROFILE_TT) {
+            TS_WARN("stretch canonical TT - TODO");
+            //solveProfileTT(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
+        } else if (_sProfileType == Stp7::PROFILE_TW) {
+            TS_WARN("stretch canonical TW - TODO");
+            //solveProfileTW(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
+        } else if (_sProfileType == Stp7::PROFILE_WT) {
+            TS_WARN("stretch canonical WT - TODO");
+            //solveProfileWT(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
+        } else if (_sProfileType == Stp7::PROFILE_WW) {
+            TS_WARN("stretch canonical WW - TODO");
+            //solveProfileWW(_t, _x[0], _x[7], _v[0], _a[0], _jmax, da, dir);
+        } else throw invalid_argument("Unknown profile!");
+    }
+    convertTimeIntervallsToPoints();
+    
+    return getDuration();
+}
+
+void Stp7::adaptProfile(double t[8], double j[8], double xtarget, double x0, double v0, double a0) {
+    // Given a profile (t,j) where acceleration and deceleration phase was
+    // already changed (cutted or shifted) such that velocity v(3) is smaller
+    // in magnitude than before, this function extends the cruising phase (or
+    // inserts one), such that the target is reach again.
+    // This is a simple linear equation...
+    double a_dummy, v_dummy, x_dummy;
+    double xend, v3new;
+    calcjTracksTimeInt(t, j, 7, x0, v0, a0, xend, v_dummy, a_dummy);
+    calcjTracksTimeInt(t, j, 3, x0, v0, a0, x_dummy, v3new, a_dummy);
+    //  enlarge cruising time, such that area below velocity profile equals dp again
+    t[4] = t[4] + (xtarget - xend) / v3new;
+}
+
+bool Stp7::stillTooShort(double t[8], double newDuration) {
+     return (t[1]+t[2]+t[3]+t[4]+t[5]+t[6]+t[7] < newDuration);
+}
+
+void Stp7::findProfileTypeStretchCanonical(double newDuration) {
+    // find correct profile by cutting pieces and descending to shorter profiles
+
+    _sProfileType = getProfileString(_t);
+    
+    // if profile type does not change, we just insert cruising phase into t
+    double t_orig[8];
+    for (int i = 0; i < 8; i++) t_orig[i] = _t[i];
+    if (_t[4] == 0) t_orig[4]=1;
+    
+    if (_sProfileType == PROFILE_TT) {
+        // cut out smaller a=const. part
+        double dt = min(_t[2], _t[6]);
+        _t[2] = _t[2] - dt;
+        _t[6] = _t[6] - dt;
+        adaptProfile (_t, _j, _x[7], _x[0], _v[0], _a[0]);
+        if (stillTooShort(_t, newDuration)) {
+            // recursively calling this function even cuts further
+            findProfileTypeStretchCanonical(newDuration);
+        } else {
+            // now we stop after duration time newDuration, hence profile stays TT
+           for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+        }
+        return;
+    }
+
+    if (_sProfileType == PROFILE_WW) {
+        for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+        return; // nothing to do, WW stays WW anytime
+    }
+
+    if (_sProfileType == PROFILE_WT) {
+        double a1 = _a[0] + _j[1]*_t[1];
+        double dt_w = min(_t[1],_t[3]);
+        double area_w_max = fabs(dt_w * (2.*a1 - dt_w*_j[1]));
+        double area_t_max = _t[6]*_amax;
+        if (area_w_max > area_t_max) {
+            // we will cut out the whole t(6) WT -> WW
+            _t[6] = 0;
+            double dt = (fabs(a1)-sqrt(a1*a1-area_t_max))/_jmax;
+            _t[1] = _t[1]-dt;
+            _t[3] = _t[3]-dt;
+            adaptProfile(_t,_j,_x[7],_x[0],_v[0],_a[0]);
+            if (stillTooShort(_t,newDuration)) {
+                _sProfileType = PROFILE_WW; // type switches to WW
+            } else {
+                // now we stop after duration time newDuration, hence profile stays WT
+                for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+            }
+        } else {
+            // nothing to cut out, stays at WT
+            for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+        }
+        return;
+    }
+    
+    if (_sProfileType == PROFILE_TW) {
+        double a5 = _j[5]*_t[5];
+        double area_w_max = fabs(_t[5]*a5);
+        double area_t_max = _t[2]*_amax;
+        if (area_w_max > area_t_max) {
+            // we will cut out the whole t(2)
+            _t[2] = 0;
+            _t[5] = sqrt((area_w_max-area_t_max)/fabs(_j[5]));
+            _t[7] = _t[5];
+            adaptProfile(_t,_j,_x[7],_x[0],_v[0],_a[0]);
+            if (stillTooShort(_t,newDuration)) {
+                _sProfileType = PROFILE_WW; // type switches to WW
+            } else {
+                // now we stop after duration time newDuration, hence profile stays TW
+                for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+            }
+        } else {
+            // nothing to cut out, stays at WT
+            for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+        }
+        return;
+    }
+    
+    return;
+}
+
+void Stp7::findProfileTypeStretchDoubleDec(double newDuration) {
+    // find correct double deceleration profile by shifting area from second
+    // deceleration to first deceleration part.
+    // We can get two type of deceleration profiles here:
+    // 1) The time-optimal profile was already double deceleraton, leading to a(3) ~= 0
+    // 2) all other profiles: a(3) == 0, there might be profile [0 0 t3] / [t1 0 0]
+    
+    double v_dummy, x_dummy;
+    double a3, a7;
+    calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v_dummy, a3);
+    
+    double tdec[4];
+    
+    if (!isZero(a3)) {
+        // 1) Time-optiomal profile was double deceleration already
+        // In this case we must check, whether we can reach a3 = 0 (to insert
+        // a cruising phase
+        double tz = fabs(a3/_jmax); // time needed to reach zero acceleration
+        // try to shorten deceleration profile, such that a3 reaches zero in between
+        tdec[1] = _t[5]+tz; tdec[2] = _t[6]; tdec[3] = _t[7];
+        removeAreaTimeInt(tdec, fabs(a3*tz), _amax, _jmax);
+        // adapt profile to reach target again
+        double tn[8];
+        tn[1] = _t[1]; tn[2] = _t[2]; tn[3] = _t[3]; tn[4] = 0;
+        tn[5] = tdec[1]; tn[6] = tdec[2]; tn[7] = tdec[3];
+        adaptProfile (tn, _j, _x[7], _x[0], _v[0], _a[0]);
+        // if target is overshooted if trying to set a3=0, 
+        // adaptProfile will return negative time tn(4) (and we must keep the current profile)
+        if (tn[4] < 0 || !stillTooShort(tn,newDuration))
+            return; // keep existing profile
+        for (int i = 0; i < 6; i++) _t[i] = tn[i]; // use adapted profile for further checks
+    }
+
+    // Compute current velocity decrease achieved during first and second part
+    double curFirst, curLast, t_0acc;
+    calcjTracksTimeInt(_t, _j, 3, 0, 0, _a[0], x_dummy, curFirst, a3); // a3=0
+    calcjTracksTimeInt(&(_t[4]), _j, 3, 0., 0., 0., x_dummy, curLast, a7); // a7=0
+    //////////////// WARUM nicht _j[4] ???
+    curFirst = fabs(curFirst); curLast = fabs(curLast);
+
+    // We enlarge curFirst such, that it contains the area of the (full) triangle 
+    // which reaches peak acceleration a2
+    if (_a[0] !=0 && sign(_a[0]) == sign(_j[7])) {
+        // time needed to reach zero acceleration
+        t_0acc = fabs(_a[0]/_j[1]);
+        // add area on the other side of x-axis 
+        // (because it was substracted during integration)
+        curFirst = curFirst + fabs(_a[0])*t_0acc/2;
+    } else {
+        // time needed to reach zero acceleration (now backwards)
+        t_0acc = -fabs(_a[0]/_j[1]);
+        // add (virtual) area of the missing triangle
+        curFirst = curFirst + fabs(_a[0]*t_0acc/2);
+    }
+    
+    double wedgeMax = _amax*_amax/_jmax;
+    double deltaFirst, deltaLast, deltaV, tacc[4], tn[8];
+    
+    while (1) {
+        // area needed to extend first part to full wedge
+        deltaFirst = wedgeMax - curFirst;
+        if (_t[2] == 0 && !isZero(deltaFirst)) { // first part is not yet full wedge 
+            if (_t[6] == 0) {
+                deltaLast = curLast; // area available in second part
+                // if last part has not enough area to extend first one to full
+                // triangle, the profile will keep WW shape
+                if (deltaFirst >= deltaLast) return;
+            } else {
+                deltaLast = _t[6]*_amax; // area below const-trapezoidal part
+            }
+            deltaV = min(deltaFirst, deltaLast);
+        } else {
+            if (_t[2] == 0) _t[2] = 1; // allow const-part in trapez
+            if (_t[6] == 0) return; // profile will keep TW shape
+            deltaV = _t[6]*_amax; // area below const-trapezoidal part
+        }
+        
+        addAreaTimeInt (t_0acc, curFirst + deltaV - wedgeMax, _amax,_jmax, tacc);
+        tdec[1] = _t[5]; tdec[2] = _t[6]; tdec[3] = _t[7];
+        removeAreaTimeInt (tdec, deltaV, _amax,_jmax);
+        double tn[8];
+        tn[1] = tacc[1]; tn[2] = tacc[2]; tn[3] = tacc[3]; tn[4] = _t[4];
+        tn[5] = tdec[1]; tn[6] = tdec[2]; tn[7] = tdec[3];
+        adaptProfile (tn, _j, _x[7], _x[0], _v[0], _a[0]);
+        // if we overshoot in time, t contains the correct profile
+        if (~stillTooShort(tn,newDuration)) return;
+        // otherwise continue probing with adapted profile
+        for (int i = 0; i < 6; i++) _t[i] = tn[i]; // use adapted profile for further checkst = tn;
+        curFirst = curFirst + deltaV;
+        curLast  = curLast  - deltaV;
+    }
+}
+
+void Stp7::addAreaTimeInt(double deltaT1, double deltaV, double amax, double jmax, double t[4]) {
+    // Compute a profile [t1 t2 t3] such that its area is wedgeMax + deltaV.
+    // deltaT1 is extra time added to t1
+    // The result is written in t[1..3].
+    double tmax = amax/jmax;
+    if (deltaV >= 0) { // full wedge + const trapezoidal part
+        t[1] = tmax + deltaT1;
+        t[2] = deltaV/amax;
+        t[3] = tmax;
+    } else {
+        double deltaT = tmax - sqrt (tmax*tmax + deltaV/jmax);
+        t[1] = tmax + deltaT1 - deltaT;
+        t[2] = 0;
+        t[3] = tmax - deltaT;
+    }
+}
+
 string Stp7::getProfileString(double t[8]) {
     if (t[2] != 0) { // T? profile
         if (t[6] != 0) return Stp7::PROFILE_TT;
@@ -995,7 +1322,7 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
         double dt = min(t[2], t[6]);
         t[2] = t[2] - dt;
         t[6] = t[6] - dt;
-        if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
+        if (stillOvershootsTimeInt(t, j, dir, x0, xTarget, v0, a0)) {
             // recursively calling this function even cuts further
             type = findProfileTimeInt(t,j,dir,x0,xTarget,v0,a0,amax,jmax);
         } else {
@@ -1021,7 +1348,7 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
             double dt = (fabs(a1)-sqrt(a1*a1-area_t_max))/jmax;
             t[1] = t[1]-dt;
             t[3] = t[3]-dt;
-            if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
+            if (stillOvershootsTimeInt(t, j, dir, x0, xTarget, v0, a0)) {
                 type = Stp7::PROFILE_WW; // type switches to WW
             } else {
                 // now we stop before the target, hence profile stays WT
@@ -1040,7 +1367,7 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
             t[2] = 0;
             t[5] = sqrt((area_w_max-area_t_max)/fabs(j[5]));
             t[7] = t[5];
-            if (stillOvershootsTimeInt(t, j, 7, dir, x0, xTarget, v0, a0)) {
+            if (stillOvershootsTimeInt(t, j, dir, x0, xTarget, v0, a0)) {
                 type = Stp7::PROFILE_WW;
             } else {
                 // now we stop before the target, hence profile stays TW
@@ -1102,10 +1429,10 @@ void Stp7::removeAreaTimeInt(double t[4], double deltaV, double amax, double jma
     }
 }
 
-bool Stp7::stillOvershootsTimeInt(double t[], double j[], int length, int dir,
+bool Stp7::stillOvershootsTimeInt(double t[8], double j[8], int dir,
                             double x0, double xTarget, double v0, double a0) {
     double v_dummy, a_dummy, xEnd;
-    Stp7::calcjTracksTimeInt(t, j, length, x0, v0, a0, xEnd, v_dummy, a_dummy);
+    Stp7::calcjTracksTimeInt(t, j, 7, x0, v0, a0, xEnd, v_dummy, a_dummy);
     return (sign(xEnd - xTarget)*dir == 1);                            
 }
 

@@ -92,8 +92,7 @@ private:
     void convertTimePointsToIntervalls();
     void convertTimeIntervallsToPoints();
     
-    static void removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax);
-    static bool stillOvershootsTimeInt(double t[], double j[], int length, int dir,
+    static bool stillOvershootsTimeInt(double t[8], double j[8], int dir,
                                double x0, double xTarget, double v0, double a0);
     static string findProfileTimeInt(double t[8], double j[8], int dir, double x0,
                               double xTarget, double v0, double a0, double amax,
@@ -120,7 +119,17 @@ private:
     
     static void solveProfileDD_T(double t[8], double x0, double xTarget, double v0,
                         double a0, double amax, double jmax, double da, double dc);
-
+    
+    static void adaptProfile(double t[8], double j[8], double xtarget, double a0, double v0, double x0);
+    
+    static bool stillTooShort(double t[8], double newDuration);
+    
+    static void addAreaTimeInt(double deltaT1, double deltaV, double amax, double jmax, double t[4]);
+    
+    static void removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax);
+    
+    void findProfileTypeStretchCanonical(double newDuration);
+    void findProfileTypeStretchDoubleDec(double newDuration);
 };
 
 #endif	/* _stp7_H */

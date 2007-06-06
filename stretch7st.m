@@ -137,7 +137,7 @@ curFirst = abs(curFirst); curLast = abs(curLast);
 
 % We enlarge curFirst such, that it contains the area of the (full) triangle 
 % which reaches peak acceleration a2
-if (a0 ~=0 && sign(a0) == j(7))
+if (a0 ~=0 && sign(a0) == sign(j(7)))
     % time needed to reach zero acceleration
     t_0acc = abs(a0/j(1));
     % add area on the other side of x-axis 
@@ -166,7 +166,7 @@ while (1)
         end
         deltaV = min (deltaFirst, deltaLast);
     else
-        if (t(2) == 0) t(2) == 1; end % allow const-part in trapez
+        if (t(2) == 0) t(2) = 1; end % allow const-part in trapez
         if (t(6) == 0) return; % profile will keep TW shape
         else deltaV = t(6)*amax; end % area below const-trapezoidal part
     end
