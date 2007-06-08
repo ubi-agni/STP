@@ -163,34 +163,99 @@ public:
         TS_ASSERT(stp.isDoubleDecProfile());
     }
     
-    void testCruiseProfilesStretched(void) {
+    void testCruiseProfileStretched(void) {
         Stp7 stp;
         
         TS_WARN("Only tests whether the right TYPE of profile was found.");
-        
-        // TT profile stretched to WW
-        stp.planFastestProfile(-5,5,0,3,0,2,2);
-        stp.scaleToDuration(10);
-        //cout << stp.toString() << endl;
-        //TS_ASSERT_DELTA(stp.getDuration(),10,0.0001);
-        //TS_ASSERT_DELTA(stp.pos(100),5,1e-6);
-        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WW);
-        TS_ASSERT(stp.hasCruisingPhase());
-        TS_ASSERT(!stp.isDoubleDecProfile());
-        
-        // TT profile stretched to TT
+   
+        // TcT ==> TcT
+        //[t,j] = calc7st(5,2,2,3,0,0,-5);
+        //stretch7st(t,j,6.5,5,2,2,3,0,0,-5,true);
         stp.planFastestProfile(-5,5,0,3,0,2,2);
         stp.scaleToDuration(6.5);
-        //cout << stp.toString() << endl;
-        //TS_ASSERT_DELTA(stp.getDuration(),6.5,0.0001);
+        //TS_ASSERT_DELTA(stp.getDuration(),6.5,1e-6);
         //TS_ASSERT_DELTA(stp.pos(100),5,1e-6);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TT);
         TS_ASSERT(stp.hasCruisingPhase());
         TS_ASSERT(!stp.isDoubleDecProfile());
         
+   
+        // TcT ==> WcW
+        stp.planFastestProfile(-5,5,0,3,0,2,2);
+        stp.scaleToDuration(10);
+        //TS_ASSERT_DELTA(stp.getDuration(),10,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),5,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WW);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(!stp.isDoubleDecProfile());
         
+        // TcT, a0 ==> TcW, a0
+        //[t,j] = calc7st(3,2,1.5,2,3,-2,-3);
+        //stretch7st(t,j,10,3,2,1.5,2,3,-2,-3,true); 
+        stp.planFastestProfile(-3,3,-2,2,3,1.5,2);
+        stp.scaleToDuration(10);
+        //TS_ASSERT_DELTA(stp.getDuration(),10,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),3,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(!stp.isDoubleDecProfile());
         
+        // WcT ==> WcT
+        //results in WcW profile breaking the amax limit
+        //[t,j] = calc7st(5,2,2,3,0,2,-5);
+        //stretch7st(t,j,5,5,2,2,3,0,2,-5,true);
+        stp.planFastestProfile(-5,5,2,3,0,2,2);
+        stp.scaleToDuration(5);
+        //TS_ASSERT_DELTA(stp.getDuration(),5,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),5,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WT);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(!stp.isDoubleDecProfile());
         
+        // WcW, ddec ==> WcW, ddec
+        //[t,j] = calc7st(4,2,2,2,2.5,1,-4);
+        //stretch7st(t,j,5,4,2,2,2,2.5,1,-4, true);
+        stp.planFastestProfile(-4,4,1,2,2.5,2,2);
+        stp.scaleToDuration(5);
+        //TS_ASSERT_DELTA(stp.getDuration(),5,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),4,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WW);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(stp.isDoubleDecProfile());
+    }
+    
+    void testNoCruiseProfileStretched() {
+        Stp7 stp;
+        
+        TS_WARN("Only tests whether the right TYPE of profile was found.");
+        
+        // WW ==> WcW
+        //[t,j] = calc7st(4,1,2,3,0,0,-4);
+        //stretch7st(t,j,7,4,1,2,3,0,0,-4,true);
+        stp.planFastestProfile(-4,4,0,3,0,2,1);
+        stp.scaleToDuration(7);
+        //TS_ASSERT_DELTA(stp.getDuration(),7,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),4,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WW);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(!stp.isDoubleDecProfile());
+        
+        // TW, v0 ==> TcW, v0
+        //[t,j] = calc7st(10, 4, 8, 12, -5, 15, 0, true);
+        //stretch7st(t, j, 5.5, 10, 4, 8, 12, -5, 15, 0, true);
+        stp.planFastestProfile(0,10,15,12,-5,8,4);
+        stp.scaleToDuration(5.5);
+        //TS_ASSERT_DELTA(stp.getDuration(),5.5,1e-6);
+        //TS_ASSERT_DELTA(stp.pos(100),10,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
+        TS_ASSERT(stp.hasCruisingPhase());
+        TS_ASSERT(!stp.isDoubleDecProfile());        
+    }
+    
+    void _testProblemCasesStretched() {
+        Stp7 stp;
+        
+        TS_WARN("Only tests whether the right TYPE of profile was found.");
     }
 };
 

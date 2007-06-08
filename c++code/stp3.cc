@@ -52,16 +52,21 @@ double Stp3::getTimeIntervall(int i) const {
     return _t[i]-_t[i-1];
 }
 
-void Stp3::getAccArray(double* a) const {
+void Stp3::getAccArray(double a[4]) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 4; i++) a[i] = _a[i];
 }
 
-void Stp3::getTimeArray(double* t) const {
+void Stp3::getTimeArray(double t[4]) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 4; i++) t[i] = _t[i];
+}
+
+void Stp3::getTimeIntArray(double t[4]) const {
+    t[0] = 0; t[1] = _t[1]; t[2] = _t[2] - t[1];
+    t[3] = _t[3] - _t[2]; t[4] = _t[4] - _t[3];
 }
 
 int Stp3::getPhaseIndex(double t) const {

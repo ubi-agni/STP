@@ -1,10 +1,5 @@
 % NEW open problems with streched profiles
 if (true)
-    % WcT ==> WcT
-    % results in WcW profile breaking the amax limit
-    [t,j] = calc7st(5,2,2,3,0,2,-5);
-    stretch7st(t,j,5,5,2,2,3,0,2,-5,true);
-
     % WcT ==> ddec ??
     % cant find solution...
     [t,j] = calc7st(5,2,2,3,0,2,-5);
@@ -38,6 +33,10 @@ if (true)
    % WcW, ddec ==> WcW, ddec
    [t,j] = calc7st(4,2,2,2,2.5,1,-4);
    stretch7st(t,j,5,4,2,2,2,2.5,1,-4, true);
+   
+   % WcT ==> WcT
+   [t,j] = calc7st(5,2,2,3,0,2,-5);
+   stretch7st(t,j,5,5,2,2,3,0,2,-5,true);
    
    % TT ==> WcW
    [t,j] = calc7st(4,4,3,4,0,0,-4);

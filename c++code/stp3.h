@@ -38,8 +38,9 @@ public:
     int getPhaseIndex(double t) const;
     
     // getters - they return a copy of the arrays.
-    void getAccArray(double* a) const;
-    void getTimeArray(double* t) const;
+    void getAccArray(double a[4]) const;
+    void getTimeArray(double t[4]) const;
+    void getTimeIntArray(double t[4]) const;
     
     // function for getting the pos/vel/acc at different times >= 0
     void move(double t, double &x, double &v, double &a) const;

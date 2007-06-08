@@ -41,8 +41,9 @@ public:
     int getPhaseIndex(double t) const;
     
     // getters - they return a copy of the arrays.
-    double* getJerkArray() const;
-    double* getTimeArray() const;
+    void getJerkArray(double j[8]) const;
+    void getTimeArray(double t[8]) const;
+    void getTimeIntArray(double t[8]) const;
     
     // function for getting the pos/vel/acc/jerk at different times >= 0
     void move(double t, double &x, double &v, double &a, double &j) const;
@@ -127,6 +128,8 @@ private:
     static void addAreaTimeInt(double deltaT1, double deltaV, double amax, double jmax, double t[4]);
     
     static void removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax);
+    
+    static void splitNoCruiseProfileTimeInt(double t[8], double j[8], double a0);
     
     void findProfileTypeStretchCanonical(double newDuration);
     void findProfileTypeStretchDoubleDec(double newDuration);

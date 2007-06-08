@@ -974,6 +974,8 @@ void Stp7::solveProfileDD_W(double t[8], double x0, double xTarget, double v0, d
  */
 double Stp7::scaleToDuration(double newDuration) {
     convertTimePointsToIntervalls();
+    
+    splitNoCruiseProfileTimeInt(_t, _j, _a[0]);
 
     double a_dummy, v_dummy, x_dummy;
     
@@ -983,6 +985,8 @@ double Stp7::scaleToDuration(double newDuration) {
     
     // check whether we must use the double deceleration branch
     bool useDDec = false;
+    double t_orig[8]; for (int i = 0; i < 8; i++) t_orig[i] = _t[i];
+    double j_orig[8]; for (int i = 0; i < 8; i++) j_orig[i] = _j[i];
     {
        // Tests for a given profile, whether stretching it to the time T would
        // nead a double deceleration profile.    
@@ -1022,7 +1026,7 @@ double Stp7::scaleToDuration(double newDuration) {
             Stp3 stp3Dec;
             stp3Dec.planFastestProfile(v1, 0, a1, _amax, _jmax);
             double tdec[4], jdec[4];
-            stp3Dec.getTimeArray(tdec);
+            stp3Dec.getTimeIntArray(tdec);
             stp3Dec.getAccArray(jdec);
             
             // If the a(t) profile in deceleration part has the same direction as before,
@@ -1047,6 +1051,12 @@ double Stp7::scaleToDuration(double newDuration) {
             }
         }
     }
+    if (!useDDec) {
+        for (int i = 0; i < 8; i++) {
+            _t[i] = t_orig[i];
+            _j[i] = j_orig[i];
+        }
+    }
     
     if (useDDec) {
         // double deceleration branch
@@ -1063,6 +1073,8 @@ double Stp7::scaleToDuration(double newDuration) {
             TS_WARN("stretch ddec ?W - TODO");
             //solveProfileTW(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
         } else throw invalid_argument("Unknown profile!");
+        _bIsddec = true;
+        _bHasCruise = (_t[4] != 0);
     } else {
         // normal profile branch
         findProfileTypeStretchCanonical(newDuration);
@@ -1080,6 +1092,8 @@ double Stp7::scaleToDuration(double newDuration) {
             TS_WARN("stretch canonical WW - TODO");
             //solveProfileWW(_t, _x[0], _x[7], _v[0], _a[0], _jmax, da, dir);
         } else throw invalid_argument("Unknown profile!");
+        _bIsddec = false;
+        this->_bHasCruise = (_t[4] != 0);
     }
     convertTimeIntervallsToPoints();
     
@@ -1138,7 +1152,8 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
     if (_sProfileType == PROFILE_WT) {
         double a1 = _a[0] + _j[1]*_t[1];
         double dt_w = min(_t[1],_t[3]);
-        double area_w_max = fabs(dt_w * (2.*a1 - dt_w*_j[1]));
+        double area_w_max = 0.5*dt_w*dt_w*_jmax;
+        if (_t[1] > _t[3]) area_w_max += fabs(2.*_a[0]*dt_w);
         double area_t_max = _t[6]*_amax;
         if (area_w_max > area_t_max) {
             // we will cut out the whole t(6) WT -> WW
@@ -1429,6 +1444,20 @@ void Stp7::removeAreaTimeInt(double t[4], double deltaV, double amax, double jma
     }
 }
 
+void Stp7::splitNoCruiseProfileTimeInt(double t[8], double j[8], double a0) {
+    // In case of a profile without cruising phase, the time intervalls
+    // t(3) and t(5) might be joined together into one of them so the other
+    // one is zero. This can only occour if j(3) and j(5) have the same
+    // sign.
+    // For the stretching algorithm, we need to split the time intervall up
+    // so the acc-graph reaches zero after t(3).
+    if (t[4] != 0) return;
+    if (j[3] != j[5]) return;
+    double tsum = t[3] + t[5];
+    t[3] = fabs((a0 + j[1]*t[1]) / j[3]);   // = -a2/j(3)
+    t[5] = tsum - t[3];
+}
+    
 bool Stp7::stillOvershootsTimeInt(double t[8], double j[8], int dir,
                             double x0, double xTarget, double v0, double a0) {
     double v_dummy, a_dummy, xEnd;
@@ -1499,20 +1528,23 @@ double Stp7::getTimeIntervall(int i) const {
     return _t[i]-_t[i-1];
 }
 
-double* Stp7::getJerkArray() const {
+void Stp7::getJerkArray(double j[8]) const {
     if (!_plannedProfile)
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    double* j = new double[8];
-    for (int i = 0; i < 7; i++) j[i] = _j[i];
-    return j;
+    for (int i = 0; i < 8; i++) j[i] = _j[i];
 }
 
-double* Stp7::getTimeArray() const {
+void Stp7::getTimeArray(double t[8]) const {
     if (!_plannedProfile)
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    double* t = new double[8];
-    for (int i = 0; i < 7; i++) t[i] = _t[i];
-    return t;
+    for (int i = 0; i < 8; i++) t[i] = _t[i];
+}
+
+void Stp7::getTimeIntArray(double t[8]) const {
+    if (!_plannedProfile)
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+    t[0] = 0; t[1] = _t[1];
+    for (int i = 2; i < 8; i++) t[i] = _t[i] - _t[i-1];
 }
 
 int Stp7::getPhaseIndex(double t) const {
