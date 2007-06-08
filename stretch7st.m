@@ -3,30 +3,38 @@ function [t_res,j_res] = stretch7st(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0, plo
 
 if (nargin < 11) plotMe=false; end
 
-[dummy, v3, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
-dir = sign(v3); % TODO: what happens when dir=0?
-
-% check whether we must use the double deceleration branch
-[bUseDoubleDeceleration, td,jd] = useDoubleDeceleration (t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0);
-if (bUseDoubleDeceleration)
-    % double deceleration branch
-    disp('Double Deceleration Case');
-    [t, j] = findProfileDoubleDec (td,jd,T, a0,v0,p0, ptarget, jmax,amax);
-    % extend simple profile computed in useDoubleDeceleration() to
-    % wedge-shaped profile
-    if (t(1) ~= 0 && t(3) == 0) t(3) = 1; end
-    if (t(1) == 0 && t(3) ~= 0) t(1) = 1; end
+if (T <= sum(t))
+    disp('New duration must be smaller than current one.');
+    disp('I did nothing...');
+    t_res = t; j_res = j;
 else
-    % normal profile branch
-    disp('Normal Case');
-    [t, j] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
+    t = splitNoCruiseProfile(t,j,a0);
+
+    [dummy, v3, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
+    dir = sign(v3); % TODO: what happens when dir=0?
+
+    % check whether we must use the double deceleration branch
+    [bUseDoubleDeceleration, td,jd] = useDoubleDeceleration (t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0);
+    if (bUseDoubleDeceleration)
+        % double deceleration branch
+        disp('Double Deceleration Case');
+        [t, j] = findProfileDoubleDec (td,jd,T, a0,v0,p0, ptarget, jmax,amax);
+        % extend simple profile computed in useDoubleDeceleration() to
+        % wedge-shaped profile
+       if (t(1) ~= 0 && t(3) == 0) t(3) = 1; end
+       if (t(1) == 0 && t(3) ~= 0) t(1) = 1; end
+    else
+      % normal profile branch
+       disp('Normal Case');
+      [t, j] = findProfileNormal (t,j,T, a0,v0,p0, ptarget, jmax,amax);
+    end
+    % Calculate exact phase duration for choosen profile t, j
+    % generate set of equations
+    [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+    SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+    t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
+    j_res = j;
 end
-% Calculate exact phase duration for choosen profile t, j
-% generate set of equations
-[A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
-t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
-j_res = j;
 
 % display graph
 if (plotMe)
@@ -172,7 +180,7 @@ while (1)
     end
 
     tacc = addArea (t_0acc, curFirst + deltaV - wedgeMax, jmax,amax);
-    tdec = removeArea (t(5:7), deltaV, jmax,amax);
+    [isPossible, tdec] = removeArea (t(5:7), deltaV, jmax,amax);
     tn = adaptProfile ([tacc t(4) tdec],j, ptarget, a0,v0,p0);
     % if we overshoot in time, t contains the correct profile
     if (~stillTooShort(tn,T)) return; end
@@ -218,7 +226,8 @@ end
 
 % if profile type does not change, we return t_orig, but with cruising
 % phase inserted
-t_orig = t; if(t(4) == 0) t_orig(4)=1; end
+t_orig = t;
+if(t(4) == 0) t_orig(4)=1; end
 if (strcmp (type, 'TT')) 
     % cut out smaller a=const. part
     dt = min(t(2), t(6));
@@ -294,4 +303,18 @@ return
 
 function bTooShort = stillTooShort(t,T)
     bTooShort = (sum(t) < T);
+return
+
+function [tsplit] = splitNoCruiseProfile(t,j,a0)
+    % In case of a profile without cruising phase, the time intervalls
+    % t(3) and t(5) might be joined together into one of them so the other
+    % one is zero. This can only occour if j(3) and j(5) have the same
+    % sign.
+    % For this stretching algorithm, we need to split the time intervall up
+    % so the acc-graph reaches zero after t(3).
+    tsplit = t; jsplit = j;
+    if (t(4) ~= 0) return; end
+    if (j(3) ~= j(5)) return; end
+    tsplit(3) = abs((a0 + j(1)*t(1)) / j(3));   % = -a2/j(3)
+    tsplit(5) = t(3) + t(5) - tsplit(3); % ==>tsplit(3)+tsplit(5)=t(3)+t(5)
 return

@@ -1,3 +1,57 @@
+% NEW open problems with streched profiles
+if (true)
+    % WcT ==> WcT
+    % results in WcW profile breaking the amax limit
+    [t,j] = calc7st(5,2,2,3,0,2,-5);
+    stretch7st(t,j,5,5,2,2,3,0,2,-5,true);
+
+    % WcT ==> ddec ??
+    % cant find solution...
+    [t,j] = calc7st(5,2,2,3,0,2,-5);
+    stretch7st(t,j,6.5,5,2,2,3,0,2,-5,true);
+    
+    % TcT, a0 ==> dec ??
+    % can't find solution...
+    [t,j] = calc7st(3,2,1.5,2,3,-2,-3,true);
+    stretch7st(t,j,30,3,2,1.5,2,3,-2,-3,true);
+    
+    % WcW, ddec ==> TcW, ddec
+    % no / wrong solution (doesnt switch to TcW, instead stays WcW)
+   [t,j] = calc7st(4,2,2,2,2.5,1,-4);
+   stretch7st(t,j,10,4,2,2,2,2.5,1,-4, true);
+   
+   % WT, ddec ==> no solution
+   [t,j] = calc7st(4.228053, 0.857550, 1.727873, 3.105438, 0.2, 5, -10.239185,true);
+   stretch7st(t,j,6,4.228053, 0.857550, 1.727873, 3.105438, 0.2, 5, -10.239185,true);
+end
+
+% working stretched profile cases
+if (true)
+   % TcT ==> TcT
+   [t,j] = calc7st(5,2,2,3,0,0,-5);
+   stretch7st(t,j,6.5,5,2,2,3,0,0,-5,true);
+   
+   % TcT, a0 ==> TcW, a0
+   [t,j] = calc7st(3,2,1.5,2,3,-2,-3);
+   stretch7st(t,j,10,3,2,1.5,2,3,-2,-3,true);
+   
+   % WcW, ddec ==> WcW, ddec
+   [t,j] = calc7st(4,2,2,2,2.5,1,-4);
+   stretch7st(t,j,5,4,2,2,2,2.5,1,-4, true);
+   
+   % TT ==> WcW
+   [t,j] = calc7st(4,4,3,4,0,0,-4);
+   stretch7st(t,j,6,4,4,3,4,0,0,-4,true);
+   
+   % WW ==> WcW
+   [t,j] = calc7st(4,1,2,3,0,0,-4);
+   stretch7st(t,j,7,4,1,2,3,0,0,-4,true);
+   
+   % TW, v0 ==> TcW, v0
+   [t,j] = calc7st(10, 4, 8, 12, -5, 15, 0, true);
+   stretch7st(t, j, 5.5, 10, 4, 8, 12, -5, 15, 0, true);
+end
+
 bPlot = false;
 % open problems
 calc7st (-0.030068, 2,1,1, 0.8,-0.2,0, bPlot, true, true);
