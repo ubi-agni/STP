@@ -106,9 +106,6 @@ private:
     static void solveProfileWW(double t[8], double x0, double xTarget, double v0,
                                       double a0, double j, double da, double dc);
     
-    static void solveProfileTT(double t[8], double x0, double xTarget, double v0,
-                      double a0, double amax, double jmax, double da, double dc);
-    
     static void solveProfileTW(double t[8], double x0, double xTarget, double v0,
                       double a0, double amax, double jmax, double da, double dc);
     

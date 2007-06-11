@@ -26,6 +26,7 @@ OBJECTDIR=build/Debug/GNU-Linux-x86
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/polynomial.o \
+	${OBJECTDIR}/stp7Formulars.o \
 	${OBJECTDIR}/stp7.o \
 	${OBJECTDIR}/complex.o \
 	${OBJECTDIR}/stp3.o \
@@ -55,6 +56,10 @@ dist/Debug/GNU-Linux-x86/stp7: ${OBJECTFILES}
 ${OBJECTDIR}/polynomial.o: polynomial.cc 
 	${MKDIR} -p ${OBJECTDIR}
 	$(COMPILE.cc) -g -Icxxtest -o ${OBJECTDIR}/polynomial.o polynomial.cc
+
+${OBJECTDIR}/stp7Formulars.o: stp7Formulars.cc 
+	${MKDIR} -p ${OBJECTDIR}
+	$(COMPILE.cc) -g -Icxxtest -o ${OBJECTDIR}/stp7Formulars.o stp7Formulars.cc
 
 ${OBJECTDIR}/stp7.o: stp7.cc 
 	${MKDIR} -p ${OBJECTDIR}
