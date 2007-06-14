@@ -19,10 +19,8 @@ else
         % double deceleration branch
         disp('Double Deceleration Case');
         [t, j] = findProfileDoubleDec (td,jd,T, a0,v0,p0, ptarget, jmax,amax);
-        % extend simple profile computed in useDoubleDeceleration() to
-        % wedge-shaped profile
-       if (t(1) ~= 0 && t(3) == 0) t(3) = 1; end
-       if (t(1) == 0 && t(3) ~= 0) t(1) = 1; end
+        % extend simple profile computed in useDoubleDeceleration() to wedge-shaped profile
+        t(1) = 1; t(3) = 1;
     else
       % normal profile branch
        disp('Normal Case');
@@ -46,10 +44,9 @@ return
 function [bDoubleDec, t,j] = useDoubleDeceleration(t,j,T, ptarget,jmax,amax,vmax, a0,v0,p0);
 % Tests for a given profile, whether stretching it to the time T would
 % nead a double deceleration profile.    
-% TODO TODO TODO:
 % folgenden einfachen algorithmus verwenden:
 % Profil erzeugen: erst a auf null, dann v auf null
-% ist dieses profil zu langsam --> double deceleration / normal
+% ist dieses profil zu langsam --> double deceleration, sonst normal
 
 if (sign(j(3)) ~= sign (j(5)))
     % that was easy - it already is a double dec. profile :)
@@ -59,40 +56,45 @@ end
 
 % If the velocity change within the deceleration part is larger in magnitude than
 % the velocity change within acceleration part (starting from max velocity,
-% i.e. at a=0, the cutting process in findProfileNormal may lead to the
+% i.e. at a=0), the cutting process in findProfileNormal may lead to the
 % situation, where no more area can be cut from the acceleration part,
 % although the desired duration T is not yet reached. In this case we have
 % to switch to the double deceleration branch as well.
-% We check whether we are still too early at the target, when employing a
-% full stop profile, reducing acceleration to zero immidiately in the first
-% phase. 
+
+% We compute a profile, which immediately decreases acceleration to zero
+% in the first (acceleration) phase and subsequently does a full stop to zero
+% velocity in the second phase. In between an appropriate cruising phase is
+% inserted to reach the final position. If this profile still is to short,
+% we need to switch to a double deceleration profile.
 
 if (a0 == 0)
-    j1 = j(5); % direction of double deceleration
     t1 = 0;
+    % profile to reach zero velocity, starting from a0=0, v0
+    [tdec jdec] = calc3st(0,jmax,amax,a0,v0);
 else
     % jerk to decrease acceleration to zero
     j1 = -sign(a0) * jmax; 
     % time needed to reach zero acceleration
-    t1 = abs(a0/j1); 
+    t1 = abs(a0/jmax); 
+    % position and velocity reached after this time
+    [a1 v1 p1] = calcjTracks (t1, j1, a0,v0,p0); %(a1==0)
+    % profile to reach zero velocity, starting from v1
+    [tdec jdec] = calc3st(0,jmax,amax,a1,v1);
 end
-
-% position and velocity reached after this time
-[a1 v1 p1] = calcjTracks (t1, j1, a0,v0,p0); %(a1==0)
-% profile to reach zero velocity, starting from v1
-[tdec jdec] = calc3st(0,jmax,amax,a1,v1);
 
 % If the a(t) profile in deceleration part has the same direction as before,
 % we may need to switch to a double deceleration profile. 
+% Otherwise, the velocity change in deceleration phase was smaller than
+% in acceleration phase, hence no switch is neccessary.
 if (sign(jdec(1)) == sign(j(5))) % we may need to switch
-    if (j1 == jdec(3)) % 
+    if (sign(a0) == sign(j(5)))
         t = [0 0 t1  0  tdec]; j = [jdec  0  jdec];
     else
         t = [t1 0 0  0  tdec]; j = [jdec  0  jdec];
     end
     % insert cruising phase, such that the target is still reached
     t = adaptProfile (t,j, ptarget, a0,v0,p0);
-    % figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+    figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
     bDoubleDec = stillTooShort (t, T);
 else
     bDoubleDec = false;
@@ -110,7 +112,7 @@ function t = adaptProfile (t, j, p_target, a0,v0,p0)
 % enlarge cruising time, such that area below velocity profile equals dp again
 t(4) = t(4) + (p_target - p_reached) / v3_new;
 
-% figure; plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted');
+%figure; plotjTracks(t,j, a0,v0,p0); set(gcf, 'Name', 'adapted');
 return
 
 
@@ -122,41 +124,59 @@ function [t,j] = findProfileDoubleDec (t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % 2) all other profiles: a(3) == 0, there might be profile [0 0 t3] / [t1 0 0]
 a3 = calcjTracks (t(1:3), j(1:3), a0,v0,p0);
 if (~isZero(a3))
-    % 1) Time-optiomal profile was double deceleration already
+    % 1) Time-optimal profile was double deceleration already
     %    In this case we must check, whether we can reach a3 = 0 (to insert
     %    a cruising phase
     tz = abs(a3/jmax); % time needed to reach zero acceleration
-    % try to shorten deceleration profile, such that a3 reaches zero in between
+    % Try to shorten deceleration profile, such that a3 reaches zero in between
+    % Because removeArea works on complete profiles only, we extend the
+    % deceleration profile by tz and remove the triangular area 0.5*a3*tz twice.
     [isPossible, tdec] = removeArea([t(5)+tz t(6) t(7)], abs(a3*tz), jmax,amax);
     % adapt profile to reach target again
     tn = adaptProfile ([t(1:2) t(3)+tz  0  tdec],j, ptarget, a0,v0,p0);
-    % if target is overshooted if trying to set a3=0, 
-    % adaptProfile will return negative time tn(4) (and we must keep the current profile)
+    % if target is overshooted while trying to set a3=0, 
+    % adaptProfile will return negative time tn(4).
     if (tn(4) < 0 || ~stillTooShort(tn,T))
+        % If deceleration profile is trapezoidal, it might become triangular
+        if (t(6) ~= 0 && tn(6) == 0)
+            % Delta * abs(a3) = amax * t(6)
+            Delta = amax * t(6) / abs(a3); % time to extend t(3) and t(5)
+            tn = adaptProfile ([t(1:2) t(3)+Delta 0 t(5)+Delta 0 t(7)],j, ptarget, a0,v0,p0);
+            tn(4) = 0;
+            if (~stillTooShort(tn,T)) t = tn; end
+        end
         return % keep existing profile
     end
     t = tn; % use adapted profile for further checks
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The rest of the code assumes a3 = 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if (sign(a0) ~= sign(j(5)))
+    % In the shifting process, we may only consider the velocity change *after*
+    % reaching zero acceleration. Hence, we compute new initial conditions, reached
+    % after this initial acceleration decrease.
+    t0 = abs(a0/jmax);
+else
+    % To ease computation during shifting, we extend the first phase
+    % to an full profile, starting at zero acceleration
+    t0 = -abs(a0/jmax);
+end
+% compute initial position at zero acceleration
+[a0 v0 p0] = calcjTracks (t0, j(1), a0,v0,p0);
+t(1) = t(1) - t0;
+
+[t, j] = shiftDoubleDecArea (t,j,T-t0, a0,v0,p0, ptarget, jmax,amax)
+t(1) = t(1) + t0;
+return
+
+function [t,j] = shiftDoubleDecArea (t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % Compute current velocity decrease achieved during first and second part
 [a3 curFirst dummy] = calcjTracks(t(1:3),j, a0,0,0); % a3 = 0
 [a7 curLast dummy]  = calcjTracks(t(5:7),j, 0,0,0); % a7 = 0
 curFirst = abs(curFirst); curLast = abs(curLast);
-
-% We enlarge curFirst such, that it contains the area of the (full) triangle 
-% which reaches peak acceleration a2
-if (a0 ~=0 && sign(a0) == sign(j(7)))
-    % time needed to reach zero acceleration
-    t_0acc = abs(a0/j(1));
-    % add area on the other side of x-axis 
-    % (because it was substracted during integration)
-    curFirst = curFirst + abs(a0)*t_0acc/2;
-else
-    % time needed to reach zero acceleration (now backwards)
-    t_0acc = -abs(a0/j(1));
-    % add (virtual) area of the missing triangle
-    curFirst = curFirst + abs(a0*t_0acc/2);
-end
 
 wedgeMax = amax^2/jmax;
 
@@ -179,7 +199,7 @@ while (1)
         else deltaV = t(6)*amax; end % area below const-trapezoidal part
     end
 
-    tacc = addArea (t_0acc, curFirst + deltaV - wedgeMax, jmax,amax);
+    tacc = addArea (curFirst + deltaV - wedgeMax, jmax,amax);
     [isPossible, tdec] = removeArea (t(5:7), deltaV, jmax,amax);
     tn = adaptProfile ([tacc t(4) tdec],j, ptarget, a0,v0,p0);
     % if we overshoot in time, t contains the correct profile
@@ -191,16 +211,15 @@ while (1)
 end
 return
 
-function [t_res] = addArea(deltaT1, deltaV, jmax,amax)
+function [t_res] = addArea(deltaV, jmax,amax)
 % Compute a profile [t1 t2 t3] such that its area is wedgeMax + deltaV.
-% deltaT1 is extra time added to t1
 
 tmax = amax/jmax;
 if (deltaV >= 0) % full wedge + const trapezoidal part
-    t_res = [tmax + deltaT1, deltaV/amax, tmax];
+    t_res = [tmax, deltaV/amax, tmax];
 else
     deltaT = tmax - sqrt (tmax^2 + deltaV/jmax);
-    t_res = [tmax + deltaT1 - deltaT, 0 , tmax - deltaT];
+    t_res = [tmax - deltaT, 0 , tmax - deltaT];
 end
 
 
