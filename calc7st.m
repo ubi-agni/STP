@@ -38,8 +38,12 @@ end
 % at imidiate halt
 [t_stop a_stop] = calc3st(0,jmax,amax,a0,v0);
 [ah vh p_fullstop] = calcjTracks(t_stop,a_stop,a0,v0,p0);
+%h = figure; set(h,'Name','fullstop');
+%plotjTracks(t_stop, a_stop, a0, v0, p0, true, jmax, amax, vmax, p_target);
+
 % get direction
 dir = sign(p_target-p_fullstop);
+
 if (dir == 0)
     t = t_stop;
     j = a_stop;

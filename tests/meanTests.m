@@ -1,4 +1,5 @@
 % NEW open problems with streched profiles
+bPlot = true;
 if (true)    
 end
 

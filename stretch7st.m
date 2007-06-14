@@ -94,7 +94,6 @@ if (sign(jdec(1)) == sign(j(5))) % we may need to switch
     end
     % insert cruising phase, such that the target is still reached
     t = adaptProfile (t,j, ptarget, a0,v0,p0);
-    figure;[a_end, v_end, p_end] = plotjTracks(t,j,a0,v0,p0, true, jmax,amax,vmax,ptarget);
     bDoubleDec = stillTooShort (t, T);
 else
     bDoubleDec = false;
@@ -168,7 +167,7 @@ end
 [a0 v0 p0] = calcjTracks (t0, j(1), a0,v0,p0);
 t(1) = t(1) - t0;
 
-[t, j] = shiftDoubleDecArea (t,j,T-t0, a0,v0,p0, ptarget, jmax,amax)
+[t, j] = shiftDoubleDecArea (t,j,T-t0, a0,v0,p0, ptarget, jmax,amax);
 t(1) = t(1) + t0;
 return
 
