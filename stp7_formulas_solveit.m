@@ -53,11 +53,6 @@ for i=1:N
         if (i==5) J=sym(-d_c*jmax); end
         if (i==6) J=sym(0); end
         if (i==7) J=sym(d_c*jmax); end
-        %J = j(i);
-        %if (j(i) ~= 0)
-            %if (sign(j(i))==1) J = sym(d_c*jmax);
-            %else J=sym(-d_c*jmax); end
-        %end
 
         % new time variable t_i
         Ts = [Ts T];
@@ -89,9 +84,6 @@ pEQ=addEQ ([], ptarget, p(N)); % reach target
 aEQ = addEQ (aEQ, 0, a(7));
 vEQ = addEQ (vEQ, 0, v(7));
 
-%if (bUseDir) VARS = addEQ (VARS, dir, dirVal); end
-%VARS = [VARS sym(sprintf('d'))];
-
 % the following things work only for "correct" 7-phases profiles
 if (N==7)
     a1 = 'a1'; a5 = 'a5'; a3 = 'a3';
@@ -105,7 +97,7 @@ if (N==7)
         % for first trapezoidal profile we add the limit as an equation
         % for t(1) because it actually fixes t(1)
         % this can be overwritten by calling routine if neccessary
-        if (t(2) ~= 0) TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(d_c*amax)))); end
+        if (t(2) ~= 0) TEQ(1) = sym(strcat(char(sym(a1)),'=',char(sym(-d_c*amax)))); end
     else % normal profile
         % add max limits for trapezoidal profiles (and remove corr. variable)
         if (t(2) ~= 0 && t(1) ~= 0) aEQ = addEQ (aEQ, a1,  d_c*amax); end
