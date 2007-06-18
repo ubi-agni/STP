@@ -122,7 +122,11 @@ private:
     
     static bool stillTooShort(double t[8], double newDuration);
     
-    static void addAreaTimeInt(double deltaT1, double deltaV, double amax, double jmax, double t[4]);
+    static void shiftDoubleDecArea(double t[8], double j[8], double newDuration, 
+                            double x0, double xTarget, double v0, double vmax,
+                            double a0, double amax, double jmax);
+    
+    static void addAreaTimeInt(double deltaV, double amax, double jmax, double t[4]);
     
     static void removeAreaTimeInt(double t[4], double deltaV, double amax, double jmax);
     

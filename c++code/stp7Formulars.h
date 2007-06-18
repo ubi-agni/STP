@@ -115,11 +115,11 @@ private:
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime);
     ////////////////////////////////////////////////////////////////////////////
-    static void calcCoeffsStretchedDoubleDecProfile_W(double coeffs[7],
+    static void calcCoeffsStretchedDoubleDecProfileWW(double coeffs[7],
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
-        double stretchToTime, double t[8]);
-    static void calcTimeIntervallsStretchedDoubleDecProfile_W(double t[8], double root,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], double root,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime);

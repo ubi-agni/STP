@@ -137,20 +137,28 @@ void Stp7Formulars::calcCoeffs(double coeffs[7],
                 return;
             }
         }
-    } else {
+    } else { // stretched Profile
         // double deceleration?
         if (bDoubleDec) {
             // case distinction for profile type
-            if (type == Stp7::PROFILE_TT || type == Stp7::PROFILE_WT) {
-                // double dec ?T profile
+            if (type == Stp7::PROFILE_TT) {
+                // double dec TT profile
                 
                 //return;
-            } else if (type == Stp7::PROFILE_TW || type == Stp7::PROFILE_WW) {
-                // double dec ?W profile
-                //cout << "Coeffs for Stretched DoubleDec ?W" << endl;
-                calcCoeffsStretchedDoubleDecProfile_W(coeffs,x0,xTarget,v0,vmax,a0,amax,
-                        jmax,da,dc,stretchToTime,t); 
+            } else if (type == Stp7::PROFILE_WT) {
+                // double dec WT profile
+                
+                //return;
+            } else if (type == Stp7::PROFILE_WW) {
+                // double dec WW profile
+                //cout << "Coeffs for Stretched DoubleDec WW" << endl;
+                calcCoeffsStretchedDoubleDecProfileWW(coeffs,x0,xTarget,v0,vmax,a0,amax,
+                        jmax,da,dc,stretchToTime); 
                 return;
+            } else if (type == Stp7::PROFILE_TW) {
+                // double dec TW profile
+                
+                //return;
             }
         } else {
             // case distinction for profile type
@@ -231,20 +239,29 @@ void Stp7Formulars::calcTimeIntervalls(double t[8],
                 return;
             }
         }
-    } else {
+    } else { // stretched Profile
         // double deceleration?
         if (bDoubleDec) {
             // case distinction for profile type
-            if (type == Stp7::PROFILE_TT || type == Stp7::PROFILE_WT) {
-                // double dec ?T profile
+            if (type == Stp7::PROFILE_TT) {
+                // double dec TT profile
                 
                 //return;
-            } else if (type == Stp7::PROFILE_TW || type == Stp7::PROFILE_WW) {
-                // double dec ?W profile
+            } else if (type == Stp7::PROFILE_WT) {
+                // double dec WT profile
+                
+                //return;
+            } else if (type == Stp7::PROFILE_WW) {
+                // double dec WW profile
+                
                 //cout << "Times for Stretched DoubleDec ?W" << endl;
-                calcTimeIntervallsStretchedDoubleDecProfile_W(t,root,x0,xTarget,v0,vmax,a0,amax,
+                calcTimeIntervallsStretchedDoubleDecProfileWW(t,root,x0,xTarget,v0,vmax,a0,amax,
                         jmax,da,dc,stretchToTime);
                 return;
+            } else if (type == Stp7::PROFILE_TW) {
+                // double dec TW profile
+                
+                //return;
             }
         } else {
             // case distinction for profile type
@@ -1003,96 +1020,94 @@ void Stp7Formulars::calcTimeIntervallsStretchedProfileWT(double t[8], double roo
     t[7] = t[5];
 }
 
-/**
- * t[1] and t[2] must be set to correct values already.
- */
-void Stp7Formulars::calcCoeffsStretchedDoubleDecProfile_W(double coeffs[7],
-        double x0, double xTarget, double v0, double vmax,
-        double a0, double amax, double jmax, double da, double dc,
-        double stretchToTime, double t[8]) {
-    double t1 = jmax * jmax;
-    double t2 = t1 * jmax;
-    double t3 = t2 * dc;
-    double t4 = t[1];
-    double t5 = t4 * t4;
-    double t6 = t5 * stretchToTime;
-    double t10 = t3 * t4;
-    double t11 = t[2];
-    double t12 = stretchToTime * t11;
-    double t16 = t4 * t2;
-    double t17 = dc * da;
-    double t21 = stretchToTime * t1;
-    double t22 = a0 * a0;
-    double t30 = t5 * t4;
-    double t31 = t30 * a0;
-    double t34 = t5 * t22;
-    double t35 = t1 * da;
-    double t38 = stretchToTime * stretchToTime;
-    double t42 = t4 * stretchToTime;
-    double t43 = t1 * t22;
-    double t49 = t11 * t11;
-    double t59 = t22 * a0;
-    double t61 = dc * jmax;
-    double t65 = t1 * t1;
-    double t66 = t65 * da;
-    double t69 = -0.24e2 * t3 * t6 * a0 - 0.24e2 * t10 * t12 * a0 - 0.24e2 * t16 * t17 * x0 + 0.12e2 * t21 * t22 * da * t4 - 0.12e2 * t3 * t5 * v0 + 0.12e2 * t31 * t3 - 0.12e2 * t34 * t35 + 0.12e2 * t3 * t38 * v0 + 0.12e2 * t42 * t43 + 0.24e2 * t3 * x0 * stretchToTime - 0.12e2 * t3 * t49 * v0 - 0.24e2 * t3 * x0 * t4 - 0.24e2 * t3 * x0 * t11 + 0.4e1 * t11 * t59 * t61 - 0.6e1 * t5 * t49 * t66;
-    double t87 = stretchToTime * dc;
-    double t94 = t38 * t65;
-    double t104 = t22 * t22;
-    double t114 = 0.12e2 * t12 * t43 - 0.24e2 * t3 * xTarget * stretchToTime + 0.24e2 * t3 * xTarget * t11 + 0.24e2 * t3 * xTarget * t4 - 0.12e2 * t30 * t11 * t66 + 0.4e1 * t4 * t59 * t61 - 0.4e1 * t87 * jmax * t59 + 0.12e2 * t30 * stretchToTime * t66 - 0.6e1 * t94 * da * t5 + 0.12e2 * t12 * t65 * t5 + 0.24e2 * t16 * t17 * xTarget - t104 + 0.12e2 * t3 * t38 * t11 * a0 - 0.12e2 * t4 * t22 * t1 * t11;
-    double t116 = t5 * t2;
-    double t117 = t116 * dc;
-    double t118 = da * t11;
-    double t125 = t49 * stretchToTime;
-    double t133 = t11 * a0;
-    double t137 = t38 * t1;
-    double t157 = t5 * t5;
-    double t158 = t157 * t65;
-    double t166 = 0.24e2 * t117 * t118 * a0 - 0.24e2 * t11 * v0 * t10 - 0.12e2 * t3 * t125 * a0 + 0.12e2 * t3 * t38 * t4 * a0 + 0.12e2 * t3 * t133 * t5 - 0.6e1 * t137 * t22 - 0.24e2 * xTarget * t1 * a0 - 0.6e1 * t49 * t22 * t1 - 0.12e2 * t34 * t1 + 0.24e2 * x0 * t1 * a0 + 0.12e2 * stretchToTime * t65 * t30 - 0.6e1 * t49 * t65 * t5 - 0.6e1 * t158 * da - 0.6e1 * t94 * t5 - 0.12e2 * t65 * t30 * t11;
-    double t178 = v0 * v0;
-    double t188 = t4 * dc * jmax;
-    double t223 = 0.12e2 * t49 * t1 + 0.12e2 * t22 - 0.24e2 * t133 * t61 - 0.24e2 * t42 * t1 - 0.24e2 * t21 * da * t4 + 0.24e2 * t4 * t11 * t1 + 0.12e2 * t137 - 0.24e2 * t4 * a0 * t61 - 0.24e2 * a0 * da * t188 + 0.24e2 * t87 * jmax * a0 - 0.24e2 * t12 * t1 + 0.24e2 * t118 * t1 * t4 + 0.24e2 * t35 * t5 + 0.24e2 * t5 * t1;
-    double t228 = da * stretchToTime;
-    double t252 = -0.12e2 * t11 * t22 * t35 * t4 - 0.12e2 * t94 * t118 * t4 + 0.12e2 * t10 * da * t38 * a0 - 0.12e2 * t178 * t1 + 0.12e2 * t10 * da * t49 * a0 - 0.6e1 * t158 + 0.4e1 * t59 * da * t188 - 0.12e2 * t116 * t17 * v0 - 0.24e2 * t10 * t228 * t133 + 0.24e2 * t6 * t65 * t11 * da + 0.12e2 * t125 * t66 * t4 - 0.24e2 * t117 * t228 * a0 + 0.12e2 * t31 * t3 * da;
-    
-    coeffs[4] = 0.12e2;
-    coeffs[3] = -0.24e2 * a0 + 0.24e2 * t17 * jmax * t4 + 0.24e2 * t188 + 0.24e2 * t61 * t11 - 0.24e2 * t87 * jmax;
-    coeffs[2] = t223;
-    coeffs[1] = 0.;
-    coeffs[0] = t69 + t114 + t166 + t252;        
-}
-
-void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfile_W(double t[8], double root,
+void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileWW(double coeffs[7],
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime) {
+    double t1 = jmax * jmax;
+    double t2 = t1 * da;
+    double t3 = a0 * a0;
+    double t4 = t3 * a0;
+    double t8 = t1 * jmax;
+    double t10 = t8 * v0 * dc;
+    double t11 = a0 * da;
+    double t15 = da * dc;
+    double t16 = v0 * v0;
+    double t17 = t16 * v0;
+    double t27 = t1 * t1;
+    double t28 = da * t27;
+    double t32 = t3 * t3;
+    double t34 = t8 * dc;
+    double t35 = v0 * a0;
+    double t39 = x0 * x0;
+    double t42 = dc * jmax;
+    double t53 = t1 * a0;
+    double t83 = da * t3;
+    double t92 = da * t4;
+    double t99 = a0 * stretchToTime;
+    double t102 = 0.72e2 * t34 * x0 * stretchToTime + 0.72e2 * t53 * xTarget + 0.72e2 * t2 * t35 * stretchToTime + 0.72e2 * t15 * t8 * x0 * stretchToTime + 0.72e2 * t2 * a0 * xTarget - 0.72e2 * t15 * t8 * stretchToTime * xTarget + 0.96e2 * t1 * t16 + 0.120e3 * t2 * t16 + 0.48e2 * t42 * t3 * v0 - 0.72e2 * t2 * a0 * x0 - 0.72e2 * t34 * stretchToTime * xTarget + 0.24e2 * t42 * t83 * v0 + 0.24e2 * t42 * t4 * stretchToTime + 0.6e1 * da * t32 + 0.24e2 * t42 * t92 * stretchToTime - 0.72e2 * t53 * x0 + 0.72e2 * t1 * v0 * t99;
+    double t104 = 0.24e2 * t2 * t4 * x0 + 0.72e2 * t10 * t11 * x0 - 0.40e2 * t15 * t8 * t17 - 0.24e2 * t2 * t4 * xTarget - 0.12e2 * t2 * t3 * t16 - 0.72e2 * t28 * x0 * xTarget - t32 * t3 - 0.72e2 * t34 * t35 * xTarget + 0.36e2 * t27 * t39 - 0.6e1 * t42 * da * v0 * t32 - 0.72e2 * t10 * t11 * xTarget;
+    double t111 = stretchToTime * stretchToTime;
+    double t114 = v0 * dc;
+    double t128 = xTarget * xTarget;
+    double t131 = jmax * a0;
+    double t152 = t1 * t4;
+    double t175 = 0.72e2 * t34 * t35 * x0 + 0.36e2 * t27 * t128 - 0.24e2 * t152 * xTarget + 0.24e2 * t152 * x0 + 0.36e2 * t28 * t128 + 0.36e2 * t28 * t39 - 0.72e2 * t27 * x0 * xTarget - 0.24e2 * t1 * t3 * t16 - 0.32e2 * t34 * t17;
+    
+    coeffs[6] = 0.68e2 + 0.76e2 * da;
+    coeffs[5] = 0.72e2 * a0 - 0.72e2 * t42 * stretchToTime + 0.72e2 * t11 - 0.72e2 * t42 * da * stretchToTime;
+    coeffs[4] = -0.72e2 * t42 * t99 - 0.24e2 * t3 + 0.36e2 * t1 * t111 - 0.96e2 * t114 * jmax + 0.36e2 * t2 * t111 - 0.12e2 * t83 - 0.120e3 * t15 * jmax * v0 - 0.72e2 * t42 * t11 * stretchToTime;
+    coeffs[3] = -0.72e2 * t114 * t131 * da - 0.24e2 * t92 - 0.24e2 * t4 + 0.72e2 * t1 * xTarget - 0.72e2 * t2 * x0 - 0.72e2 * t114 * t131 + 0.72e2 * t2 * xTarget - 0.72e2 * t1 * x0;
+    coeffs[2] = t102;
+    coeffs[1] = 0.;
+    coeffs[0] = t104 + t175;
+}
+
+void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime) {
+    double frac;
     {
-        double t1 = t[1];
-        double t2 = t1 * t1;
-        double t3 = jmax * jmax;
-        double t4 = t2 * t3;
-        double t5 = pow(root, 0.2e1);
-        double t7 = a0 * a0;
-        double t20 = dc * jmax;
-        t[3] = (-t4 + 0.2e1 * t5 - t7 + (-0.2e1 * v0 * jmax - 0.2e1 * jmax * stretchToTime * a0) * dc + (-t4 + 0.2e1 * t1 * stretchToTime * t3) * da + 0.2e1 * a0 * da * t20 * t1) / (0.2e1 * t20 * a0 - 0.2e1 * t3 * da * t1 - 0.2e1 * t3 * t1 - 0.2e1 * t3 * t[2] + 0.2e1 * t3 * stretchToTime);
+        double t1 = jmax * jmax;
+        double t2 = t1 * v0;
+        double t6 = pow(root, 0.2e1);
+        double t7 = jmax * t6;
+        double t8 = a0 * a0;
+        double t9 = t8 * jmax;
+        frac = 0.1e1 / (0.2e1 * t2 + 0.4e1 * t2 * da + (-0.2e1 * t7 + 0.2e1 * t9) * dc + (-0.4e1 * t7 + t9) * dc * da);
     }
     {
-        double t3 = t[1] * jmax;
-        t[4] = (a0 - 0.2e1 * root + (-t3 - t[2] * jmax + stretchToTime * jmax) * dc - da * dc * t3) / dc / jmax;
+        double t1 = pow(root, 0.2e1);
+        double t3 = 0.2e1 * t1 * a0;
+        double t4 = a0 * a0;
+        double t8 = jmax * jmax;
+        t[1] = (t3 + t4 * a0 + (0.6e1 * t1 * root - t3 - 0.6e1 * t8 * x0 + 0.6e1 * t8 * xTarget) * da - 0.2e1 * v0 * dc * jmax * a0 + (-0.6e1 * jmax * t1 * stretchToTime + 0.2e1 * v0 * jmax * a0) * dc * da) * frac;
     }
-    t[5] = root / dc / jmax;
-    t[6] = 0.;
+    t[2] = 0.;
     {
         double t1 = pow(root, 0.2e1);
         double t5 = a0 * a0;
-        double t6 = t[1];
-        double t7 = t6 * t6;
-        double t8 = jmax * jmax;
-        double t9 = t7 * t8;
-        double t11 = jmax * root * t6;
-        double t12 = t[2];
-        double t13 = t12 * jmax;
-        double t19 = jmax * t6 * a0;
-        t[7] = (-0.2e1 * t1 + 0.2e1 * root * a0 - t5 - t9 + (-0.2e1 * t11 - 0.2e1 * t13 * root + 0.2e1 * stretchToTime * jmax * root + 0.2e1 * v0 * jmax + 0.2e1 * t19 + 0.2e1 * t13 * a0) * dc + (-t9 - 0.2e1 * t6 * t12 * t8) * da + (-0.2e1 * t11 + 0.2e1 * t19) * dc * da) / (0.2e1 * dc * jmax * a0 - 0.2e1 * t8 * da * t6 - 0.2e1 * t8 * t6 - 0.2e1 * t8 * t12 + 0.2e1 * t8 * stretchToTime);
+        double t19 = jmax * jmax;
+        t[3] = (0.6e1 * t1 * a0 * da - 0.2e1 * t5 * a0 - 0.6e1 * v0 * dc * jmax * a0 * da + 0.6e1 * t1 * root - 0.6e1 * dc * jmax * t1 * stretchToTime - 0.6e1 * t19 * x0 + 0.6e1 * t19 * xTarget) * frac;
     }
+    {
+        double t1 = a0 * a0;
+        double t3 = jmax * jmax;
+        double t5 = 0.6e1 * t3 * x0;
+        double t7 = 0.6e1 * t3 * xTarget;
+        double t9 = t3 * stretchToTime * v0;
+        double t11 = pow(root, 0.2e1);
+        double t13 = 0.2e1 * t11 * root;
+        double t14 = t11 * a0;
+        double t16 = t1 * root;
+        double t24 = v0 * jmax * a0;
+        double t27 = jmax * t11 * stretchToTime;
+        double t30 = t1 * jmax * stretchToTime;
+        double t33 = root * jmax * v0;
+        t[4] = (t1 * a0 + t5 - t7 + 0.2e1 * t9 - t13 - 0.2e1 * t14 - 0.4e1 * t16 + (t5 - t7 + t13 - 0.2e1 * t16 + 0.4e1 * t9 - 0.4e1 * t14) * da + (0.2e1 * t24 + 0.4e1 * t27 + 0.2e1 * t30 - 0.4e1 * t33) * dc + (-0.8e1 * t33 + 0.4e1 * t24 + t30 + 0.2e1 * t27) * dc * da) * frac;
+    }
+    t[5] = root / dc / jmax;
+    t[6] = 0.;
+    t[7] = t[5];
 }

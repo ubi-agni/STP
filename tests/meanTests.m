@@ -1,5 +1,23 @@
 % NEW open problems with streched profiles
 bPlot = true;
+
+if (false)
+   % WT, ddec ==> TcW, ddec
+   % PROBLEM: results in WcW breaking the amax limit
+   [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
+   stretch7st(t,j,6,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
+   
+   % WT, ddec ==> WcT, ddec
+   % PROBLEM: results in WcW breaking the amax limit
+   [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
+   stretch7st(t,j,5.5,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
+   
+   % TT, ddec ==> ???
+   % PROBLEM: finds no solution
+   [t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
+   stretch7st(t,j,7,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
+end
+
 if (false)    
 % doesn't reach target / a is too high (if using less precision it works!)
 calc7st(0.26400000000000068, 1, 1, 1, -1.2, 0.7, 0, bPlot, true, true);
@@ -10,15 +28,11 @@ end
 % working stretched profile cases
 bPlot = false;
 if (true)
-   % WT, ddec ==> WW, ddec
-   [t,j] = calc7st(4.228053, 0.857550, 1.727873, 3.105438, 0.2, 5, -10.239185);
-   stretch7st(t,j,6,4.228053, 0.857550, 1.727873, 3.105438, 0.2, 5, -10.239185,bPlot);
-
-   % WcT ==> ddec
+   % WcT ==> ddec WcW
    [t,j] = calc7st(5,2,2,3,0,2,-5);
    stretch7st(t,j,6.5,5,2,2,3,0,2,-5,bPlot);
     
-   % TcT, a0 ==> ddec ??
+   % TcT, a0 ==> ddec WcW
    [t,j] = calc7st(3,2,1.5,2,3,-2,-3);
    stretch7st(t,j,30,3,2,1.5,2,3,-2,-3,bPlot);
 
