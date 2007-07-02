@@ -162,7 +162,7 @@ void Stp3::planProfile()
     if (target == stop) { // after full stop, we are already at the goal
         _t[1] = _t[2] = 0;       // no acceleration, no cruising phase
         _t[3] = fabs(_v[0]) / _amax;
-        _a[1] = -dir; _a[3] = dir;
+        _a[1] = -dir*_amax; _a[3] = dir*_amax;
         return;
     } else {
         /* direction of cruising phase */

@@ -19,6 +19,10 @@ int sign(double x);
 
 bool isZero(double x);
 
+bool isPositive(double x);
+
+bool isNegative(double x);
+
 void writedArrayToStream(ostringstream &oss, const double* a,
                          int start, int end);
 

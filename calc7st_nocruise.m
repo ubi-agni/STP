@@ -70,10 +70,10 @@ end
     end
 
     if (t(6) == 0 && ~bSecondTrapezoidal) % second part will be wedge-shaped (W)
-        disp('double dec: ?-W');
+        %disp('double dec: ?-W');
     else % second part will be trapezoidal (T)
         t(6)=1; % allow trapez in second part when generating formulas
-        disp('double dec: ?-T');
+        %disp('double dec: ?-T');
     end
 
     % Calculate exact phase duration from given profile t, j
@@ -97,7 +97,7 @@ end
 
 % find correct profile by cutting pieces and descending to shorter profiles
 [t,j,type] = findProfile(t,j,dir, a0,v0,p0, ptarget, jmax,amax);
-disp (sprintf ('profile: %s', type));
+%disp (sprintf ('profile: %s', type));
 
 % Calculate exact phase duration for choosen profile t, j
 % generate set of equations
@@ -151,7 +151,7 @@ if (strcmp (type, 'WT'))
     if (area_w_max > area_t_max)
         % we will cut out the whole t(6) WT -> WW
         t(6) = 0;
-        dt = (abs(a1)-sqrt(a1^2-area_t_max))/jmax;
+        dt = (abs(a1)-sqrt(a1^2-area_t_max*jmax))/jmax;
         t(1) = t(1)-dt;
         t(3) = t(3)-dt;
 

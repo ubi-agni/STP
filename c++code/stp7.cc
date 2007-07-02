@@ -57,7 +57,7 @@ void Stp7::planProfile() {
     
     Stp7::calcjTracks(_t, _j, 3, _x[0], _v[0], _a[0], xStop, v_dummy, a_dummy);
     dir = sign(xTarget-xStop);
-    if (dir == 0) {
+    if (isZero(xTarget-xStop)) {
         for (int i = 4; i < 8; i++) {
             _t[i] = _t[3]; _j[i] = 0;
         }
@@ -97,7 +97,7 @@ void Stp7::planProfile() {
                 : Stp7::PROFILE_WW;
             _bIsddec = (_j[1]==_j[5]);
         } else {
-            // without cruising phase TODO TODO
+            // without cruising phase
             planProfileNoCruise(dir);
             _bHasCruise = false;
         }
@@ -166,7 +166,7 @@ void Stp7::planProfileNoCruise(int dir) {
     // (1)
     // check if we have a double deceleration profile
     if (sign(_j[3]) != sign (_j[5])) {
-        _sProfileType = Stp7::PROFILE_WW;
+        //_sProfileType = Stp7::PROFILE_WW;
         if (_t[6] == 0) {
             // second part is currently wedge, may become trapez
             // calculate maximal shift from first to second deceleration phase
@@ -184,7 +184,7 @@ void Stp7::planProfileNoCruise(int dir) {
                     for (int i = 0; i < 8; i++) _t[i] = tNew[i];
                     // allow trapez in second part when generating formulas:
                     _t[6] = 1;
-                    _sProfileType = Stp7::PROFILE_TT;
+                    //_sProfileType = Stp7::PROFILE_TT;
                 }
             } else {
                 // velocity delta in phase 3 is not enough to extend
@@ -194,6 +194,8 @@ void Stp7::planProfileNoCruise(int dir) {
         }
 
         _bIsddec = true;
+        if (_t[6] == 0) _sProfileType = Stp7::PROFILE_WW;
+        else _sProfileType = Stp7::PROFILE_TT;
         
         // Calculate exact phase duration from given profile t, j
         Stp7Formulars::solveProfile(_t, _sProfileType, _bIsddec, da==-1, dir==1,
@@ -632,7 +634,7 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
         if (area_w_max > area_t_max) {
             // we will cut out the whole t[6] WT -> WW
             t[6] = 0;
-            double dt = (fabs(a1)-sqrt(a1*a1-area_t_max))/jmax;
+            double dt = (fabs(a1)-sqrt(a1*a1-area_t_max*jmax))/jmax;
             t[1] = t[1]-dt;
             t[3] = t[3]-dt;
             if (stillOvershootsTimeInt(t, j, dir, x0, xTarget, v0, a0)) {
@@ -784,6 +786,16 @@ string Stp7::getProfileType() const {
     return _sProfileType;
 }
 
+string Stp7::getDetailedProfileType() const {
+    if (!_plannedProfile)
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+    string result;
+    if (isDoubleDecProfile()) result = "ddec "; else result = "cano ";
+    if (hasCruisingPhase()) result += "c";
+    result += getProfileType();
+    return result;
+}
+
 double Stp7::getSwitchTime(int i) const {
     if (!_plannedProfile)
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -824,13 +836,13 @@ int Stp7::getPhaseIndex(double t) const {
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     if (t < 0)
         throw invalid_argument("Negative time.");
-    if (t < _t[1]) return 0;
-    if (t < _t[2]) return 1;
-    if (t < _t[3]) return 2;
-    if (t < _t[4]) return 3;
-    if (t < _t[5]) return 4;
-    if (t < _t[6]) return 5;
-    if (t < _t[7]) return 6;
+    if (t <= _t[1]) return 0;
+    if (t <= _t[2]) return 1;
+    if (t <= _t[3]) return 2;
+    if (t <= _t[4]) return 3;
+    if (t <= _t[5]) return 4;
+    if (t <= _t[6]) return 5;
+    if (t <= _t[7]) return 6;
     return 7;
 }
 
@@ -895,6 +907,41 @@ double Stp7::jer(double t) const {
     double x, v, a, j;
     move(t, x, v, a, j);
     return j;
+}
+
+void Stp7::sett(int i, double v) {
+    _t[i] = v;
+}
+
+// The function returns an empty string if everything is correct, otherwise
+// an error description is returned.
+string Stp7::testProfile() const {
+    if (!_plannedProfile)
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");   
+
+    // test whether time intervalls are all positive
+    for (int i=1; i<8; i++) {
+        if (!isPositive(_t[i]-_t[i-1])) return "Negative Time Intervalls";
+    }
+    
+    // test for jerk, acc and vel limits at switching points
+    double j,a,v,x;
+    for (int i=1; i<8; i++) {
+        if (isZero(_t[i])) continue;
+        move(_t[i], x, v, a, j);
+        if ((!isZero(fabs(j)-_jmax)) && (!isZero(j))) return "Wrong jerk value!";
+        if (!isNegative(fabs(a)-_amax))
+            return "Broke acc limit!";
+        if (!isNegative(fabs(v)-_vmax)) {
+            if ((sign(a) == sign(v)) || (i >= 5)) return "Broke vel limit!";
+            // the only 'excuse' for braking the vec limit is v0>vmax or v1>vmax
+            // because of a unappropriately starting acceleration.
+            if ((!isPositive(fabs(_v[0])-_vmax)) &&
+                    (!isNegative(_vmax-fabs(0.5*_a[0]*_a[0]*(double)sign(_a[0])/_jmax+_v[0]))))
+                return "Broke vel limit!";
+        }
+    }
+    return "";
 }
 
 std::string Stp7::toString() const {

@@ -30,6 +30,7 @@ public:
     bool isDoubleDecProfile() const;
     bool hasCruisingPhase() const;
     string getProfileType() const;
+    string getDetailedProfileType() const;
     // 1 <= i <= 7. Returns the time of switch between phase (i) and (i+1) of
     // the profile.
     double getSwitchTime(int i) const;
@@ -62,6 +63,10 @@ public:
     
     string toString() const;
     
+    // The function returns an empty string if everything is correct, otherwise
+    // an error description is returned.
+    string testProfile() const;
+    
     static void calcjTrack(double dt, double x0, double v0, double a0, double j,
                         double &newx, double &newv, double &newa);
     // Calculates a given 3rd order profile and writes the resulting position,
@@ -75,8 +80,9 @@ public:
     static void calcjTracksTimeInt(double t[], double j[], int length,
               double x0, double v0, double a0, double &x, double &v, double &a);
     
+        void sett(int i, double v);
 protected:
-    
+
 private:
     // ?[0] is start condition, ?[7] is end condition.
     double _x[8], _v[8], _a[8], _t[8];  // t[i] is point in time, not intervall

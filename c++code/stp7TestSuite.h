@@ -9,9 +9,35 @@
 #define	_stp7TestSuite_H
 
 #include "stp7.h"
+#include <iomanip>
 #include <cxxtest/TestSuite.h>
 
 class Stp7TestSuite: public CxxTest::TestSuite {
+private:
+    double calcFullstopPosition(double x0, double v0, double a0, double amax, double jmax) {
+	Stp3 stp;
+        stp.planFastestProfile(v0, 0, a0, amax, jmax);
+        return stp.pos(stp.getDuration());
+    }
+    
+    double calcZeroCruisePosition(int dir, double x0, double v0, double vmax, double a0, double amax, double jmax) {
+        double t[8], j[8];
+        double xStop, v_dummy, a_dummy;
+        // position change just from acc and dec phase:
+        Stp3 stp3Acc, stp3Dec;
+        stp3Acc.planFastestProfile(v0, dir*vmax, a0, amax, jmax);
+        stp3Dec.planFastestProfile(dir*vmax, 0, 0, amax, jmax);
+        // position change:
+        stp3Acc.getTimeArray(t);
+        stp3Acc.getAccArray(j);
+        stp3Dec.getTimeArray(&(t[4]));
+        stp3Dec.getAccArray(&(j[4]));
+        t[4] = 0; j[4] = 0;
+        for (int i = 4; i < 8; i++) t[i] += t[3];
+        Stp7::calcjTracks(t, j, 7, x0, v0, a0, xStop, v_dummy, a_dummy);
+        return xStop;
+    }
+	
 public:
     void testBasics( void ) {
         Stp7 stp;
@@ -22,7 +48,63 @@ public:
         TS_ASSERT_DELTA(stp.pos(8.46),30,0.05);
         TS_ASSERT_DELTA(stp.vel(8.46),0,0.1);
         TS_ASSERT_DELTA(stp.acc(8.46),0,0.1);
+        TS_ASSERT_EQUALS(stp.testProfile(), "");
+        stp.sett(1,10);
+        TS_ASSERT_DIFFERS(stp.testProfile(), "");
     };
+    
+    void testAutomatedFastestProfileTest(void) {
+        // Runs 980+49 tests covering all possible cases for the planning of
+        // time optimal profiles, both ddec and canonical ones.
+        Stp7 stp;
+        
+        int count = 0;
+        double amax = 1.;
+        double vmax = 1.;
+        double jmax = 1.5;
+        double xtarget;
+
+        double x0 = 0.;
+        double a0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        double v0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        
+        string testResult;
+        
+        for (int i_a = 0; i_a < 7; i_a++) {
+            for (int i_v = 0; i_v < 7; i_v++) {
+                double x_fullstop = calcFullstopPosition(x0, v0[i_v], a0[i_a], amax, jmax);
+                TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, x_fullstop, v0[i_v], vmax, a0[i_a], amax, jmax));
+                testResult = stp.testProfile();
+                if (testResult != "") {
+                    cout << stp.toString();
+                    cout << setprecision(10) << "Testing planFastestProfile(" << x0 << ", " << x_fullstop
+                        << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
+                        << ", " << amax << ", " << jmax << ")" << endl;
+                    }
+                TS_ASSERT_EQUALS(testResult, "");
+                count++;
+                double x_neg = calcZeroCruisePosition(-1, x0, v0[i_v], vmax, a0[i_a], amax, jmax);
+		double x_pos = calcZeroCruisePosition(1, x0, v0[i_v], vmax, a0[i_a], amax, jmax);
+                double dp = fabs((x_neg-x_pos)/9);
+                if (x_pos < x_neg) x_neg = x_pos;
+                for (int i_x=-5; i_x<15; i_x++) {
+                    xtarget = x_neg + i_x*dp;
+                    TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, xtarget, v0[i_v], vmax, a0[i_a], amax, jmax));
+                    testResult = stp.testProfile();
+                    if (testResult != "") {
+                        cout << stp.toString();
+                        cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget
+                            << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
+                            << ", " << amax << ", " << jmax << ")" << endl;
+                    }
+                    TS_ASSERT_EQUALS(testResult, "");
+                    //cout << stp.getDetailedProfileType();
+                    count++;
+                }
+            }
+        }
+        cout << endl << "Calculated time optimal profile for " << count << " different start conditions." << endl;
+    }
     
     void testCruiseProfilesStandard(void) {
         Stp7 stp;
@@ -297,7 +379,7 @@ public:
         TS_ASSERT(!stp.isDoubleDecProfile());
     }
     
-    void _testProblemCasesStretched() {
+    void testProblemCasesStretched() {
         Stp7 stp;
         
         TS_WARN("Only tests whether the right TYPE of profile was found.");

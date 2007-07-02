@@ -2,6 +2,18 @@
 % j = (j1 j2 ... jn) ... jerks for the n phases
 function [isCorrect, reason] = testjTracks(t,j,a0,v0,p0,jmax,amax,vmax,ptarget)
 
+if (numel(t) == 7) 
+    output = 'Profile: ';
+    if (j(1) == j(5)) output = [output, 'ddec ']; else output = [output, 'can ']; end
+    if (t(2) == 0) output = [output, 'W']; else output = [output, 'T']; end
+    if (t(4) ~= 0) output = [output, 'c']; end
+    if (t(6) == 0) output = [output, 'W']; else output = [output, 'T']; end
+    disp(output);
+else
+    disp('Expected 7 elements in t vector...');
+    t
+end
+
 derr = 0.000001;
 
 a=a0;
