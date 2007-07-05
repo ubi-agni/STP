@@ -5,6 +5,16 @@
 // Created on 22. April 2007, 17:06
 //
 
+/*
+ * TODO:
+ * o) Einspeisen der Lösungen für alle stretched double dec Fälle:
+ *      - TW
+ *      - TT, TcT
+ *      - WT, WcT
+ * o) Systematischer Test für stretched profile
+ * o) Profiling / Zeitanalyse ==> worst case: wieviele ddec ==> stretched ddec / sec. ?
+ */
+
 #include "polynomial.h"
 #include "complex.h"
 #include <stdlib.h>
@@ -198,7 +208,7 @@ void Stp7::planProfileNoCruise(int dir) {
         else _sProfileType = Stp7::PROFILE_TT;
         
         // Calculate exact phase duration from given profile t, j
-        Stp7Formulars::solveProfile(_t, _sProfileType, _bIsddec, da==-1, dir==1,
+        Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax);
         _sProfileType = getProfileString(_t);
         
@@ -215,7 +225,7 @@ void Stp7::planProfileNoCruise(int dir) {
     
     // Calculate exact phase duration for choosen profile t, j
     // j[0..7] are already the correct values!
-    Stp7Formulars::solveProfile(_t, _sProfileType, _bIsddec, da==-1, dir==1,
+    Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax);
     
     convertTimeIntervallsToPoints();
@@ -323,29 +333,16 @@ double Stp7::scaleToDuration(double newDuration) {
     
     if (useDDec) {
         // double deceleration branch
-        findProfileTypeStretchDoubleDec(newDuration);
-        // extend simple profile computed in useDoubleDeceleration() to
-        // wedge-shaped profile
-        _t[1] = 1; _t[3] = 1;
-        _sProfileType = getProfileString(_t);
-        _bIsddec = true;
-        if (_sProfileType == Stp7::PROFILE_TT || _sProfileType == Stp7::PROFILE_WT) {
-            TS_WARN("stretch ddec ?T - TODO");
-            //solveProfileTT(_t, _x[0], _x[7], _v[0], _a[0], _amax, _jmax, da, dir);
-        } else if (_sProfileType == Stp7::PROFILE_TW || _sProfileType == Stp7::PROFILE_WW) {
-            //TS_WARN("stretch ddec ?W - TODO");
-            Stp7Formulars::solveProfile(_t, _sProfileType, _bIsddec, da==-1, dir==1,
-                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
-        } else throw invalid_argument("Unknown profile!");
+        planProfileStretchDoubleDec(newDuration, dir, da);
         _bHasCruise = (_t[4] != 0);
     } else {
         // normal profile branch
         _bIsddec = false;
         findProfileTypeStretchCanonical(newDuration);
         _sProfileType = getProfileString(_t);
-        Stp7Formulars::solveProfile(_t, _sProfileType, _bIsddec, da==-1, dir==1,
+        _bHasCruise = (_t[4] != 0);
+        Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
-        this->_bHasCruise = (_t[4] != 0);
     }
     convertTimeIntervallsToPoints();
     
@@ -367,7 +364,7 @@ void Stp7::adaptProfile(double t[8], double j[8], double xtarget, double x0, dou
 }
 
 bool Stp7::stillTooShort(double t[8], double newDuration) {
-     return (t[1]+t[2]+t[3]+t[4]+t[5]+t[6]+t[7] < newDuration);
+    return (t[1]+t[2]+t[3]+t[4]+t[5]+t[6]+t[7] < newDuration);
 }
 
 void Stp7::findProfileTypeStretchCanonical(double newDuration) {
@@ -453,7 +450,7 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
     return;
 }
 
-void Stp7::findProfileTypeStretchDoubleDec(double newDuration) {
+void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da) {
     // find correct double deceleration profile by shifting area from second
     // deceleration to first deceleration part.
     // We can get two type of deceleration profiles here:
@@ -467,35 +464,59 @@ void Stp7::findProfileTypeStretchDoubleDec(double newDuration) {
     double tdec[4];
     
     if (!isZero(a3)) {
-        // 1) Time-optiomal profile was double deceleration already
-        // In this case we must check, whether we can reach a3 = 0 (to insert
-        // a cruising phase
-        double tz = fabs(a3/_jmax); // time needed to reach zero acceleration
-        // Try to shorten deceleration profile, such that a3 reaches zero in between
-        // Because removeArea works on complete profiles only, we extend the
-        // deceleration profile by tz and remove the triangular area 0.5*a3*tz twice.
-        tdec[1] = _t[5]+tz; tdec[2] = _t[6]; tdec[3] = _t[7];
-        removeAreaTimeInt(tdec, fabs(a3*tz), _amax, _jmax);
-        // adapt profile to reach target again
-        double tn[8];
-        tn[1] = _t[1]; tn[2] = _t[2]; tn[3] = _t[3]; tn[4] = 0;
-        tn[5] = tdec[1]; tn[6] = tdec[2]; tn[7] = tdec[3];
-        adaptProfile (tn, _j, _x[7], _x[0], _v[0], _a[0]);
-        // if target is overshooted while trying to set a3=0, 
-        // adaptProfile will return negative time tn(4).
-        if (tn[4] < 0 || !stillTooShort(tn,newDuration))
-             // If deceleration profile is trapezoidal, it might become triangular
-            if (_t[6] != 0 && tn[6] == 0) {
-                // Delta * abs(a3) = amax * t(6)
-                double delta = _amax * _t[6] / fabs(a3); // time to extend t(3) and t(5)
-                tn[1] = _t[1]; tn[2] = _t[2]; tn[3] = _t[3]+delta; tn[4] = 0;
-                tn[5] = _t[5]+delta; tn[6] = 0; tn[7] = _t[7];
-                adaptProfile (tn,_j,_x[7],_x[0],_v[0],_a[0]);
-                tn[4] = 0;
-                if (~stillTooShort(tn,newDuration)) for (int i = 0; i < 8; i++) _t[i] = tn[i];
-            }
-            return; // keep existing profile
-        for (int i = 0; i < 8; i++) _t[i] = tn[i]; // use adapted profile for further checks
+        // We now have to stretch a double deceleration profile without a
+        // cruising phase, which is the most complex possible case.
+        // It turns out, that we can't distinguish between the 8 profile types
+        // without actually trying to compute them and see whether we get a
+        // correct solution or not.
+        // However - since we will shift area under the acc-graph
+        // from the second part of the movement to the first, the unstretched
+        // profile type already limits the possible outcomes:
+        // TT==>{TT,TW}, TW==>{TW}, WT==>{WT,WW,TW,TT}, WW==>{WW,TW}
+        // In each of this cases, t4 could either be zero or not.
+        
+        // First put all profiles to test as columns into a matrix:
+        string profilesToTest[4];
+        double length = 0;
+        
+        if ((_t[2] != 0) && (_t[6] != 0)) { // TT
+            length = 2;
+            profilesToTest[0] = Stp7::PROFILE_TT;
+            profilesToTest[1] = Stp7::PROFILE_TW;
+        } else if ((_t[2] != 0) && (_t[6] == 0)) { // TW
+            length = 1;
+            profilesToTest[0] = Stp7::PROFILE_TW;
+        } else if ((_t[2] == 0) && (_t[6] != 0)) { // WT
+            length = 4;
+            profilesToTest[0] = Stp7::PROFILE_TT;
+            profilesToTest[1] = Stp7::PROFILE_TW;
+            profilesToTest[2] = Stp7::PROFILE_WT;
+            profilesToTest[3] = Stp7::PROFILE_WW;
+        } else if ((_t[2] == 0) && (_t[6] == 0)) { // WW
+            length = 2;
+            profilesToTest[0] = Stp7::PROFILE_TW;
+            profilesToTest[1] = Stp7::PROFILE_WW;
+        }
+    
+        // now test all profiles in until we found the right one:
+        _bIsddec = true;
+        for (int i = 0; i < length; i++) {
+            _sProfileType = profilesToTest[i];
+            try {
+                // with cruising phase
+                Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
+                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+                return;
+            } catch (exception e) {}
+            try {
+                // without cruising phase
+                Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
+                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+                return;
+            } catch (exception e) {}
+        }
+        throw logic_error("No solution found for stretched double dec profile.");
+
     } else { // ==> a3 == 0
         double t0;
         if (sign(_a[0]) != sign(_j[5])) {
@@ -515,7 +536,13 @@ void Stp7::findProfileTypeStretchDoubleDec(double newDuration) {
 
         shiftDoubleDecArea (_t,_j,newDuration-t0, x0, _x[7], v0, _vmax, a0, _amax, _jmax);
         _t[1] = _t[1] + t0;
-        return;
+        
+        // extend simple profile to wedge-shaped profile
+        _t[1] = 1; _t[3] = 1;
+        _sProfileType = getProfileString(_t);
+        _bIsddec = true;
+        Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
+                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
     }
 }
 
@@ -554,16 +581,16 @@ void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration,
         
         addAreaTimeInt (curFirst + deltaV - wedgeMax, amax,jmax, tacc);
         double tdec[4];
-        tdec[1] = t[5]; tdec[2] = t[6]; tdec[3] = t[7];
+        tdec[0] = 0; tdec[1] = t[5]; tdec[2] = t[6]; tdec[3] = t[7];
         removeAreaTimeInt (tdec, deltaV, amax,jmax);
         double tn[8];
-        tn[1] = tacc[1]; tn[2] = tacc[2]; tn[3] = tacc[3]; tn[4] = t[4];
-        tn[5] = tdec[1]; tn[6] = tdec[2]; tn[7] = tdec[3];
+        tn[0] = 0; tn[1] = tacc[1]; tn[2] = tacc[2]; tn[3] = tacc[3];
+        tn[4] = t[4]; tn[5] = tdec[1]; tn[6] = tdec[2]; tn[7] = tdec[3];
         adaptProfile (tn, j, xTarget, x0, v0, a0);
         // if we overshoot in time, t contains the correct profile
-        if (~stillTooShort(tn,newDuration)) return;
+        if (!stillTooShort(tn,newDuration)) return;
         // otherwise continue probing with adapted profile
-        for (int i = 0; i < 6; i++) t[i] = tn[i]; // use adapted profile for further checkst = tn;
+        for (int i = 0; i < 7; i++) t[i] = tn[i]; // use adapted profile for further checkst = tn;
         curFirst = curFirst + deltaV;
         curLast  = curLast  - deltaV;
     }

@@ -2,20 +2,34 @@
 bPlot = true;
 
 if (false)
-   % WT, ddec ==> TcW, ddec
-   % PROBLEM: results in WcW breaking the amax limit
+   % WW, ddec ==> WW, ddec
+   [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 4.5, -10);
+   stretch7st(t,j,6,4.5, 0.8, 1.7, 3, 0.2, 4.5, -10, bPlot);
+    
+   % WW, ddec ==> WcW, ddec
+   [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 4.5, -10);
+   stretch7st(t,j,7,4.5, 0.8, 1.7, 3, 0.2, 4.5, -10, bPlot);
+   
+    % TT, ddec ==> TcW, ddec
+   [t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
+   stretch7st(t,j,7.5,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
+   
+   % WT, ddec ==> TW, ddec
    [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
    stretch7st(t,j,6,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
    
-   % WT, ddec ==> WcT, ddec
-   % PROBLEM: results in WcW breaking the amax limit
+   % WT, ddec ==> WT, ddec
    [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
    stretch7st(t,j,5.5,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
    
-   % TT, ddec ==> ???
-   % PROBLEM: finds no solution
+   % WT, ddec ==> WcT, ddec
+   [t,j] = calc7st(8, 0.8, 1.4, 3.5, -0.1, 5, -10);
+   stretch7st(t,j,7,8, 0.8, 1.4, 3.5, -0.1, 5, -10,bPlot);
+   
+   % TT, ddec ==> TT, ddec
    [t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
-   stretch7st(t,j,7,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
+   stretch7st(t,j,6.3,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
+   
 end
 
 if (false)    

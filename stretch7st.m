@@ -18,7 +18,7 @@ else
     if (bUseDoubleDeceleration)
         % double deceleration branch
         disp('Double Deceleration Case');
-        [t, j] = findProfileDoubleDec (td,jd,T, a0,v0,p0, ptarget, jmax,amax);
+        [t, j] = findProfileDoubleDec (td,jd,T, dir,a0,v0,p0, ptarget, jmax,amax,vmax);
         % extend simple profile computed in useDoubleDeceleration() to wedge-shaped profile
         t(1) = 1; t(3) = 1;
     else
@@ -115,7 +115,7 @@ t(4) = t(4) + (p_target - p_reached) / v3_new;
 return
 
 
-function [t,j] = findProfileDoubleDec (t,j,T, a0,v0,p0, ptarget, jmax,amax)
+function [t,j] = findProfileDoubleDec (t,j,T, dir, a0,v0,p0, ptarget, jmax,amax,vmax)
 % find correct double deceleration profile by shifting area from second
 % deceleration to first deceleration part.
 % We can get two type of deceleration profiles here:
@@ -123,30 +123,71 @@ function [t,j] = findProfileDoubleDec (t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % 2) all other profiles: a(3) == 0, there might be profile [0 0 t3] / [t1 0 0]
 a3 = calcjTracks (t(1:3), j(1:3), a0,v0,p0);
 if (~isZero(a3))
-    % 1) Time-optimal profile was double deceleration already
-    %    In this case we must check, whether we can reach a3 = 0 (to insert
-    %    a cruising phase
-    tz = abs(a3/jmax); % time needed to reach zero acceleration
-    % Try to shorten deceleration profile, such that a3 reaches zero in between
-    % Because removeArea works on complete profiles only, we extend the
-    % deceleration profile by tz and remove the triangular area 0.5*a3*tz twice.
-    [isPossible, tdec] = removeArea([t(5)+tz t(6) t(7)], abs(a3*tz), jmax,amax);
-    % adapt profile to reach target again
-    tn = adaptProfile ([t(1:2) t(3)+tz  0  tdec],j, ptarget, a0,v0,p0);
-    % if target is overshooted while trying to set a3=0, 
-    % adaptProfile will return negative time tn(4).
-    if (tn(4) < 0 || ~stillTooShort(tn,T))
-        % If deceleration profile is trapezoidal, it might become triangular
-        if (t(6) ~= 0 && tn(6) == 0)
-            % Delta * abs(a3) = amax * t(6)
-            Delta = amax * t(6) / abs(a3); % time to extend t(3) and t(5)
-            tn = adaptProfile ([t(1:2) t(3)+Delta 0 t(5)+Delta 0 t(7)],j, ptarget, a0,v0,p0);
-            tn(4) = 0;
-            if (~stillTooShort(tn,T)) t = tn; end
-        end
-        return % keep existing profile
+    % We now have to stretch a double deceleration profile without a
+    % cruising phase, which is the most complex possible case.
+    % It turns out, that we can't distinguish between the 8 profile types
+    % without actually trying to compute them and see whether we get a
+    % correct solution or not.
+    % However - since we will shift area under the acc-graph
+    % from the second part of the movement to the first, the unstretched
+    % profile type already limits the possible outcomes:
+    % TT==>{TT,TW}, TW==>{TW}, WT==>{WT,WW,TW,TT}, WW==>{WW,TW}
+    % In each of this cases, t4 could either be zero or not.
+    
+    % First put all profiles to test as columns into a matrix:
+    clear Mt;
+    if (t(2) ~= 0) && (t(6) ~= 0) % TT
+        Mt{1} = [1 1 1 1 1 1 1]; Mt{2} = [1 1 1 0 1 1 1]; % TT
+        Mt{3} = [1 1 1 1 1 0 1]; Mt{4} = [1 1 1 0 1 0 1]; % TW
+    elseif (t(2) ~= 0) && (t(6) == 0) % TW
+        Mt{1} = [1 1 1 1 1 0 1]; Mt{2} = [1 1 1 0 1 0 1]; % TW
+    elseif (t(2) == 0) && (t(6) ~= 0) % WT
+        Mt{1} = [1 1 1 1 1 1 1]; Mt{2} = [1 1 1 0 1 1 1]; % TT
+        Mt{3} = [1 1 1 1 1 0 1]; Mt{4} = [1 1 1 0 1 0 1]; % TW
+        Mt{5} = [1 0 1 1 1 1 1]; Mt{6} = [1 0 1 0 1 1 1]; % WT
+        Mt{7} = [1 0 1 1 1 0 1]; Mt{8} = [1 0 1 0 1 0 1]; % WW
+    elseif (t(2) == 0) && (t(6) == 0) % WW
+        Mt{1} = [1 1 1 1 1 0 1]; Mt{2} = [1 1 1 0 1 0 1]; % TW
+        Mt{3} = [1 0 1 1 1 0 1]; Mt{4} = [1 0 1 0 1 0 1]; % WW
     end
-    t = tn; % use adapted profile for further checks
+    
+    % Now test all profiles in Mt until we found the right one:
+    for ii=1:numel(Mt),
+       try
+           [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(Mt{ii}, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+           SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+           t = solveAll ([A V TEQ SUM_EQ P], TVARS);
+           j = j;
+           return;
+       end
+    end
+    disp('This should not happen: Found no solution when stretching double dec profile');
+    
+% Unfortunately, the following code is not working...    
+%     % 1) Time-optimal profile was double deceleration already
+%     %    In this case we must check, whether we can reach a3 = 0 (to insert
+%     %    a cruising phase
+%     tz = abs(a3/jmax); % time needed to reach zero acceleration
+%     % Try to shorten deceleration profile, such that a3 reaches zero in between
+%     % Because removeArea works on complete profiles only, we extend the
+%     % deceleration profile by tz and remove the triangular area 0.5*a3*tz twice.
+%     [isPossible, tdec] = removeArea([t(5)+tz t(6) t(7)], abs(a3*tz), jmax,amax);
+%     % adapt profile to reach target again
+%     tn = adaptProfile ([t(1:2) t(3)+tz  0  tdec],j, ptarget, a0,v0,p0);
+%     % if target is overshooted while trying to set a3=0, 
+%     % adaptProfile will return negative time tn(4).
+%     if (tn(4) < 0 || ~stillTooShort(tn,T))
+%         % If deceleration profile is trapezoidal, it might become triangular
+%         if (t(6) ~= 0 && tn(6) == 0)
+%             % Delta * abs(a3) = amax * t(6)
+%             Delta = amax * t(6) / abs(a3); % time to extend t(3) and t(5)
+%             tn = adaptProfile ([t(1:2) t(3)+Delta 0 t(5)+Delta 0 t(7)],j, ptarget, a0,v0,p0);
+%             tn(4) = 0;
+%             if (~stillTooShort(tn,T)) t = tn; end
+%         end
+%         return % keep existing profile
+%     end
+%     t = tn; % use adapted profile for further checks
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

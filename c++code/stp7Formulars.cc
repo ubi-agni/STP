@@ -34,12 +34,12 @@ using namespace std;
  * The results will be written to the t array.
  */
 void Stp7Formulars::solveProfile(double t[8],
-        string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+        string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double stretchToTime) {
     // get the coeffients of the polynomial we need to find the roots of
     double coeffs[7] = {0.,0.,0.,0.,0.,0.};
-    calcCoeffs(coeffs, type, bDoubleDec, bDecAcc, bMoveForward, x0, xTarget,
+    calcCoeffs(coeffs, type, bCruise, bDoubleDec, bDecAcc, bMoveForward, x0, xTarget,
             v0, vmax, a0, amax, jmax, stretchToTime, t);
     // create polynomial
     Polynomial p(6, coeffs);
@@ -57,7 +57,7 @@ void Stp7Formulars::solveProfile(double t[8],
         root = c.r;
         
         // calc the time intervalls for this root and check if they are valid
-        calcTimeIntervalls(t, type, bDoubleDec, bDecAcc, bMoveForward, root, x0,
+        calcTimeIntervalls(t, type, bCruise, bDoubleDec, bDecAcc, bMoveForward, root, x0,
                 xTarget, v0, vmax, a0, amax, jmax, stretchToTime);
         if (!areValidTimeIntervalls(t)) continue;
         
@@ -77,7 +77,7 @@ void Stp7Formulars::solveProfile(double t[8],
     
     // otherwise give back the best solution
     root = bestRoot;
-    calcTimeIntervalls(t, type, bDoubleDec, bDecAcc, bMoveForward, root, x0,
+    calcTimeIntervalls(t, type, bCruise, bDoubleDec, bDecAcc, bMoveForward, root, x0,
                 xTarget, v0, vmax, a0, amax, jmax, stretchToTime);
 }
 
@@ -91,7 +91,7 @@ bool Stp7Formulars::areValidTimeIntervalls(double t[8]) {
 
 
 void Stp7Formulars::calcCoeffs(double coeffs[7],
-        string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+        string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double stretchToTime,
         double t[8]) {
@@ -140,25 +140,51 @@ void Stp7Formulars::calcCoeffs(double coeffs[7],
     } else { // stretched Profile
         // double deceleration?
         if (bDoubleDec) {
-            // case distinction for profile type
-            if (type == Stp7::PROFILE_TT) {
-                // double dec TT profile
-                
-                //return;
-            } else if (type == Stp7::PROFILE_WT) {
-                // double dec WT profile
-                
-                //return;
-            } else if (type == Stp7::PROFILE_WW) {
-                // double dec WW profile
-                //cout << "Coeffs for Stretched DoubleDec WW" << endl;
-                calcCoeffsStretchedDoubleDecProfileWW(coeffs,x0,xTarget,v0,vmax,a0,amax,
-                        jmax,da,dc,stretchToTime); 
-                return;
-            } else if (type == Stp7::PROFILE_TW) {
-                // double dec TW profile
-                
-                //return;
+            // with cruising phase?
+            if (bCruise) { // with cruising phase
+                // case distinction for profile type
+                if (type == Stp7::PROFILE_TT) {
+                    // double dec TcT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WT) {
+                    // double dec WcT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WW) {
+                    // double dec WcW profile
+                    //cout << "Coeffs for Stretched DoubleDec WcW" << endl;
+                    calcCoeffsStretchedDoubleDecProfileWcW(coeffs,x0,xTarget,v0,vmax,a0,amax,
+                            jmax,da,dc,stretchToTime); 
+                    return;
+                } else if (type == Stp7::PROFILE_TW) {
+                    // double dec TcW profile
+                    //cout << "Coeffs for Stretched DoubleDec TcW" << endl;
+                    calcCoeffsStretchedDoubleDecProfileTcW(coeffs,x0,xTarget,v0,vmax,a0,amax,
+                            jmax,da,dc,stretchToTime); 
+                    return;
+                }
+            } else { // without cruising phase
+                // case distinction for profile type
+                if (type == Stp7::PROFILE_TT) {
+                    // double dec TT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WT) {
+                    // double dec WT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WW) {
+                    // double dec WW profile
+                    //cout << "Coeffs for Stretched DoubleDec WW" << endl;
+                    calcCoeffsStretchedDoubleDecProfileWW(coeffs,x0,xTarget,v0,vmax,a0,amax,
+                            jmax,da,dc,stretchToTime); 
+                    return;
+                } else if (type == Stp7::PROFILE_TW) {
+                    // double dec TW profile
+
+                    //return;
+                }   
             }
         } else {
             // case distinction for profile type
@@ -190,11 +216,11 @@ void Stp7Formulars::calcCoeffs(double coeffs[7],
         }    
     }
     // unknown profile type, throw exception
-    throw logic_error("Unknown profile: " + type + ".");
+    throw logic_error("Unknown profile: " + type + (bCruise ? ", " : ", no ") + "cruise.");
 }
 
 void Stp7Formulars::calcTimeIntervalls(double t[8],
-        string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+        string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double root, double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double stretchToTime) {
     double da = bDecAcc ? -1 : 1;
@@ -242,26 +268,51 @@ void Stp7Formulars::calcTimeIntervalls(double t[8],
     } else { // stretched Profile
         // double deceleration?
         if (bDoubleDec) {
-            // case distinction for profile type
-            if (type == Stp7::PROFILE_TT) {
-                // double dec TT profile
-                
-                //return;
-            } else if (type == Stp7::PROFILE_WT) {
-                // double dec WT profile
-                
-                //return;
-            } else if (type == Stp7::PROFILE_WW) {
-                // double dec WW profile
-                
-                //cout << "Times for Stretched DoubleDec ?W" << endl;
-                calcTimeIntervallsStretchedDoubleDecProfileWW(t,root,x0,xTarget,v0,vmax,a0,amax,
+            // with cruising phase?
+            if (bCruise) { // with cruising phase
+                // case distinction for profile type
+                if (type == Stp7::PROFILE_TT) {
+                    // double dec TcT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WT) {
+                    // double dec WcT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WW) {
+                    // double dec WcW profile
+                    //cout << "Times for Stretched DoubleDec WcW" << endl;
+                    calcTimeIntervallsStretchedDoubleDecProfileWcW(t,root,x0,xTarget,v0,vmax,a0,amax,
                         jmax,da,dc,stretchToTime);
-                return;
-            } else if (type == Stp7::PROFILE_TW) {
-                // double dec TW profile
-                
-                //return;
+                    return;
+                } else if (type == Stp7::PROFILE_TW) {
+                    // double dec TcW profile
+                    //cout << "Times for Stretched DoubleDec TcW" << endl;
+                    calcTimeIntervallsStretchedDoubleDecProfileTcW(t,root,x0,xTarget,v0,vmax,a0,amax,
+                        jmax,da,dc,stretchToTime);
+                    return;
+                }
+            } else { // without cruising phase
+                // case distinction for profile type
+                if (type == Stp7::PROFILE_TT) {
+                    // double dec TT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WT) {
+                    // double dec WT profile
+
+                    //return;
+                } else if (type == Stp7::PROFILE_WW) {
+                    // double dec WW profile
+                    //cout << "Times for Stretched DoubleDec WW" << endl;
+                    calcTimeIntervallsStretchedDoubleDecProfileWW(t,root,x0,xTarget,v0,vmax,a0,amax,
+                        jmax,da,dc,stretchToTime);
+                    return;
+                } else if (type == Stp7::PROFILE_TW) {
+                    // double dec TW profile
+
+                    //return;
+                }   
             }
         } else {
             // case distinction for profile type
@@ -293,7 +344,7 @@ void Stp7Formulars::calcTimeIntervalls(double t[8],
         }    
     }
     // unknown profile type, throw exception
-    throw logic_error("Unknown profile: " + type + ".");
+    throw logic_error("Unknown profile: " + type + (bCruise ? ", " : ", no ") + "cruise.");
 }
 
 
@@ -1020,7 +1071,7 @@ void Stp7Formulars::calcTimeIntervallsStretchedProfileWT(double t[8], double roo
     t[7] = t[5];
 }
 
-void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileWW(double coeffs[7],
+void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileWcW(double coeffs[7],
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime) {
@@ -1063,7 +1114,7 @@ void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileWW(double coeffs[7],
     coeffs[0] = t104 + t175;
 }
 
-void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], double root,
+void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileWcW(double t[8], double root,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime) {
@@ -1109,5 +1160,107 @@ void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], d
     }
     t[5] = root / dc / jmax;
     t[6] = 0.;
+    t[7] = t[5];
+}
+
+void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileWW(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime) {
+    double t1 = a0 * a0;
+    double t4 = dc * jmax;
+    double t12 = jmax * jmax;
+    double t13 = stretchToTime * stretchToTime;
+    double t14 = t12 * t13;
+    double t19 = v0 * dc;
+    double t27 = xTarget * t12;
+    double t31 = x0 * t12;
+    double t33 = t12 * jmax;
+    double t35 = t33 * t13 * stretchToTime;
+    double t42 = t1 * a0;
+    double t47 = stretchToTime * t1;
+    double t58 = -0.96e2 * t27 - 0.96e2 * t27 * da + 0.96e2 * t31 + 0.12e2 * t35 * dc - 0.12e2 * t14 * a0 + 0.96e2 * t31 * da - 0.4e1 * t42 - 0.12e2 * t14 * a0 * da - 0.12e2 * t4 * t47 * da - 0.4e1 * t42 * da + 0.12e2 * t35 * dc * da - 0.12e2 * t4 * t47;
+    double t64 = t33 * stretchToTime;
+    double t70 = t12 * t12;
+    double t71 = t13 * t13;
+    double t77 = v0 * v0;
+    double t83 = t1 * t1;
+    
+    coeffs[2] = 0.12e2 * t1 * da + 0.24e2 * t4 * stretchToTime * da * a0 + 0.24e2 * t4 * stretchToTime * a0 - 0.12e2 * t14 - 0.12e2 * t14 * da + 0.12e2 * t1 + 0.48e2 * t19 * jmax + 0.48e2 * t19 * jmax * da;
+    coeffs[1] = t58;
+    coeffs[0] = 0.6e1 * t14 * t1 + 0.96e2 * t27 * a0 - 0.96e2 * t64 * dc * x0 - 0.96e2 * t31 * a0 - 0.3e1 * t70 * t71 + 0.4e1 * t4 * stretchToTime * t42 + 0.48e2 * t77 * t12 - 0.48e2 * t33 * t13 * t19 + t83 + 0.96e2 * t64 * dc * xTarget - 0.12e2 * t35 * dc * a0;
+}
+
+void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime) {
+    double frac;
+    {
+        double t1 = jmax * jmax;
+        frac = 0.1e1 / (0.4e1 * stretchToTime * t1 - 0.4e1 * dc * jmax * da * root + (-0.4e1 * jmax * root + 0.4e1 * jmax * a0) * dc);
+    }
+    t[1] = root / dc / jmax;
+    t[2] = 0.;
+    {
+        double t3 = jmax * jmax;
+        double t4 = stretchToTime * stretchToTime;
+        double t6 = a0 * a0;
+        double t12 = jmax * stretchToTime;
+        t[3] = (-0.2e1 * root * a0 + t3 * t4 - t6 + 0.2e1 * dc * jmax * stretchToTime * da * root + (-0.2e1 * t12 * root - 0.2e1 * t12 * a0 - 0.4e1 * v0 * jmax) * dc + 0.2e1 * a0 * da * root) * frac;
+    }
+    t[4] = 0.;
+    t[5] = (-root + dc * jmax * stretchToTime + a0 - da * root) / dc / jmax / 0.2e1;
+    t[6] = 0.;
+    {
+        double t3 = jmax * jmax;
+        double t4 = stretchToTime * stretchToTime;
+        double t6 = a0 * a0;
+        double t14 = jmax * stretchToTime;
+        t[7] = (0.2e1 * root * a0 + t3 * t4 - t6 - 0.2e1 * dc * jmax * stretchToTime * da * root + (0.4e1 * v0 * jmax - 0.2e1 * t14 * root + 0.2e1 * t14 * a0) * dc + 0.2e1 * a0 * da * root) * frac;
+    }
+}
+
+void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileTcW(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime) {
+    double t3 = dc * da;
+    double t6 = da * amax;
+    double t16 = a0 * a0;
+    double t19 = amax * amax;
+    double t24 = v0 * jmax;
+    double t36 = jmax * jmax;
+    double t37 = t36 * amax;
+    double t44 = v0 * v0;
+    double t50 = t16 * t16;
+    
+    coeffs[4] = 0.12e2;
+    coeffs[3] = - 0.24e2 * amax * t3;
+    coeffs[2] = 0.24e2 * t6 * jmax * stretchToTime - 0.24e2 * dc * v0 * jmax - 0.24e2 * dc * a0 * amax - 0.12e2 * da * t16 - 0.12e2 * t19 * da;
+    coeffs[1] = 0;
+    coeffs[0] = 0.12e2 * t24 * t3 * t16 + 0.8e1 * t16 * a0 * dc * t6 + 0.12e2 * jmax * t19 * t3 * v0 + 0.24e2 * t37 * t3 * x0 - 0.24e2 * t37 * t3 * xTarget + 0.12e2 * t44 * t36 + 0.24e2 * t24 * a0 * amax + 0.3e1 * t50 + 0.6e1 * t16 * t19;
+}
+
+void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileTcW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime) {
+    t[1] = (dc * da * amax + a0) / da / dc / jmax;
+    {
+        double t1 = a0 * a0;
+        double t2 = amax * amax;
+        double t3 = pow(root, 0.2e1);
+        t[2] = (t1 - t2 + (-0.2e1 * t3 - t2) * da + 0.2e1 * v0 * jmax * da * dc) / jmax / amax / 0.2e1;
+    }
+    t[3] = da * amax / jmax;
+    {
+        double t1 = amax * amax;
+        double t2 = a0 * a0;
+        double t9 = pow(root, 0.2e1);
+        t[4] = (-t1 - t2 + 0.2e1 * stretchToTime * amax * jmax - 0.4e1 * root * dc * amax + (0.2e1 * t9 - t1) * da + (-0.2e1 * a0 * amax - 0.2e1 * v0 * jmax) * dc * da) / jmax / amax / 0.2e1;
+    }
+    t[5] = root / dc / jmax;
+    t[6] = 0;
     t[7] = t[5];
 }

@@ -109,21 +109,6 @@ private:
                                   double &tDelta, double &t5, double &t7);
     static string getProfileString(double t[8]);
     
-    static void solveProfileWW(double t[8], double x0, double xTarget, double v0,
-                                      double a0, double j, double da, double dc);
-    
-    static void solveProfileTW(double t[8], double x0, double xTarget, double v0,
-                      double a0, double amax, double jmax, double da, double dc);
-    
-    static void solveProfileWT(double t[8], double x0, double xTarget, double v0,
-                      double a0, double amax, double jmax, double da, double dc);
-    
-    static void solveProfileDD_W(double t[8], double x0, double xTarget, double v0,
-                        double a0, double amax, double jmax, double da, double dc);
-    
-    static void solveProfileDD_T(double t[8], double x0, double xTarget, double v0,
-                        double a0, double amax, double jmax, double da, double dc);
-    
     static void adaptProfile(double t[8], double j[8], double xtarget, double a0, double v0, double x0);
     
     static bool stillTooShort(double t[8], double newDuration);
@@ -139,7 +124,7 @@ private:
     static void splitNoCruiseProfileTimeInt(double t[8], double j[8], double a0);
     
     void findProfileTypeStretchCanonical(double newDuration);
-    void findProfileTypeStretchDoubleDec(double newDuration);
+    void planProfileStretchDoubleDec(double newDuration, double dir, double da);
 };
 
 #endif	/* _stp7_H */

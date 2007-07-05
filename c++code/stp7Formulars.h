@@ -16,20 +16,20 @@ using namespace std;
 class Stp7Formulars {
 public:
     static void solveProfile(double t[8],
-            string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+            string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
             double x0, double xTarget, double v0, double vmax,
             double a0, double amax, double jmax, double stretchToTime=0);
     
     static bool areValidTimeIntervalls(double t[8]);
 private:
     static void calcCoeffs(double coeffs[7],
-        string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+        string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double stretchToTime,
             double t[8]);
     
     static void calcTimeIntervalls(double t[8],
-        string type, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
+        string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double root, double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double stretchToTime);
     
@@ -120,6 +120,24 @@ private:
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime);
     static void calcTimeIntervallsStretchedDoubleDecProfileWW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileWcW(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileWcW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileTcW(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileTcW(double t[8], double root,
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime);
