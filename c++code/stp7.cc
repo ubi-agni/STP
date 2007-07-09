@@ -313,6 +313,15 @@ double Stp7::scaleToDuration(double newDuration) {
                     _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
                     _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
                 }
+                // for the case that we need to reduce the acceleration first,
+                // because its over the limit, we need to rearrage the jerks a
+                // bit...
+                if ((fabs(_a[0]) > _amax) && (sign(_a[0]) == sign(_j[5]))) {
+                    _t[1] = t1; _t[2] = 0; _t[3] = 0; _t[4] = 0;
+                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                    _j[1] = -jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                }
                 // insert cruising phase, such that the target is still reached
                 adaptProfile (_t, _j, _x[7], _x[0], _v[0], _a[0]);
                 useDDec = stillTooShort (_t, newDuration);
@@ -330,7 +339,7 @@ double Stp7::scaleToDuration(double newDuration) {
     
     double da;
     da = _j[1] == _j[3] ? -1 : 1;
-    
+            
     if (useDDec) {
         // double deceleration branch
         planProfileStretchDoubleDec(newDuration, dir, da);
@@ -345,6 +354,11 @@ double Stp7::scaleToDuration(double newDuration) {
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
     }
     convertTimeIntervallsToPoints();
+    
+    for (int i = 1; i < 8; i++) {
+        // calc x,v,a values for next switch point
+        calcjTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i-1], _j[i], _x[i], _v[i], _a[i]);
+    }
     
     return getDuration();
 }
@@ -407,7 +421,7 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
         if (area_w_max > area_t_max) {
             // we will cut out the whole t(6) WT -> WW
             _t[6] = 0;
-            double dt = (fabs(a1)-sqrt(a1*a1-area_t_max))/_jmax;
+            double dt = (fabs(a1)-sqrt(a1*a1-area_t_max*_jmax))/_jmax;
             _t[1] = _t[1]-dt;
             _t[3] = _t[3]-dt;
             adaptProfile(_t,_j,_x[7],_x[0],_v[0],_a[0]);
@@ -497,46 +511,76 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
             profilesToTest[0] = Stp7::PROFILE_TW;
             profilesToTest[1] = Stp7::PROFILE_WW;
         }
-    
+        
         // now test all profiles in until we found the right one:
         _bIsddec = true;
+        int cCalcs = 0;
         for (int i = 0; i < length; i++) {
             _sProfileType = profilesToTest[i];
             try {
                 // with cruising phase
                 Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+                cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
                 return;
-            } catch (exception e) {}
+            } catch (exception e) { cCalcs++; }
             try {
                 // without cruising phase
                 Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
                     _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+                cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
                 return;
-            } catch (exception e) {}
+            } catch (exception e) { cCalcs++; }
         }
         throw logic_error("No solution found for stretched double dec profile.");
-
     } else { // ==> a3 == 0
-        double t0;
-        if (sign(_a[0]) != sign(_j[5])) {
-            // In the shifting process, we may only consider the velocity change *after*
-            // reaching zero acceleration. Hence, we compute new initial conditions, reached
-            // after this initial acceleration decrease.
-            t0 = fabs(_a[0]/_jmax);
+        // We need to differentiate between two cases:
+        // Either j(1) and j(3) have different sign, in that case, the first part of
+        // the profile will resemble a wedge or a trapezoid, respectively.
+        // When they have the same sign (in case a0 > amax), it will have the form
+        // of a slope or a stair, respectively.
+        if (sign(_j[1]) == sign(_j[3])) {
+            _bHasCruise = true;
+            da = -1;
+            if (_t[6] == 0) {
+                _t[2] = 1;
+            } else {
+                // move all the area from second trapezoid part to the first
+                _t[2] = _t[2] + _t[6];
+                _t[6] = 0;
+                double tn[8];
+                for (int i = 0; i < 8; i++) tn[i] = _t[i];
+                adaptProfile (tn, _j, _x[7], _x[0], _v[0], _a[0]);
+                // if we overshoot in time, t contains the correct profile
+                if (!stillTooShort(tn,newDuration)) {
+                    // we need to allow t(2) to be different from zero
+                    _t[2] = 1;
+                } else {
+                    // otherwise the second part will stay trapezoid
+                    _t[6] = 1;
+                    _t[2] = 1;
+                }
+            }
         } else {
-            // To ease computation during shifting, we extend the first phase
-            // to an full profile, starting at zero acceleration
-            t0 = -fabs(_a[0]/_jmax);
-        }
-        // compute initial position at zero acceleration
-        double x0,v0,a0;
-        calcjTrack(t0,_x[0],_v[0],_a[0],_j[1],x0,v0,a0);
-        _t[1] = _t[1] - t0;
+            double t0;
+            if (sign(_a[0]) != sign(_j[5])) {
+                // In the shifting process, we may only consider the velocity change *after*
+                // reaching zero acceleration. Hence, we compute new initial conditions, reached
+                // after this initial acceleration decrease.
+                t0 = fabs(_a[0]/_jmax);
+            } else {
+                // To ease computation during shifting, we extend the first phase
+                // to an full profile, starting at zero acceleration
+                t0 = -fabs(_a[0]/_jmax);
+            }
+            // compute initial position at zero acceleration
+            double x0,v0,a0;
+            calcjTrack(t0,_x[0],_v[0],_a[0],_j[1],x0,v0,a0);
+            _t[1] = _t[1] - t0;
 
-        shiftDoubleDecArea (_t,_j,newDuration-t0, x0, _x[7], v0, _vmax, a0, _amax, _jmax);
-        _t[1] = _t[1] + t0;
-        
+            shiftDoubleDecArea (_t,_j,newDuration-t0, x0, _x[7], v0, _vmax, a0, _amax, _jmax);
+            _t[1] = _t[1] + t0;
+        }
         // extend simple profile to wedge-shaped profile
         _t[1] = 1; _t[3] = 1;
         _sProfileType = getProfileString(_t);
@@ -559,7 +603,7 @@ void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration,
 
     double wedgeMax = amax*amax/jmax;
     double deltaFirst, deltaLast, deltaV, tacc[4], tn[8];
-    
+
     while (1) {
         // area needed to extend first part to full wedge
         deltaFirst = wedgeMax - curFirst;
@@ -578,7 +622,7 @@ void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration,
             if (t[6] == 0) return; // profile will keep TW shape
             deltaV = t[6]*amax; // area below const-trapezoidal part
         }
-        
+
         addAreaTimeInt (curFirst + deltaV - wedgeMax, amax,jmax, tacc);
         double tdec[4];
         tdec[0] = 0; tdec[1] = t[5]; tdec[2] = t[6]; tdec[3] = t[7];

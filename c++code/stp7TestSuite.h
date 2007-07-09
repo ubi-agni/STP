@@ -378,25 +378,7 @@ public:
         TS_ASSERT(stp.hasCruisingPhase());
         TS_ASSERT(stp.isDoubleDecProfile());
         
-        // WcW, ddec ==> TcW, ddec
-        //[t,j] = calc7st(4,2,2,2,2.5,1,-4);
-        //stretch7st(t,j,10,4,2,2,2,2.5,1,-4, bPlot);
-//        stp.planFastestProfile(-4,4,1,2,2.5,2,2);
-//        stp.scaleToDuration(10);
-//        TS_ASSERT_DELTA(stp.getDuration(),10,1e-6);
-//        TS_ASSERT_DELTA(stp.pos(100),4,1e-6);
-//        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
-//        TS_ASSERT(stp.hasCruisingPhase());
-//        TS_ASSERT(stp.isDoubleDecProfile());     
-    }
-    
-    void _testProblemCasesStretched() {
-        Stp7 stp;
-        
-        TS_WARN("Only tests whether the right TYPE of profile was found.");
-        
-        // WT ddec ==> TcW ddec
-        // PROBLEM: results in WcW breaking the amax limit
+        // WT, ddec ==> TW, ddec
         //[t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
         //stretch7st(t,j,6,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
         stp.planFastestProfile(-10,4.5,5,3,0.2,1.7,0.8);
@@ -404,36 +386,133 @@ public:
         TS_ASSERT_DELTA(stp.getDuration(),6,1e-6);
         TS_ASSERT_DELTA(stp.pos(100),4.5,1e-6);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
+        TS_ASSERT(!stp.hasCruisingPhase());
+        TS_ASSERT(stp.isDoubleDecProfile());
+        
+        // WT, ddec ==> WcT, ddec
+        //[t,j] = calc7st(8, 0.8, 1.4, 3.5, -0.1, 5, -10);
+        //stretch7st(t,j,7,8, 0.8, 1.4, 3.5, -0.1, 5, -10,bPlot);
+        stp.planFastestProfile(-10,8,5,3.5,-0.1,1.4,0.8);
+        stp.scaleToDuration(7);
+        TS_ASSERT_DELTA(stp.getDuration(),7,1e-6);
+        TS_ASSERT_DELTA(stp.pos(100),8,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WT);
         TS_ASSERT(stp.hasCruisingPhase());
         TS_ASSERT(stp.isDoubleDecProfile());
         
-        // WT ddec ==> WcT ddec
-        // PROBLEM: results in WcW breaking the amax limit
-        //[t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
-        //stretch7st(t,j,5.5,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
+         // WT, ddec ==> WT, ddec
+         //[t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 5, -10);
+         //stretch7st(t,j,5.5,4.5, 0.8, 1.7, 3, 0.2, 5, -10, bPlot);
         stp.planFastestProfile(-10,4.5,5,3,0.2,1.7,0.8);
         stp.scaleToDuration(5.5);
         TS_ASSERT_DELTA(stp.getDuration(),5.5,1e-6);
         TS_ASSERT_DELTA(stp.pos(100),4.5,1e-6);
         TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_WT);
-        TS_ASSERT(stp.hasCruisingPhase());
-        TS_ASSERT(stp.isDoubleDecProfile()); 
+        TS_ASSERT(!stp.hasCruisingPhase());
+        TS_ASSERT(stp.isDoubleDecProfile());
         
-        // TT, ddec ==> ???
-        // PROBLEM: finds no solution
-        //[t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
-        //stretch7st(t,j,7,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
-        stp.planFastestProfile(-10,10,6.5,3,-0.1,1.5,0.8);
-        stp.scaleToDuration(7);
-        TS_ASSERT_DELTA(stp.getDuration(),7,1e-6);
-        TS_ASSERT_DELTA(stp.pos(100),10,1e-6);
-        //???????????????
-        //?? TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TW);
-        //???????????????
+        // TT, ddec ==> TcT, ddec
+        //[t,j] = calc7st(15, 0.8, 1.4, 3.5, -0.1, 6.5, -10);
+        //stretch7st(t,j,8.2,15, 0.8, 1.4, 3.5, -0.1, 6.5, -10,bPlot);
+        stp.planFastestProfile(-10,15,6.5,3.5,-0.1,1.4,0.8);
+        stp.scaleToDuration(8.2);
+        TS_ASSERT_DELTA(stp.getDuration(),8.2,1e-6);
+        TS_ASSERT_DELTA(stp.pos(100),15,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TT);
         TS_ASSERT(stp.hasCruisingPhase());
         TS_ASSERT(stp.isDoubleDecProfile());
+        
+        // TT, ddec ==> TT, ddec
+        //[t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
+        //stretch7st(t,j,6.3,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
+        stp.planFastestProfile(-10,10,6.5,3,-0.1,1.5,0.8);
+        stp.scaleToDuration(6.3);
+        TS_ASSERT_DELTA(stp.getDuration(),6.3,1e-6);
+        TS_ASSERT_DELTA(stp.pos(100),10,1e-6);
+        TS_ASSERT_EQUALS(stp.getProfileType(), Stp7::PROFILE_TT);
+        TS_ASSERT(!stp.hasCruisingPhase());
+        TS_ASSERT(stp.isDoubleDecProfile());
     }
+    
+    void testAutomatedStretchedProfileTest(void) {
+        // Runs 980+49 tests covering all possible cases for the planning of
+        // time optimal profiles, both ddec and canonical ones.
+        Stp7 stp;
+        
+        //stp.planFastestProfile(0, -3.292233187207443290134278868208639323711395263671875, -1, 1, -1.1999999999999999555910790149937383830547332763671875, 1, 1.5);
+        //stp.scaleToDuration(35.98037516565142368563101626932621002197265625);
+        
+        int count = 0;
+        int error_counter = 0;
+        int problem_counter = 0;
+        double amax = 1.;
+        double vmax = 1.;
+        double jmax = 1.5;
+        double xtarget;
+
+        double x0 = 0.;
+        double a0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        double v0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        double dt[10] = {1.0001, 1.125, 1.25, 1.375, 1.5, 1.6667, 1.83333, 2.0, 3.0, 10.0};
+        
+        string testResult;
+        
+        for (int i_a = 0; i_a < 7; i_a++) {
+            for (int i_v = 0; i_v < 7; i_v++) {
+                double x_fullstop = calcFullstopPosition(x0, v0[i_v], a0[i_a], amax, jmax);
+                TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, x_fullstop, v0[i_v], vmax, a0[i_a], amax, jmax));
+                testResult = stp.testProfile();
+                if (testResult != "") {
+                    cout << stp.toString();
+                    cout << setprecision(10) << "Testing planFastestProfile(" << x0 << ", " << x_fullstop
+                        << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
+                        << ", " << amax << ", " << jmax << ")" << endl;
+                    }
+                TS_ASSERT_EQUALS(testResult, "");
+                count++;
+                double x_neg = calcZeroCruisePosition(-1, x0, v0[i_v], vmax, a0[i_a], amax, jmax);
+		double x_pos = calcZeroCruisePosition(1, x0, v0[i_v], vmax, a0[i_a], amax, jmax);
+                double dp = fabs((x_neg-x_pos)/9);
+                if (x_pos < x_neg) x_neg = x_pos;
+                for (int i_x=-5; i_x<15; i_x++) {
+                    xtarget = x_neg + i_x*dp;
+                    TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, xtarget, v0[i_v], vmax, a0[i_a], amax, jmax));
+                    double sum_t = stp.getDuration();
+                    for (int i_t = 1; i_t<10; i_t++) {
+                        double Tnew = dt[i_t] * sum_t;
+                        //TS_ASSERT_THROWS_NOTHING(stp.scaleToDuration(Tnew));
+                        try {
+                            stp.scaleToDuration(Tnew);
+                            testResult = stp.testProfile();
+                            if (testResult != "") {
+                                //testResult = stp.testProfile();
+                                //cout << stp.toString();
+                                //cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget
+                                //    << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
+                                //    << ", " << amax << ", " << jmax << ") stretched to "
+                                //    <<  "a duration of " << Tnew << "." << endl;
+                                problem_counter++;
+                            }
+                            TS_ASSERT_EQUALS(testResult, "");
+                            //cout << stp.getDetailedProfileType();
+                            count++;
+                        } catch (exception e) {
+                            cout << stp.toString();
+                                cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget
+                                    << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
+                                    << ", " << amax << ", " << jmax << ") stretched to "
+                                    <<  "a duration of " << Tnew << "." << endl;
+                            error_counter++;
+                        }
+                    }
+                }
+            }
+        }
+        cout << endl << "Calculated stretched profile for " << count << " different start conditions." << endl;
+        cout << endl << "I couldn't solve " << error_counter << " profiles at all." << endl;
+        cout << endl << "I couldn't solve " << problem_counter << " profiles correctly." << endl;
+    }
+    
 };
 
 #endif	/* _stp7TestSuite_H */
-

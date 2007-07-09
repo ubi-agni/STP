@@ -7,7 +7,7 @@ v=v0;
 p=p0;
 
 for i=1:length(t)
-    if (t(i) > 0)
+    if (t(i) ~= 0)
         [a,v,p] = calcjTrack(t(i),j(i),a,v,p);
     end
 end

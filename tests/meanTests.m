@@ -29,7 +29,10 @@ if (false)
    % TT, ddec ==> TT, ddec
    [t,j] = calc7st(10, 0.8, 1.5, 3, -0.1, 6.5, -10);
    stretch7st(t,j,6.3,10, 0.8, 1.5, 3, -0.1, 6.5, -10, bPlot);
-   
+    
+   % TT, ddec ==> TcT, ddec
+   [t,j] = calc7st(15, 0.8, 1.4, 3.5, -0.1, 6.5, -10);
+   stretch7st(t,j,8.2,15, 0.8, 1.4, 3.5, -0.1, 6.5, -10,bPlot);
 end
 
 if (false)    

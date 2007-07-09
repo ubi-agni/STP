@@ -141,6 +141,51 @@ private:
         double x0, double xTarget, double v0, double vmax,
         double a0, double amax, double jmax, double da, double dc,
         double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileTW(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileTW(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileWcT(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileWcT(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileWT(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileWT(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileTcT(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileTcT(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    ////////////////////////////////////////////////////////////////////////////
+    static void calcCoeffsStretchedDoubleDecProfileTT(double coeffs[7],
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
+    static void calcTimeIntervallsStretchedDoubleDecProfileTT(double t[8], double root,
+        double x0, double xTarget, double v0, double vmax,
+        double a0, double amax, double jmax, double da, double dc,
+        double stretchToTime);
 };
 
 

@@ -92,6 +92,11 @@ if (sign(jdec(1)) == sign(j(5))) % we may need to switch
     else
         t = [t1 0 0  0  tdec]; j = [jdec  0  jdec];
     end
+    % for the case that we need to reduce the acceleration first, because
+    % its over the limit, we need to rearrage the jerks a bit...
+    if (abs(a0) > amax) && (sign(a0) == sign(j(5)))
+        t = [t1 0 0  0  tdec]; j = [jdec  0  jdec]; j(1) = -j(1);
+    end
     % insert cruising phase, such that the target is still reached
     t = adaptProfile (t,j, ptarget, a0,v0,p0);
     bDoubleDec = stillTooShort (t, T);
@@ -193,6 +198,31 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The rest of the code assumes a3 = 0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% We need to differentiate between two cases:
+% Either j(1) and j(3) have different sign, in that case, the first part of
+% the profile will resemble a wedge or a trapezoid, respectively.
+% When they have the same sign (in case a0 > amax), it will have the form
+% of a slope or a stair, respectively.
+if (sign(j(1)) == sign(j(3)))
+    if (t(6) == 0)
+        t(2) = 1;
+        return;
+    end
+    % move all the area from second trapezoid part to the first
+    t(2) = t(2) + t(6);
+    t(6) = 0;
+    tn = adaptProfile (t,j,ptarget,a0,v0,p0);
+    % if we overshoot in time, t contains the correct profile
+    if (~stillTooShort(tn,T)) 
+        % we need to allow t(2) to be different from zero
+        t(2) = 1;
+        return;
+    end
+    % otherwise the second part will stay trapezoid
+    t(6) = 1;
+    t(2) = 1;
+    return;
+end
 
 if (sign(a0) ~= sign(j(5)))
     % In the shifting process, we may only consider the velocity change *after*
@@ -214,41 +244,41 @@ return
 
 function [t,j] = shiftDoubleDecArea (t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % Compute current velocity decrease achieved during first and second part
-[a3 curFirst dummy] = calcjTracks(t(1:3),j, a0,0,0); % a3 = 0
-[a7 curLast dummy]  = calcjTracks(t(5:7),j, 0,0,0); % a7 = 0
-curFirst = abs(curFirst); curLast = abs(curLast);
+    [a3 curFirst dummy] = calcjTracks(t(1:3),j, a0,0,0); % a3 = 0
+    [a7 curLast dummy]  = calcjTracks(t(5:7),j, 0,0,0); % a7 = 0
+    curFirst = abs(curFirst); curLast = abs(curLast);
 
-wedgeMax = amax^2/jmax;
+    wedgeMax = amax^2/jmax;
 
-while (1)
-    % area needed to extend first part to full wedge
-    deltaFirst = wedgeMax - curFirst;
-    if (t(2) == 0 && ~isZero(deltaFirst)) % first part is not yet full wedge 
-        if (t(6) == 0) 
-            deltaLast  = curLast; % area available in second part
-            % if last part has no enough area to extend first one to full
-            % triangle, the profile will keep WW shape
-            if (deltaFirst >= deltaLast) return; end
+    while (1)
+        % area needed to extend first part to full wedge
+        deltaFirst = wedgeMax - curFirst;
+        if (t(2) == 0 && ~isZero(deltaFirst)) % first part is not yet full wedge 
+            if (t(6) == 0) 
+                deltaLast  = curLast; % area available in second part
+                % if last part has no enough area to extend first one to full
+                % triangle, the profile will keep WW shape
+                if (deltaFirst >= deltaLast) return; end
+            else
+                deltaLast = t(6)*amax; % area below const-trapezoidal part
+            end
+            deltaV = min (deltaFirst, deltaLast);
         else
-            deltaLast = t(6)*amax; % area below const-trapezoidal part
+            if (t(2) == 0) t(2) = 1; end % allow const-part in trapez
+            if (t(6) == 0) return; % profile will keep TW shape
+            else deltaV = t(6)*amax; end % area below const-trapezoidal part
         end
-        deltaV = min (deltaFirst, deltaLast);
-    else
-        if (t(2) == 0) t(2) = 1; end % allow const-part in trapez
-        if (t(6) == 0) return; % profile will keep TW shape
-        else deltaV = t(6)*amax; end % area below const-trapezoidal part
-    end
 
-    tacc = addArea (curFirst + deltaV - wedgeMax, jmax,amax);
-    [isPossible, tdec] = removeArea (t(5:7), deltaV, jmax,amax);
-    tn = adaptProfile ([tacc t(4) tdec],j, ptarget, a0,v0,p0);
-    % if we overshoot in time, t contains the correct profile
-    if (~stillTooShort(tn,T)) return; end
-    % otherwise continue probing with adapted profile
-    t = tn;
-    curFirst = curFirst + deltaV;
-    curLast  = curLast  - deltaV;
-end
+        tacc = addArea (curFirst + deltaV - wedgeMax, jmax,amax);
+        [isPossible, tdec] = removeArea (t(5:7), deltaV, jmax,amax);
+        tn = adaptProfile ([tacc t(4) tdec],j, ptarget, a0,v0,p0);
+        % if we overshoot in time, t contains the correct profile
+        if (~stillTooShort(tn,T)) return; end
+        % otherwise continue probing with adapted profile
+        t = tn;
+        curFirst = curFirst + deltaV;
+        curLast  = curLast  - deltaV;
+    end
 return
 
 function [t_res] = addArea(deltaV, jmax,amax)
@@ -319,7 +349,7 @@ if (strcmp (type, 'WT'))
     if (area_w_max > area_t_max)
         % we will cut out the whole t(6) WT -> WW
         t(6) = 0;
-        dt = (abs(a1)-sqrt(a1^2-area_t_max))/jmax;
+        dt = (abs(a1)-sqrt(a1^2-area_t_max*jmax))/jmax;
         t(1) = t(1)-dt;
         t(3) = t(3)-dt;
         t = adaptProfile (t,j, ptarget, a0,v0,p0);
