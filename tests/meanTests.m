@@ -1,6 +1,57 @@
 % NEW open problems with streched profiles
 bPlot = true;
 
+if (true)
+    % a ddec profile with a3 = 0 leading to an stretched ddec profile with
+    % a3 != 0
+    figure;wrapper7st_stretch(1.7,0, 0.315, 0, 1, 1, 1, 1.5)
+    
+    % The problem is the following:
+    % We have a ddec profile, with a cruising phase, which is to be
+    % stretched. In the test, which profile to take, we transfer all area
+    % under the second wedge-shaped part of the acc-graph to the first part.
+    % In the resulting profile, we are too slow (in fact we're never
+    % arriving at the goal, its a fullstop) - but we ccould easily insert a
+    % cruising phase, after stopping.
+    % However - in some of the area distributions between these two
+    % extrema, the cruise phase will disappear and we will overshoot the
+    % target. This means, we would actually need a3 to be different from
+    % zero.
+    
+    % Example:
+    ta = [ 0 0 0.1 1 1]; j = [ -1 1 0 -1 1];
+    tb = [ sqrt(2)/2 sqrt(2)/2 1 sqrt(2)/2 sqrt(2)/2];
+    figure; plotjTracks(tb,j, 0,1,0, true, 0,0,0,0);   
+    figure; plotjTracks(ta,j, 0,1,0, true, 0,0,0,0);   
+    
+    % This is a switching from a ddec, cruising profile to a ddec
+    % no-cruising profile in the stretching process and this possiblity is
+    % not yet covered by our algorithm.
+    
+    % Concept for a solution:
+    % We need to introduce an additional test that uses that distribution
+    % of acc-area between the first and the second part, that leads to the
+    % farest target point when not introducing a cruising phase.
+    % If this point lies behind the actual target, it might be necessary to
+    % switch to the no-cruising case. So this would be a necessary
+    % condition for the need of switching.
+    
+    % For the construction of a sufficient condition, one would have to
+    % compute the two(?) cases in which the cruising phase will be reduced
+    % to zero exactly in order to stop at the target point.
+    % If the disired stretch-time lies between the two(?) times these
+    % profiles take, the resulting profile will have a3 != 0 and a3 = 0
+    % otherwise.
+    
+    % Problematic is the high effort in order to calculate the test,
+    % especially in the second proposition.
+    % An easy to implement, yet quite unsatisfying solution would be to
+    % check whether we get a correct result with the current algorithmus
+    % and if not, we try to switch to the a3 != 0 case.
+    % This might, however, also affect other cases that the one we talk
+    % about.
+end
+
 if (false)
    % WW, ddec ==> WW, ddec
    [t,j] = calc7st(4.5, 0.8, 1.7, 3, 0.2, 4.5, -10);

@@ -1,0 +1,45 @@
+11.07.2007
+==========
+
+Change in stretch7st.m
+Problem:
+    Some of the stretched ddec (original nocruise) profiles had several
+    solutions, some with a oszillation in the acc-graph.
+Example:
+    (1) figure; wrapper7st_stretch(7, 0, 3.6, 1.2, 1, 1.2, 1, 1.5)
+Solution:
+    Test for each profile found, that a3 is either zero, or its sign has
+    the opposite direction of dir.
+
+-----
+
+Change in stretch7st.m
+Problem:
+    During stretching a double deceleration profile with cruising phase
+    switched into one without.
+    This case was not covered by the algorithm so far.
+Example:
+    (1) figure;wrapper7st_stretch(1.7,0, 0.315, 0, 1, 1, 1, 1.5)
+    (2) ta = [ 0 0 0.1 1 1]; j = [ -1 1 0 -1 1];
+        tb = [ sqrt(2)/2 sqrt(2)/2 1 sqrt(2)/2 sqrt(2)/2];
+        figure; plotjTracks(tb,j, 0,1,0, true, 0,0,0,0);   
+        figure; plotjTracks(ta,j, 0,1,0, true, 0,0,0,0);
+Solution:
+    In the case of stretching a double deceleration profile with a cruising
+    phase, if the normal approach to solve it fails, we try again with the
+    same kind of profile, but without a cruising phase.
+    This is neither a satisfying nor complete solution and just a quick
+    fix-up until we come up with something better.
+
+-----
+
+Change in stretch7st.m
+Problem: 
+    In the algorithm for determining the stetched profile type of canonical
+    profile, in the TW profile the area under the wedge and the area under
+    t(2) might be equal resulting in a fullstop profile which causes
+    a problem.
+Example:
+    wrapper7st_stretch(6.24818754884600924270898758550174534320831298828125,0, 0.77777777777777779011358916250173933804035186767578125, 1, 1, 0, 1, 1)
+Solution:
+    Introduced an additional case differentiation.

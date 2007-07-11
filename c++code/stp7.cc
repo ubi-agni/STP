@@ -236,122 +236,141 @@ void Stp7::planProfileNoCruise(int dir) {
  * This function stretches the computed profile to a new (longer) duration.
  */
 double Stp7::scaleToDuration(double newDuration) {
+    if (!_plannedProfile)
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");   
+    if (newDuration < getDuration())
+        throw invalid_argument("Profile can't be scaled to a shorter duration.");
+    
     convertTimePointsToIntervalls();
     
-    splitNoCruiseProfileTimeInt(_t, _j, _a[0]);
-
-    double a_dummy, v_dummy, x_dummy;
-    
-    double v3;
-    calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v3, a_dummy);
-    double dir = sign(v3); // TODO: what happens when dir=0?
-    
-    // check whether we must use the double deceleration branch
-    bool useDDec = false;
-    double t_orig[8]; for (int i = 0; i < 8; i++) t_orig[i] = _t[i];
-    double j_orig[8]; for (int i = 0; i < 8; i++) j_orig[i] = _j[i];
-    {
-       // Tests for a given profile, whether stretching it to the time T would
-       // nead a double deceleration profile.    
-       
-       // folgenden einfachen algorithmus verwenden:
-       // Profil erzeugen: erst a auf null, dann v auf null
-       // ist dieses profil zu langsam --> double deceleration, sonst normal
-
-        if (sign(_j[3]) != sign(_j[5])) {
-            // that was easy - it already is a double dec. profile :)
-            useDDec = true;
-        } else {
-            // If the velocity change within the deceleration part is larger in magnitude than
-            // the velocity change within acceleration part (starting from max velocity,
-            // i.e. at a=0, the cutting process in findProfileNormal may lead to the
-            // situation, where no more area can be cut from the acceleration part,
-            // although the desired duration T is not yet reached. In this case we have
-            // to switch to the double deceleration branch as well.
-            // We compute a profile, which immediately decreases acceleration to zero
-            // in the first (acceleration) phase and subsequently does a full stop to zero
-            // velocity in the second phase. In between an appropriate cruising phase is
-            // inserted to reach the final position. If this profile still is to short,
-            // we need to switch to a double deceleration profile.
-            double j1,t1;    
-            double tdec[4], jdec[4];
-            if (_a[0] == 0) {
-                t1 = 0;
-                // profile to reach zero velocity, starting from a0=0, v0
-                Stp3 stp3Dec;
-                stp3Dec.planFastestProfile(_v[0], 0, _a[0], _amax, _jmax);
-                stp3Dec.getTimeIntArray(tdec);
-                stp3Dec.getAccArray(jdec);
-            } else {
-                // jerk to decrease acceleration to zero
-                j1 = -sign(_a[0]) * _jmax; 
-                // time needed to reach zero acceleration
-                t1 = fabs(_a[0]/_jmax); 
-                // position and velocity reached after this time
-                double a1, v1, x1;
-                calcjTrack(t1, _x[0], _v[0], _a[0], j1, x1, v1, a1); // a1 == 0
-                // profile to reach zero velocity, starting from v1
-                Stp3 stp3Dec;
-                stp3Dec.planFastestProfile(v1, 0, a1, _amax, _jmax);
-                stp3Dec.getTimeIntArray(tdec);
-                stp3Dec.getAccArray(jdec);
-            }
-            
-            // If the a(t) profile in deceleration part has the same direction as before,
-            // we may need to switch to a double deceleration profile. 
-            // Otherwise, the velocity change in deceleration phase was smaller than
-            // in acceleration phase, hence no switch is neccessary.
-            if (sign(jdec[1]) == sign(_j[5])) { // we may need to switch
-                if (sign(_a[0]) == sign(_j[5])) { 
-                    _t[1] = 0; _t[2] = 0; _t[3] = t1; _t[4] = 0;
-                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
-                    _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
-                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
-                } else {
-                    _t[1] = t1; _t[2] = 0; _t[3] = 0; _t[4] = 0;
-                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
-                    _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
-                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
-                }
-                // for the case that we need to reduce the acceleration first,
-                // because its over the limit, we need to rearrage the jerks a
-                // bit...
-                if ((fabs(_a[0]) > _amax) && (sign(_a[0]) == sign(_j[5]))) {
-                    _t[1] = t1; _t[2] = 0; _t[3] = 0; _t[4] = 0;
-                    _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
-                    _j[1] = -jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
-                    _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
-                }
-                // insert cruising phase, such that the target is still reached
-                adaptProfile (_t, _j, _x[7], _x[0], _v[0], _a[0]);
-                useDDec = stillTooShort (_t, newDuration);
-            } else {
-                useDDec = false;
-            }
-        }
-    }
-    if (!useDDec) {
-        for (int i = 0; i < 8; i++) {
-            _t[i] = t_orig[i];
-            _j[i] = j_orig[i];
-        }
-    }
-    
-    double da;
-    da = _j[1] == _j[3] ? -1 : 1;
-            
-    if (useDDec) {
-        // double deceleration branch
-        planProfileStretchDoubleDec(newDuration, dir, da);
-        _bHasCruise = (_t[4] != 0);
+    // we can't really stretch a full-stop profile, so check for it first
+    if ((isZero(_t[5])) && (isZero(_t[6])) && (isZero(_t[7]))) {
+        _t[4] = newDuration - _t[1] - _t[2] - _t[3] -  _t[4];
     } else {
-        // normal profile branch
-        _bIsddec = false;
-        findProfileTypeStretchCanonical(newDuration);
-        _sProfileType = getProfileString(_t);
-        _bHasCruise = (_t[4] != 0);
-        Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
-                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+        splitNoCruiseProfileTimeInt(_t, _j, _a[0]);
+        // for the case that v(0) = vmax the jerk vector might be filled with zeros
+        // only in the first part --> we need to correct that.
+        if (_j[1] == 0) {
+            _j[1] = -sign(_v[0])*_jmax;
+            _j[3] = -_j[1];
+        }    
+
+        double a_dummy, v_dummy, x_dummy;
+
+        double v3;
+        calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v3, a_dummy);
+        double dir = sign(v3); // TODO: what happens when dir=0?
+
+        // check whether we must use the double deceleration branch
+        bool useDDec = false;
+        double t_orig[8]; for (int i = 0; i < 8; i++) t_orig[i] = _t[i];
+        double j_orig[8]; for (int i = 0; i < 8; i++) j_orig[i] = _j[i];
+        {
+           // Tests for a given profile, whether stretching it to the time T would
+           // nead a double deceleration profile.    
+
+           // folgenden einfachen algorithmus verwenden:
+           // Profil erzeugen: erst a auf null, dann v auf null
+           // ist dieses profil zu langsam --> double deceleration, sonst normal
+
+            if (sign(_j[3]) != sign(_j[5])) {
+                // that was easy - it already is a double dec. profile :)
+                if ((fabs(_a[0]) > _amax) && (sign(_a[0]) == sign(_j[5])))
+                    _j[1] = _j[3];
+                useDDec = true;
+            } else {
+                // If the velocity change within the deceleration part is larger in magnitude than
+                // the velocity change within acceleration part (starting from max velocity,
+                // i.e. at a=0, the cutting process in findProfileNormal may lead to the
+                // situation, where no more area can be cut from the acceleration part,
+                // although the desired duration T is not yet reached. In this case we have
+                // to switch to the double deceleration branch as well.
+                // We compute a profile, which immediately decreases acceleration to zero
+                // in the first (acceleration) phase and subsequently does a full stop to zero
+                // velocity in the second phase. In between an appropriate cruising phase is
+                // inserted to reach the final position. If this profile still is to short,
+                // we need to switch to a double deceleration profile.
+                double j1,t1;    
+                double tdec[4], jdec[4];
+                if (_a[0] == 0) {
+                    t1 = 0;
+                    // profile to reach zero velocity, starting from a0=0, v0
+                    Stp3 stp3Dec;
+                    stp3Dec.planFastestProfile(_v[0], 0, _a[0], _amax, _jmax);
+                    stp3Dec.getTimeIntArray(tdec);
+                    stp3Dec.getAccArray(jdec);
+                } else {
+                    // jerk to decrease acceleration to zero
+                    j1 = -sign(_a[0]) * _jmax; 
+                    // time needed to reach zero acceleration
+                    t1 = fabs(_a[0]/_jmax); 
+                    // position and velocity reached after this time
+                    double a1, v1, x1;
+                    calcjTrack(t1, _x[0], _v[0], _a[0], j1, x1, v1, a1); // a1 == 0
+                    // profile to reach zero velocity, starting from v1
+                    Stp3 stp3Dec;
+                    stp3Dec.planFastestProfile(v1, 0, a1, _amax, _jmax);
+                    stp3Dec.getTimeIntArray(tdec);
+                    stp3Dec.getAccArray(jdec);
+                }
+
+                // If the a(t) profile in deceleration part has the same direction as before,
+                // we may need to switch to a double deceleration profile. 
+                // Otherwise, the velocity change in deceleration phase was smaller than
+                // in acceleration phase, hence no switch is neccessary.
+                if (sign(jdec[1]) == sign(_j[5])) { // we may need to switch
+                    if (sign(_a[0]) == sign(_j[5])) { 
+                        _t[1] = 0; _t[2] = 0; _t[3] = t1; _t[4] = 0;
+                        _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                        _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                        _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                    } else {
+                        _t[1] = t1; _t[2] = 0; _t[3] = 0; _t[4] = 0;
+                        _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                        _j[1] = jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                        _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                    }
+                    // for the case that we need to reduce the acceleration first,
+                    // because its over the limit, we need to rearrage the jerks a
+                    // bit...
+                    if ((fabs(_a[0]) > _amax) && (sign(_a[0]) == sign(_j[5]))) {
+                        double t1a = (fabs(_a[0])-_amax)/_jmax;
+                        _t[1] = t1a; _t[2] = 0; _t[3] = t1-t1a; _t[4] = 0;
+                        _t[5] = tdec[1]; _t[6] = tdec[2]; _t[7] = tdec[3];
+                        _j[1] = -jdec[1]; _j[2] = jdec[2]; _j[3] = jdec[3];
+                        _j[4] = 0; _j[5] = jdec[1]; _j[6] = jdec[2]; _j[7] = jdec[3];
+                    }
+                    // insert cruising phase, such that the target is still reached
+                    adaptProfile (_t, _j, _x[7], _x[0], _v[0], _a[0]);
+                    useDDec = stillTooShort (_t, newDuration);
+                } else {
+                    useDDec = false;
+                }
+            }
+        }
+        if (!useDDec) {
+            for (int i = 0; i < 8; i++) {
+                _t[i] = t_orig[i];
+                _j[i] = j_orig[i];
+            }
+        }
+
+        double da;
+        da = _j[1] == _j[3] ? -1 : 1;
+
+        if (useDDec) {
+            // double deceleration branch
+            planProfileStretchDoubleDec(newDuration, dir, da);
+            _bHasCruise = (_t[4] != 0);
+        } else {
+            // normal profile branch
+            _bIsddec = false;
+            findProfileTypeStretchCanonical(newDuration);
+            _sProfileType = getProfileString(_t);
+            _bHasCruise = (_t[4] != 0);
+            Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
+                        _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+        }
     }
     convertTimeIntervallsToPoints();
     
@@ -447,12 +466,21 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
             _t[2] = 0;
             _t[5] = sqrt((area_w_max-area_t_max)/fabs(_j[5]));
             _t[7] = _t[5];
-            adaptProfile(_t,_j,_x[7],_x[0],_v[0],_a[0]);
-            if (stillTooShort(_t,newDuration)) {
-                _sProfileType = PROFILE_WW; // type switches to WW
-            } else {
-                // now we stop after duration time newDuration, hence profile stays TW
+            // for the case the t area and the second wedge are exactly same,
+            // the result is a fullstop. In this case we stay a TW profile.
+            if (isZero(_t[7])) {
                 for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+            } else {
+                adaptProfile(_t,_j,_x[7],_x[0],_v[0],_a[0]);
+                // t(4) might get smaller than zero, when due to the area
+                // switching, the direction flag of the motion changes. In
+                // that case, we stay a TW profile.
+                if ((_t[4] >= 0) && (stillTooShort(_t,newDuration))) {
+                    _sProfileType = PROFILE_WW; // type switches to WW
+                } else {
+                    // now we stop after duration time newDuration, hence profile stays TW
+                    for (int i = 0; i < 8; i++) _t[i] = t_orig[i]; // allow for a cruising phase
+                }
             }
         } else {
             // nothing to cut out, stays at WT
@@ -477,63 +505,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
     
     double tdec[4];
     
-    if (!isZero(a3)) {
-        // We now have to stretch a double deceleration profile without a
-        // cruising phase, which is the most complex possible case.
-        // It turns out, that we can't distinguish between the 8 profile types
-        // without actually trying to compute them and see whether we get a
-        // correct solution or not.
-        // However - since we will shift area under the acc-graph
-        // from the second part of the movement to the first, the unstretched
-        // profile type already limits the possible outcomes:
-        // TT==>{TT,TW}, TW==>{TW}, WT==>{WT,WW,TW,TT}, WW==>{WW,TW}
-        // In each of this cases, t4 could either be zero or not.
-        
-        // First put all profiles to test as columns into a matrix:
-        string profilesToTest[4];
-        double length = 0;
-        
-        if ((_t[2] != 0) && (_t[6] != 0)) { // TT
-            length = 2;
-            profilesToTest[0] = Stp7::PROFILE_TT;
-            profilesToTest[1] = Stp7::PROFILE_TW;
-        } else if ((_t[2] != 0) && (_t[6] == 0)) { // TW
-            length = 1;
-            profilesToTest[0] = Stp7::PROFILE_TW;
-        } else if ((_t[2] == 0) && (_t[6] != 0)) { // WT
-            length = 4;
-            profilesToTest[0] = Stp7::PROFILE_TT;
-            profilesToTest[1] = Stp7::PROFILE_TW;
-            profilesToTest[2] = Stp7::PROFILE_WT;
-            profilesToTest[3] = Stp7::PROFILE_WW;
-        } else if ((_t[2] == 0) && (_t[6] == 0)) { // WW
-            length = 2;
-            profilesToTest[0] = Stp7::PROFILE_TW;
-            profilesToTest[1] = Stp7::PROFILE_WW;
-        }
-        
-        // now test all profiles in until we found the right one:
-        _bIsddec = true;
-        int cCalcs = 0;
-        for (int i = 0; i < length; i++) {
-            _sProfileType = profilesToTest[i];
-            try {
-                // with cruising phase
-                Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
-                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
-                cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
-                return;
-            } catch (exception e) { cCalcs++; }
-            try {
-                // without cruising phase
-                Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
-                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
-                cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
-                return;
-            } catch (exception e) { cCalcs++; }
-        }
-        throw logic_error("No solution found for stretched double dec profile.");
-    } else { // ==> a3 == 0
+    if (isZero(a3)) {
         // We need to differentiate between two cases:
         // Either j(1) and j(3) have different sign, in that case, the first part of
         // the profile will resemble a wedge or a trapezoid, respectively.
@@ -552,7 +524,9 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
                 for (int i = 0; i < 8; i++) tn[i] = _t[i];
                 adaptProfile (tn, _j, _x[7], _x[0], _v[0], _a[0]);
                 // if we overshoot in time, t contains the correct profile
-                if (!stillTooShort(tn,newDuration)) {
+                if (stillTooShort(tn,newDuration)) {
+                    // we will need to transfer even more area to the first part
+                    // ==> no trapezoid second part
                     // we need to allow t(2) to be different from zero
                     _t[2] = 1;
                 } else {
@@ -581,13 +555,101 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
             shiftDoubleDecArea (_t,_j,newDuration-t0, x0, _x[7], v0, _vmax, a0, _amax, _jmax);
             _t[1] = _t[1] + t0;
         }
-        // extend simple profile to wedge-shaped profile
-        _t[1] = 1; _t[3] = 1;
-        _sProfileType = getProfileString(_t);
-        _bIsddec = true;
-        Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
-                    _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+        // did we find a correct profile? if not, we need to enter the a3 != 0
+        // case
+        if (_t[4] >= 0) {
+            // extend simple profile to wedge-shaped profile
+            _t[1] = 1; _t[3] = 1;
+            _sProfileType = getProfileString(_t);
+            _bIsddec = true;
+            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // this is a very ugly solution for the problem that we can't detect
+            // cases in which a ddec profile with cruising phase switches into a
+            // profile without cruising phase.
+            // We will just set t(4) to zero and try.
+            try { // try the case with cruising phase first
+                Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
+                        _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+                return;
+            } catch (exception e) {}
+            // it didnt work --> try the one without cruising phase
+            Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
+                _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+            return;
+        }
     }
+    
+//     We now have to stretch a double deceleration profile without a
+//     cruising phase, which is the most complex possible case.
+//     It turns out, that we can't distinguish between the 8 profile types
+//     without actually trying to compute them and see whether we get a
+//     correct solution or not.
+//     However - since we will shift area under the acc-graph
+//     from the second part of the movement to the first, the unstretched
+//     profile type already limits the possible outcomes:
+//     TT==>{TT,TW}, TW==>{TW}, WT==>{WT,WW,TW,TT}, WW==>{WW,TW}
+//     In each of this cases, t4 could either be zero or not.
+
+    // First put all profiles to test as columns into a matrix:
+    string profilesToTest[4];
+    double length = 0;
+
+    if ((_t[2] != 0) && (_t[6] != 0)) { // TT
+        length = 2;
+        profilesToTest[0] = Stp7::PROFILE_TT;
+        profilesToTest[1] = Stp7::PROFILE_TW;
+    } else if ((_t[2] != 0) && (_t[6] == 0)) { // TW
+        length = 1;
+        profilesToTest[0] = Stp7::PROFILE_TW;
+    } else if ((_t[2] == 0) && (_t[6] != 0)) { // WT
+        length = 4;
+        profilesToTest[0] = Stp7::PROFILE_TT;
+        profilesToTest[1] = Stp7::PROFILE_TW;
+        profilesToTest[2] = Stp7::PROFILE_WT;
+        profilesToTest[3] = Stp7::PROFILE_WW;
+    } else if ((_t[2] == 0) && (_t[6] == 0)) { // WW
+        length = 2;
+        profilesToTest[0] = Stp7::PROFILE_TW;
+        profilesToTest[1] = Stp7::PROFILE_WW;
+    }
+
+    // now test all profiles in until we found the right one:
+    _bIsddec = true;
+    int cCalcs = 0;
+    for (int i = 0; i < length; i++) {
+        _sProfileType = profilesToTest[i];
+        try {
+            // with cruising phase
+            Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
+                _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+            //cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
+            // in some cases we might get an additional solution that is
+            // oszillating in the acceleration. So we need to check, whether
+            // a3 has the same sign as -dir.
+            double a3 = _a[0] + _t[1]*_j[1] + _t[2]*_j[2] + _t[3]*_j[3];
+            if ((isZero(a3)) || (sign(a3) != sign(dir))) {
+               // no oszillation, we found the correct profile
+               return;
+            }
+            // oszillation, we need to continue the search
+        } catch (exception e) { cCalcs++; }
+        try {
+            // without cruising phase
+            Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
+                _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+            //cout << "Stretch DDec: Calculated " << cCalcs << " profiles before finding the right one." << endl;
+            // in some cases we might get an additional solution that is
+            // oszillating in the acceleration. So we need to check, whether
+            // a3 has the same sign as -dir.
+            double a3 = _a[0] + _t[1]*_j[1] + _t[2]*_j[2] + _t[3]*_j[3];
+            if ((isZero(a3)) || (sign(a3) != sign(dir))) {
+               // no oszillation, we found the correct profile
+               return;
+            }
+            // oszillation, we need to continue the search
+        } catch (exception e) { cCalcs++; }
+    }
+    throw logic_error("No solution found for stretched double dec profile.");
 }
 
 void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration, 
@@ -1004,7 +1066,7 @@ string Stp7::testProfile() const {
         if (!isNegative(fabs(a)-_amax))
             return "Broke acc limit!";
         if (!isNegative(fabs(v)-_vmax)) {
-            if ((sign(a) == sign(v)) || (i >= 5)) return "Broke vel limit!";
+            if ((sign(a) == sign(v))) return "Broke vel limit!";
             // the only 'excuse' for braking the vec limit is v0>vmax or v1>vmax
             // because of a unappropriately starting acceleration.
             if ((!isPositive(fabs(_v[0])-_vmax)) &&

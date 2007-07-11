@@ -7,8 +7,15 @@ if (T <= sum(t))
     disp('New duration must be smaller than current one.');
     disp('I did nothing...');
     t_res = t; j_res = j;
+elseif (numel(t) == 3)
+    disp('This is a fullstop-profile which can''t be stretched');
+    t_res = [t 0 0 0 0]; j_res = [j 0 -j];
 else
     t = splitNoCruiseProfile(t,j,a0);
+    if (j(1) == 0)
+        j(1) = -sign(v0)*jmax;
+        j(3) = -j(1);
+    end
 
     [dummy, v3, dummy] = calcjTracks(t(1:3),j, a0,v0,p0);
     dir = sign(v3); % TODO: what happens when dir=0?
@@ -28,10 +35,39 @@ else
     end
     % Calculate exact phase duration for choosen profile t, j
     % generate set of equations
-    [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
-    SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
-    t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
-    j_res = j;
+    
+    % TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+    % this is a very ugly solution for the problem that we can't detect
+    % cases in which a ddec profile with cruising phase switches into a
+    % profile without cruising phase.
+    % We will just set t(4) to zero and try.
+    
+    % The unlikely case we cant detect:
+    if (bUseDoubleDeceleration) && (~isZero(t(4)))
+        try % try the normal solution
+            [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+            SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+            t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
+            j_res = j;
+            % display graph
+            if (plotMe)
+                [a_end, v_end, p_end] = plotjTracks(t_res,j_res,a0,v0,p0, true, jmax,amax,vmax,ptarget);
+            end
+            return;
+        end
+        % it didnt work --> so lets try with t(4) = 0
+        t(4) = 0;
+        [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+        SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+        t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
+        j_res = j;
+    else
+        % the normal solution
+        [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(t, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
+        SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
+        t_res = solveAll ([A V TEQ SUM_EQ P], TVARS);
+        j_res = j;  
+    end
 end
 
 % display graph
@@ -51,6 +87,9 @@ function [bDoubleDec, t,j] = useDoubleDeceleration(t,j,T, ptarget,jmax,amax,vmax
 if (sign(j(3)) ~= sign (j(5)))
     % that was easy - it already is a double dec. profile :)
     bDoubleDec = true;
+    if (abs(a0) > amax) && (sign(a0) == sign(j(5)))
+        j(1) = j(3);
+    end
     return;
 end
 
@@ -95,7 +134,8 @@ if (sign(jdec(1)) == sign(j(5))) % we may need to switch
     % for the case that we need to reduce the acceleration first, because
     % its over the limit, we need to rearrage the jerks a bit...
     if (abs(a0) > amax) && (sign(a0) == sign(j(5)))
-        t = [t1 0 0  0  tdec]; j = [jdec  0  jdec]; j(1) = -j(1);
+        t1a = (abs(a0)-amax)/jmax;
+        t = [t1a 0 t1-t1a  0  tdec]; j = [jdec  0  jdec]; j(1) = -j(1);
     end
     % insert cruising phase, such that the target is still reached
     t = adaptProfile (t,j, ptarget, a0,v0,p0);
@@ -127,7 +167,55 @@ function [t,j] = findProfileDoubleDec (t,j,T, dir, a0,v0,p0, ptarget, jmax,amax,
 % 1) The time-optimal profile was already double deceleraton, leading to a(3) ~= 0
 % 2) all other profiles: a(3) == 0, there might be profile [0 0 t3] / [t1 0 0]
 a3 = calcjTracks (t(1:3), j(1:3), a0,v0,p0);
-if (~isZero(a3))
+if (isZero(a3))
+    % We need to differentiate between two cases:
+    % Either j(1) and j(3) have different sign, in that case, the first part of
+    % the profile will resemble a wedge or a trapezoid, respectively.
+    % When they have the same sign (in case a0 > amax), it will have the form
+    % of a slope or a stair, respectively.
+    if (sign(j(1)) == sign(j(3))) && (j(1) ~= 0)
+        if (t(6) == 0)
+            t(2) = 1;
+            return;
+        end
+        % move all the area from second trapezoid part to the first
+        t(2) = t(2) + t(6);
+        t(6) = 0;
+        tn = adaptProfile (t,j,ptarget,a0,v0,p0);
+        % if we overshoot in time, t contains the correct profile
+        if (stillTooShort(tn,T)) 
+            % we need to allow t(2) to be different from zero
+            t(2) = 1;
+            return;
+        end
+        % otherwise the second part will stay trapezoid
+        t(6) = 1;
+        t(2) = 1;
+        return;
+    end
+
+    if (sign(a0) ~= sign(j(5)))
+        % In the shifting process, we may only consider the velocity change *after*
+        % reaching zero acceleration. Hence, we compute new initial conditions, reached
+        % after this initial acceleration decrease.
+        t0 = abs(a0/jmax);
+    else
+        % To ease computation during shifting, we extend the first phase
+        % to an full profile, starting at zero acceleration
+        t0 = -abs(a0/jmax);
+    end
+    % compute initial position at zero acceleration
+    [a0_ v0_ p0_] = calcjTracks (t0, j(1), a0,v0,p0);
+    t(1) = t(1) - t0;
+
+    [t, j] = shiftDoubleDecArea (t,j,T-t0, a0_,v0_,p0_, ptarget, jmax,amax);
+    t(1) = t(1) + t0;
+    
+    % if we got a valid result, a profile with cruising phase is possible.
+    % Otherwise we have to enter the a3 <> 0 case.
+    if (t(4) >= 0) return; end
+end
+    
     % We now have to stretch a double deceleration profile without a
     % cruising phase, which is the most complex possible case.
     % It turns out, that we can't distinguish between the 8 profile types
@@ -162,85 +250,19 @@ if (~isZero(a3))
            [A, V, P, TEQ, TVARS, VARS] = stp7_formulas(Mt{ii}, j, false, dir,ptarget,jmax,amax,vmax, a0,v0,p0);
            SUM_EQ = sym(strcat('t1+t2+t3+t4+t5+t6+t7=', char(sym(T))));
            t = solveAll ([A V TEQ SUM_EQ P], TVARS);
-           j = j;
-           return;
+           % in some cases we might get an additional solution that is
+           % oszillating in the acceleration. So we need to check, whether
+           % a3 has the same sign as -dir.
+           a3 = a0 + t(1)*j(1) + t(2)*j(2) + t(3)*j(3);
+           if (isZero(a3)) || (sign(a3) ~= sign(dir))
+               % no oszillation, we found the correct profile
+               return;
+           end
+           % oszillation, we need to continue the search
        end
     end
     disp('This should not happen: Found no solution when stretching double dec profile');
-    
-% Unfortunately, the following code is not working...    
-%     % 1) Time-optimal profile was double deceleration already
-%     %    In this case we must check, whether we can reach a3 = 0 (to insert
-%     %    a cruising phase
-%     tz = abs(a3/jmax); % time needed to reach zero acceleration
-%     % Try to shorten deceleration profile, such that a3 reaches zero in between
-%     % Because removeArea works on complete profiles only, we extend the
-%     % deceleration profile by tz and remove the triangular area 0.5*a3*tz twice.
-%     [isPossible, tdec] = removeArea([t(5)+tz t(6) t(7)], abs(a3*tz), jmax,amax);
-%     % adapt profile to reach target again
-%     tn = adaptProfile ([t(1:2) t(3)+tz  0  tdec],j, ptarget, a0,v0,p0);
-%     % if target is overshooted while trying to set a3=0, 
-%     % adaptProfile will return negative time tn(4).
-%     if (tn(4) < 0 || ~stillTooShort(tn,T))
-%         % If deceleration profile is trapezoidal, it might become triangular
-%         if (t(6) ~= 0 && tn(6) == 0)
-%             % Delta * abs(a3) = amax * t(6)
-%             Delta = amax * t(6) / abs(a3); % time to extend t(3) and t(5)
-%             tn = adaptProfile ([t(1:2) t(3)+Delta 0 t(5)+Delta 0 t(7)],j, ptarget, a0,v0,p0);
-%             tn(4) = 0;
-%             if (~stillTooShort(tn,T)) t = tn; end
-%         end
-%         return % keep existing profile
-%     end
-%     t = tn; % use adapted profile for further checks
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% The rest of the code assumes a3 = 0
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% We need to differentiate between two cases:
-% Either j(1) and j(3) have different sign, in that case, the first part of
-% the profile will resemble a wedge or a trapezoid, respectively.
-% When they have the same sign (in case a0 > amax), it will have the form
-% of a slope or a stair, respectively.
-if (sign(j(1)) == sign(j(3)))
-    if (t(6) == 0)
-        t(2) = 1;
-        return;
-    end
-    % move all the area from second trapezoid part to the first
-    t(2) = t(2) + t(6);
-    t(6) = 0;
-    tn = adaptProfile (t,j,ptarget,a0,v0,p0);
-    % if we overshoot in time, t contains the correct profile
-    if (~stillTooShort(tn,T)) 
-        % we need to allow t(2) to be different from zero
-        t(2) = 1;
-        return;
-    end
-    % otherwise the second part will stay trapezoid
-    t(6) = 1;
-    t(2) = 1;
-    return;
-end
-
-if (sign(a0) ~= sign(j(5)))
-    % In the shifting process, we may only consider the velocity change *after*
-    % reaching zero acceleration. Hence, we compute new initial conditions, reached
-    % after this initial acceleration decrease.
-    t0 = abs(a0/jmax);
-else
-    % To ease computation during shifting, we extend the first phase
-    % to an full profile, starting at zero acceleration
-    t0 = -abs(a0/jmax);
-end
-% compute initial position at zero acceleration
-[a0 v0 p0] = calcjTracks (t0, j(1), a0,v0,p0);
-t(1) = t(1) - t0;
-
-[t, j] = shiftDoubleDecArea (t,j,T-t0, a0,v0,p0, ptarget, jmax,amax);
-t(1) = t(1) + t0;
-return
+    return   
 
 function [t,j] = shiftDoubleDecArea (t,j,T, a0,v0,p0, ptarget, jmax,amax)
 % Compute current velocity decrease achieved during first and second part
@@ -258,7 +280,8 @@ function [t,j] = shiftDoubleDecArea (t,j,T, a0,v0,p0, ptarget, jmax,amax)
                 deltaLast  = curLast; % area available in second part
                 % if last part has no enough area to extend first one to full
                 % triangle, the profile will keep WW shape
-                if (deltaFirst >= deltaLast) return; end
+                if (deltaFirst >= deltaLast) return;
+                end
             else
                 deltaLast = t(6)*amax; % area below const-trapezoidal part
             end
@@ -376,14 +399,23 @@ if (strcmp (type, 'TW'))
         t(2) = 0;
         t(5) = sqrt((area_w_max-area_t_max)/abs(j(5)));
         t(7) = t(5);
-        t = adaptProfile (t,j, ptarget, a0,v0,p0);
-
-        if (stillTooShort(t,T))
-            % TODO checkDoubleDecel
-            type = 'WW'; % type switches to WW
+        
+        % for the case the t area and the second wedge are exactly same,
+        % the result is a fullstop. In this case we stay a TW profile.
+        if (isZero(t(7)))
+            t = t_orig;
         else
-            % now we stop after duration time T, hence profile stays TW
-            t = t_orig; % return input profile
+            t = adaptProfile (t,j, ptarget, a0,v0,p0);
+            % t(4) might get smaller than zero, when due to the area
+            % switching, the direction flag of the motion changes. In
+            % that case, we stay a TW profile.
+            if (t(4) >= 0) && (stillTooShort(t,T))
+                % TODO checkDoubleDecel
+                type = 'WW'; % type switches to WW
+            else
+                % now we stop after duration time T, hence profile stays TW
+                t = t_orig; % return input profile
+            end
         end
     else
        % nothing to cut out, stays at TW
