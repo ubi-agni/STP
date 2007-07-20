@@ -145,8 +145,14 @@ end
 
 if (strcmp (type, 'WT'))
     a1 = a0 + j(1)*t(1);
-    dt_w = min(t(1),t(3));
-    area_w_max = abs(dt_w * (2*a1 - dt_w*j(1)));
+    %%%dt_w = min(t(1),t(3));
+    %%%area_w_max = abs(dt_w * (2*a1 - dt_w*j(1)));
+
+    area_w_max = t(3)*t(3)*jmax;
+    if (t(1) < t(3))
+        area_w_max = area_w_max - 0.5*a0*a0/jmax;
+    end
+
     area_t_max = t(6)*amax;
     if (area_w_max > area_t_max)
         % we will cut out the whole t(6) WT -> WW

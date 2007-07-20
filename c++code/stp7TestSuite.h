@@ -60,12 +60,12 @@ public:
         
         int count = 0;
         double amax = 1.07;
-        double vmax = 9.92;
+        double vmax = 0.92;
         double xtarget;
 
         double x0 = 0.;
-        double a0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
-        double v0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        double a0[7] = {-1.2,-1.07,-0.7,0.0,0.7,1.07,1.2};
+        double v0[7] = {-1.2,-0.92,-0.7,0.0,0.7,0.92,1.2};
         double jmaxs[6] = {0.23, 0.79, 1.0, 1.68, 5.1, 101};
         
         string testResult;
@@ -442,13 +442,19 @@ public:
         // time optimal profiles, both ddec and canonical ones.
         Stp7 stp;
         
+        // TODO TODO last unsolved problem case!!!
+        stp. planFastestProfile(0, 12.084, 1, 2, -1, 1.07, 1);
+        stp.scaleToDuration(24.54);
+        
+        return;
+        
         double amax = 1.07;
-        double vmax = 9.92;
+        double vmax = 0.92;
         double xtarget;
 
         double x0 = 0.;
-        double a0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
-        double v0[7] = {-1.2,-1.0,-0.7,0.0,0.7,1.0,1.2};
+        double a0[7] = {-1.2,-1.07,-0.7,0.0,0.7,1.07,1.2};
+        double v0[7] = {-1.2,-0.92,-0.7,0.0,0.7,0.92,1.2};
         double dt[10] = {1.0001, 1.125, 1.25, 1.375, 1.5, 1.6667, 1.83333, 2.0, 3.0, 10.0};
         double jmaxs[6] = {0.23, 0.79, 1.0, 1.68, 5.1, 101};
         

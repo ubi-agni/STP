@@ -43,3 +43,15 @@ Example:
     wrapper7st_stretch(6.24818754884600924270898758550174534320831298828125,0, 0.77777777777777779011358916250173933804035186767578125, 1, 1, 0, 1, 1)
 Solution:
     Introduced an additional case differentiation.
+
+
+20.07.2007
+==========
+
+Change in stetch7st.m und calc7st.m
+Problem:
+    Calculation of the area that can be cut out ni the first part of
+    movement in a WT pofile was calculated wrong in the functions for
+    determining the profile type.
+Solution:
+    Corrected way of calculation.

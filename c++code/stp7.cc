@@ -433,9 +433,12 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
 
     if (_sProfileType == PROFILE_WT) {
         double a1 = _a[0] + _j[1]*_t[1];
-        double dt_w = min(_t[1],_t[3]);
-        double area_w_max = 0.5*dt_w*dt_w*_jmax;
-        if (_t[1] > _t[3]) area_w_max += fabs(2.*_a[0]*dt_w);
+        //double dt_w = min(_t[1],_t[3]);
+        //double area_w_max = 0.5*dt_w*dt_w*_jmax;
+        //if (_t[1] > _t[3]) area_w_max += fabs(2.*_a[0]*dt_w);
+        double area_w_max = _t[3]*_t[3]*_jmax;
+        if (_t[1] < _t[3]) area_w_max -= 0.5*_a[0]*_a[0]/_jmax;
+        
         double area_t_max = _t[6]*_amax;
         if (area_w_max > area_t_max) {
             // we will cut out the whole t(6) WT -> WW
@@ -761,8 +764,12 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
     
     if (type == Stp7::PROFILE_WT) {
         double a1 = a0 + j[1]*t[1];
-        double dt_w = min(t[1],t[3]);
-        double area_w_max = fabs(dt_w * (2*a1 - dt_w*j[1]));
+        //double dt_w = min(t[1],t[3]);
+        //double area_w_max = fabs(dt_w * (2*a1 - dt_w*j[1]));
+        
+        double area_w_max = t[3]*t[3]*jmax;
+        if (t[1] < t[3]) area_w_max -= 0.5*a0*a0/jmax;
+        
         double area_t_max = t[6]*amax;
         if (area_w_max > area_t_max) {
             // we will cut out the whole t[6] WT -> WW
