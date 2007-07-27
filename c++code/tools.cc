@@ -1,9 +1,7 @@
-// 
-// File:   tools.cc
-// Author: erik
-//
-// Created on 25. April 2007, 21:53
-//
+/**
+ * \file tools.cc
+ * \author Erik Weitnauer
+ */
 
 #include "tools.h"
 #include <sstream>

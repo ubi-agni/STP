@@ -1,9 +1,7 @@
-// 
-// File:   stp7TestSuite.h
-// Author: erik
-//
-// Created on 28. April 2007, 16:07
-//
+/**
+ * \file stp7TestSuite.h
+ * \author Erik Weitnauer
+ */
 
 #ifndef _stp7TestSuite_H
 #define	_stp7TestSuite_H
@@ -12,6 +10,14 @@
 #include <iomanip>
 #include <cxxtest/TestSuite.h>
 
+/**
+ * \brief Class for automated testing of the Stp7 class.
+ * \author Erik Weitnauer
+ * \date 2007
+ *
+ * The "cxxtest" testing system is used.
+ * \see cxxtest.sourceforge.net/
+ */
 class Stp7TestSuite: public CxxTest::TestSuite {
 private:
     double calcFullstopPosition(double x0, double v0, double a0, double amax, double jmax) {
@@ -39,6 +45,7 @@ private:
     }
 	
 public:
+    /// test some simple basic behavior
     void testBasics( void ) {
         Stp7 stp;
         TS_ASSERT_DIFFERS(stp.toString(), "");
@@ -53,9 +60,24 @@ public:
         TS_ASSERT_DIFFERS(stp.testProfile(), "");
     };
     
+    /**
+     * Runs 6174 tests covering all possible cases for the planning of
+     * time optimal profiles, both ddec and canonical ones.
+     * 
+     * The method choses the target position around the end positions for
+     * the zero-cruise profiles (exactly reach vmax, but immediately slow down
+     * afterwards). 21 Positions are chosen.
+     *
+     * For the other values, the method iterates through the following
+     * combinations:
+     *      - amax = 1.07
+     *      - vmax = 0.92
+     *      - x0 = 0
+     *      - a0 = {-1.2,-1.07,-0.7,0.0,0.7,1.07,1.2}
+     *      - v0 = {-1.2,-0.92,-0.7,0.0,0.7,0.92,1.2}
+     *      - jmax = {0.23, 0.79, 1.0, 1.68, 5.1, 101}
+     */
     void testAutomatedFastestProfileTest(void) {
-        // Runs 980+49 tests covering all possible cases for the planning of
-        // time optimal profiles, both ddec and canonical ones.
         Stp7 stp;
         
         int count = 0;
@@ -109,6 +131,7 @@ public:
         cout << endl << "Calculated time optimal profile for " << count << " different start conditions." << endl;
     }
     
+    /// test 4 basic cases for standard profiles with cruising phase
     void testCruiseProfilesStandard(void) {
         Stp7 stp;
         // TT profile
@@ -144,6 +167,7 @@ public:
         TS_ASSERT(!stp.isDoubleDecProfile());
     }
     
+    /// test 3 cases for standard profiles with cruising phase with a0 > amax
     void testCruiseProfilesSpecial(void) {
         Stp7 stp;
         // a0>amax, double deceleration, TT
@@ -171,6 +195,7 @@ public:
         TS_ASSERT(stp.isDoubleDecProfile());
     }
     
+    /// test 4 basic cases for standard profiles without cruising phase
     void testNoCruiseProfilesStandard(void) {
         Stp7 stp;
         
@@ -208,6 +233,7 @@ public:
         TS_ASSERT(!stp.isDoubleDecProfile());
     }
     
+    /// test 4 cases for double deceleration profiles without cruising phase
     void testNoCruiseProfileDoubleDec(void) {
         Stp7 stp;
         
@@ -248,6 +274,7 @@ public:
         TS_ASSERT(stp.isDoubleDecProfile());
     }
     
+    /// test the stretching of 4 profiles with cruising phase
     void testCruiseProfileStretched(void) {
         Stp7 stp;
         
@@ -297,6 +324,7 @@ public:
         TS_ASSERT(!stp.isDoubleDecProfile());
     }
 
+    /// test the stretching of 3 profiles without a cruising phase
     void testNoCruiseProfileStretched() {
         Stp7 stp;
         
@@ -334,6 +362,7 @@ public:
         TS_ASSERT(!stp.isDoubleDecProfile());
     }
     
+    /// tests the stretching of 9 double deceleration profiles
     void testDoubleDecProfileStretched() {
         Stp7 stp;
    
@@ -437,16 +466,39 @@ public:
         TS_ASSERT(stp.isDoubleDecProfile());
     }
     
+    /**
+     * Runs 53214 tests covering all possible cases for the planning of
+     * stretched profiles, both ddec and canonical ones.
+     *
+     * The method choses the target position around the end positions for
+     * the zero-cruise profiles (exactly reach vmax, but immediately slow down
+     * afterwards). 21 Positions are chosen.
+     *
+     * For the other values, the method iterates through the following
+     * combinations:
+     *      - amax = 1.07
+     *      - vmax = 0.92
+     *      - x0 = 0
+     *      - a0 = {-1.2,-1.07,-0.7,0.0,0.7,1.07,1.2}
+     *      - v0 = {-1.2,-0.92,-0.7,0.0,0.7,0.92,1.2}
+     *      - jmax = {0.23, 0.79, 1.0, 1.68, 5.1, 101}
+     *      - dt = {1.0001, 1.125, 1.25, 1.375, 1.5, 1.6667, 1.83333, 2.0, 3.0, 10.0}
+     *
+     * The new duration is calcutated by multiplying the dt value with the time
+     * optimal duration.
+     *
+     * \bug last unsolved problem case!!!
+     * stp. planFastestProfile(0, 12.084, 1, 2, -1, 1.07, 1);
+     * stp.scaleToDuration(24.54);
+     */
     void testAutomatedStretchedProfileTest(void) {
-        // Runs 980+49 tests covering all possible cases for the planning of
-        // time optimal profiles, both ddec and canonical ones.
         Stp7 stp;
         
         // TODO TODO last unsolved problem case!!!
-        stp. planFastestProfile(0, 12.084, 1, 2, -1, 1.07, 1);
-        stp.scaleToDuration(24.54);
+        // stp. planFastestProfile(0, 12.084, 1, 2, -1, 1.07, 1);
+        // stp.scaleToDuration(24.54);
         
-        return;
+        //return;
         
         double amax = 1.07;
         double vmax = 0.92;

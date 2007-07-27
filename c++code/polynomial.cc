@@ -1,10 +1,7 @@
-// 
-// File:   stp7.cc
-// Author: erik
-// Using the laguer algorithm decribed in "Numerical Recipes In C", 2nd edition
-// for finding the roots of a (complex) polynomial, p.371ff
-// Created on 22. April 2007, 17:06
-//
+/**
+ * \file polynomial.cc
+ * \author Erik Weitnauer
+ */
 
 #include "polynomial.h"
 #include "complex.h"
@@ -31,6 +28,13 @@
 
 using namespace std;
 
+/**
+ * .
+ * @param[in] a Complex[0..m] of coefficients
+ * @param[in] m degree of polynomial
+ * @param[out] x the root that was found
+ * @param[out] its number of iterations needed
+ */
 void Polynomial::laguer(Complex a[], int m, Complex &x, int *its) {
     int iter,j;
     double abx,abp,abm,err;
@@ -77,6 +81,14 @@ void Polynomial::laguer(Complex a[], int m, Complex &x, int *its) {
     throw x;    
 }
 
+/**
+ * .
+ * @param[in] a  Complex[0..m] of coefficients
+ * @param[in] m  degree of polynomial
+ * @param[out] roots Complex[0..m] all roots that were found
+ * @param[in] polish option to further improve the precision of solution,
+ * could be necessary for polynomials of very high degree.
+ */
 void Polynomial::findRoots(Complex a[], int m, Complex roots[], bool polish) {
     int i,its,j,jj;
     Complex x,b,c;
@@ -110,6 +122,11 @@ void Polynomial::findRoots(Complex a[], int m, Complex roots[], bool polish) {
     }    
 }
 
+/**
+ * .
+ * @param[in] i index
+ * @return coefficient
+ */
 Complex Polynomial::getCoeff(int i) {
     if ((i < 0) && (i > degree)) throw i;
     return coeff[i];
@@ -123,6 +140,13 @@ void Polynomial::mayComputeRoots() {
     }
 }
 
+/**
+ * .
+ * @param[in] i index
+ * @return root
+ *
+ * Searches for the roots first, if neccessary.
+ */
 Complex Polynomial::getRoot(int i) {
     if ((i < 0) && (i >= degree)) throw i;
     mayComputeRoots();
@@ -157,8 +181,12 @@ double Polynomial::getSmallestRealRoot() {
     return roots[mini].r;
 }
 
-double Polynomial::value(Complex x) {
-    
+Complex Polynomial::value(Complex x) {
+    Complex result = coeff[degree];
+    for (int i = degree-1; i >= 0; i--) {
+        result = result*x + coeff[i];
+    }
+    return result;
 }
 
 std::string Polynomial::toString() const {

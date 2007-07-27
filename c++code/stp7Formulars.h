@@ -1,9 +1,7 @@
-// 
-// File:   stp7Formulars.h
-// Author: erik
-//
-// Created on 10. Juni 2007, 15:17
-//
+/**
+ * \file stp7Formulars.h
+ * \author Erik Weitnauer
+ */
 
 #ifndef _STP7FORMULARS_H
 #define	_STP7FORMULARS_H
@@ -13,13 +11,53 @@ using namespace std;
 #include <iostream>
 #include <string>
 
+/**
+ * Class solving the equations for 3rd order trajectories.
+ * \author Erik Weitnauer
+ * \date 2007
+ *
+ * This class is used for getting the correct values for the time inveralls of
+ * a 3rd order trajectory. It must be provided with sufficient information about
+ * the type of profile:
+ *      - TT / TW / WT / WW profile
+ *      - with / without cruising phase
+ *      - double deceleration?
+ *      - start with deacceleration since a0 > amax?
+ *      - direction of cruising phase
+ *      - initial, target and limit values for position, velocity, acceleration, jerk and duration
+ *  
+ * These different conditions lead to 18 possible different profile types.
+ * Planning the trajectory for any of them is done in two steps:
+ * 
+ * 1) Calculation of the coeffecients.
+ * The coefficient of the polynomial which roots are used to calculate the
+ * solutions for the time values later.
+ *
+ * 2) For each root found do:
+ * Calculate the time intervalls associated with this root and check whether they
+ * are a valid solution (e.g. no negativ time intervalls).
+ *
+ * For the equations for the different profile types
+ * \see fastest.mw, stretch.mw and stretch_doubledec.mw maple worksheet files in "./maple/"
+ * \see "On-Line Planning of Time-Optimal, Jerk-Limited Trajectories";
+ * R. Haschke, E. Weitnauer, H. Ritter; 2007
+ *
+ * \warning The solutions for the times are given back as time intervalls instead
+ * of absolute tmie points. The index of the time array ranges from 1..7, so a
+ * double[8] array must be passed.
+ */
 class Stp7Formulars {
 public:
+    /**
+     * Most general method to calculate the solution for the time
+     * intervalls, taking into account all other parameters passed.
+     */
     static void solveProfile(double t[8],
             string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
             double x0, double xTarget, double v0, double vmax,
             double a0, double amax, double jmax, double stretchToTime=0);
     
+    /// method returns true, if all values t[1..7] are positive or zero.
     static bool areValidTimeIntervalls(double t[8]);
 private:
     static void calcCoeffs(double coeffs[7],

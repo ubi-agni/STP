@@ -1,9 +1,7 @@
-// 
-// File:   stp3TestSuite.h
-// Author: erik
-//
-// Created on 28. April 2007, 13:00
-//
+/**
+ * \file stp3TestSuite.h
+ * \author Erik Weitnauer
+ */
 
 #ifndef _stp3TestSuite_H
 #define	_stp3TestSuite_H
@@ -11,6 +9,14 @@
 #include <cxxtest/TestSuite.h>
 #include "stp3.h"
 
+/**
+ * \brief Class for automated testing of the Stp3 class.
+ * \author Erik Weitnauer
+ * \date 2007
+ *
+ * The "cxxtest" testing system is used.
+ * \see cxxtest.sourceforge.net/
+ */
 class Stp3TestSuite : public CxxTest::TestSuite {
 public:
     void setUp() {}

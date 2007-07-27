@@ -1,9 +1,7 @@
-// 
-// File:   stp3.cc
-// Author: erik
-//
-// Created on 25. April 2007, 19:23
-//
+/**
+ * \file stp3.cc
+ * \author Erik Weitnauer
+ */
 
 #include "stp3.h"
 #include <sstream>
@@ -18,24 +16,42 @@ const string Stp3::PROFILE_STOP = "profile stop";
 const string Stp3::PROFILE_T = "T profile";
 const string Stp3::PROFILE_W = "W profile";
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
 bool Stp3::isDoubleDecProfile() const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _bIsddec;
 } 
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
 bool Stp3::isTrapezoid() const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return (_t[2] != _t[1]);
 }
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
 string Stp3::getProfileType() const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _sProfileType;
 }
 
+/**
+ * .
+ * @param[in] i index, 1 <= i <= 3
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * \throws out_of_range if i is out of range
+ */
 double Stp3::getSwitchTime(int i) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -44,6 +60,12 @@ double Stp3::getSwitchTime(int i) const {
     return _t[i];
 }
 
+/**
+ * .
+ * @param[in] i index, 1 <= i <= 3
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * \throws out_of_range if i is out of range
+ */
 double Stp3::getTimeIntervall(int i) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -52,12 +74,20 @@ double Stp3::getTimeIntervall(int i) const {
     return _t[i]-_t[i-1];
 }
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
 void Stp3::getAccArray(double a[4]) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 4; i++) a[i] = _a[i];
 }
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
 void Stp3::getTimeArray(double t[4]) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -69,6 +99,12 @@ void Stp3::getTimeIntArray(double t[4]) const {
     t[3] = _t[3] - _t[2]; t[4] = _t[4] - _t[3];
 }
 
+/**
+ * .
+ * For t = 0 returns 1, for t >= duration returns 3.
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * \throws invalid_argument if a negative time was passed
+ */    
 int Stp3::getPhaseIndex(double t) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -86,6 +122,11 @@ void Stp3::calcaTrack(double dt, double x0, double v0, double a,
     newv = v0 + a*dt;
 }
 
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * \throws invalid_argument if a negative time was passed
+ */
 void Stp3::move(double t, double &x, double &v, double &a) const {
     if (!_plannedProfile) 
         throw invalid_argument("Consider to call planFastestProfile(.) first.");
@@ -119,6 +160,10 @@ double Stp3::acc(double t) const {
     return a;
 }
 
+/**
+ * .
+ * @return duration of planned trajectory
+ */
 double Stp3::planFastestProfile(double x0, double xtarget, double v0,
                                 double vmax, double amax) {
     // first set object fields
@@ -134,11 +179,7 @@ double Stp3::planFastestProfile(double x0, double xtarget, double v0,
         // calc x,v values for next switch point
         calcaTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i], _x[i], _v[i]);
     }
-    
-    // test, wether algorithm is correct
-    //if (_x[3] != xtarget) 
-    //    throw logic_error("The planned profile does not reach the goal!");
-    
+
     _plannedProfile = true;
     
     return _t[3];

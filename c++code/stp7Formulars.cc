@@ -1,9 +1,7 @@
-// 
-// File:   stp7Formulars.cc
-// Author: erik
-//
-// Created on 10. Juni 2007, 15:29
-//
+/**
+ * \file stp7Formulars.cc
+ * \author Erik Weitnauer
+ */
 
 #include "stp7Formulars.h"
 #include "polynomial.h"
@@ -22,16 +20,23 @@
 using namespace std;
 
 /**
- * Most general method to calculate the optimal solution for the time
- * intervalls, taking into account all other parameters passed:
- *      type: One of Stp7::PROFILE_{TT, WT, TW, WW}.
- *      bDoubleDec: Is profile a double deceleration profile?
- *      bDecAcc: Must acceleration be reduced first since a0 > amax?
- *      bMoveForward: False when an overshooting of target is inevitable.
- *      stretchTo: In case of stretched profile denotes the time to stretch to,
- *                 otherwise its zero.
- *
- * The results will be written to the t array.
+ * .
+ * @param[out] t calculated time intervalls
+ * @param[in] type a value amoung Stp7::PROFILE_{TT, WT, TW, WW}
+ * @param[in] bCruise true when profile has cruising phase
+ * @param[in] bDoubleDec true when profile is double decceleration profile
+ * @param[in] bDecAcc must acceleration be reduced first since a0 > amax?
+ * @param[in] bMoveForward false when an overshooting of target is inevitable 
+ * @param[in] x0 start position
+ * @param[in] xTarget target position
+ * @param[in] v0 initial velocity
+ * @param[in] vmax limit for velocity
+ * @param[in] a0 initial acceleration
+ * @param[in] amax limit for acceleration
+ * @param[in] jmax limit for jerk
+ * @param[in] stretchToTime If the profile should be stretched, this will be the
+ * resulting duration of movement. For time optimal profiles this value must be 
+ * set to zero.
  */
 void Stp7Formulars::solveProfile(double t[8],
         string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
@@ -81,15 +86,15 @@ void Stp7Formulars::solveProfile(double t[8],
                 xTarget, v0, vmax, a0, amax, jmax, stretchToTime);
 }
 
-/**
- * Method returns true, if all values t[1..7] are positive or zero.
- */
 bool Stp7Formulars::areValidTimeIntervalls(double t[8]) {
     for (int i = 1; i < 8; i++) if (t[i] < 0) return false;
     return true;
 }
 
-
+/**
+ * Call the appropriate specialist method for caluclate the coefficients of the
+ * polynomial, which roots are used to calculate the solutions for the time intervalls.
+ */
 void Stp7Formulars::calcCoeffs(double coeffs[7],
         string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double x0, double xTarget, double v0, double vmax,
@@ -229,6 +234,10 @@ void Stp7Formulars::calcCoeffs(double coeffs[7],
     throw logic_error("Unknown profile: " + type + (bCruise ? ", " : ", no ") + "cruise.");
 }
 
+/**
+ * Call the appropriate specialist method for caluclate the solution for the 
+ * time intervalls using the passed value of the root of the polynomial.
+ */
 void Stp7Formulars::calcTimeIntervalls(double t[8],
         string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double root, double x0, double xTarget, double v0, double vmax,
@@ -366,7 +375,6 @@ void Stp7Formulars::calcTimeIntervalls(double t[8],
     // unknown profile type, throw exception
     throw logic_error("Unknown profile: " + type + (bCruise ? ", " : ", no ") + "cruise.");
 }
-
 
 void Stp7Formulars::calcCoeffsProfileTT(double coeffs[7], double x0, double xTarget,
         double v0, double vmax, double a0, double amax, double jmax, double da, double dc) {
@@ -1584,23 +1592,6 @@ void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileTcT(double coeffs[7],
         double stretchToTime) {
     coeffs[1] = 1;
     coeffs[0] = 0;
-//    double t1 = da * dc;
-//    double t5 = amax * amax;
-//    double t6 = t5 * dc;
-//    double t14 = da * jmax;
-//    double t20 = a0 * a0;
-//    double t25 = t5 * t5;
-//    double t29 = v0 * v0;
-//    double t30 = jmax * jmax;
-//    double t33 = v0 * jmax;
-//    double t37 = t5 * v0;
-//    double t52 = da * amax;
-//    double t59 = t20 * t20;
-//    double t64 = t5 * amax;
-//
-//    coeffs[2] = -0.12e2 + 0.12e2 * t1;
-//    coeffs[1] = -0.24e2 * t6 * da + 0.12e2 * t6 - 0.24e2 * stretchToTime * amax * jmax + 0.36e2 * t5 + 0.24e2 * t14 * v0 + 0.24e2 * t1 * amax * a0 + 0.12e2 * dc * t20;
-//    coeffs[0] = 0.12e2 * t25 * da - 0.12e2 * t25 - 0.12e2 * t29 * t30 - 0.12e2 * t33 * t1 * t20 + 0.24e2 * t37 * jmax * dc + 0.12e2 * t5 * da * t20 - 0.8e1 * t20 * a0 * da * amax - 0.24e2 * dc * amax * t33 * a0 + 0.24e2 * t52 * xTarget * t30 - 0.24e2 * t52 * x0 * t30 - 0.3e1 * t59 - 0.12e2 * t37 * t14 * dc + 0.24e2 * t64 * a0 + 0.24e2 * t25 * dc * da - 0.24e2 * t64 * dc * da * stretchToTime * jmax - 0.6e1 * t5 * t20;
 }
 
 void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileTcT(double t[8], double root,
@@ -1650,23 +1641,6 @@ void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileTcT(double t[8], 
         t[6] = (0.3e1 * t2 + 0.6e1 * t5 - t8 + 0.24e2 * stretchToTime * t9 * jmax + 0.12e2 * t13 * t14 + (0.12e2 * t17 * t1 - 0.24e2 * t9 * a0 + 0.12e2 * t23) * da * dc + (0.8e1 * t1 * a0 * amax - 0.24e2 * xTarget * t13 * amax + 0.24e2 * x0 * t13 * amax - 0.24e2 * t23) * dc + (0.24e2 * t17 * a0 * amax - 0.12e2 * t5 - t8) * da) * frac;
     }
     t[7] = amax / jmax;
-//    t[1] = (da * amax + a0) / da / dc / jmax;
-    
-//    {
-//        double t1 = amax * amax;
-//        double t10 = a0 * a0;
-//        t[2] = (-0.3e1 * t1 * da - 0.2e1 * root * dc + 0.2e1 * v0 * jmax * dc * da + t10 - t1) / amax / jmax / dc / 0.2e1;
-//    }
-//    t[3] = da * amax / dc / jmax;
-//    {
-//        double t1 = amax * amax;
-//        double t2 = a0 * a0;
-//        double t7 = 0.2e1 * root;
-//        t[4] = (-t1 - t2 - 0.2e1 * v0 * jmax * dc * da + (t7 - 0.4e1 * t1 + 0.2e1 * stretchToTime * amax * jmax) * dc + (-0.2e1 * a0 * amax + t1 - t7) * da) / amax / jmax / dc / 0.2e1;
-//    }
-//    t[5] = amax / jmax;
-//    t[6] = root / amax / jmax / da / dc;
-//    t[7] = t[5];
 }
 
 void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileTT(double coeffs[7],
@@ -1679,29 +1653,6 @@ void Stp7Formulars::calcCoeffsStretchedDoubleDecProfileTT(double coeffs[7],
     coeffs[2] = 0.2e1 * da;
     coeffs[1] = 0;
     coeffs[0] = 0.2e1 * v0 * jmax * da * dc + t7 * da - 0.2e1 * amax * da * jmax * stretchToTime + 0.2e1 * dc * amax * a0 + t16 + t7;
-//    if (da > 0) {
-//        double t7 = a0 * a0;
-//        double t9 = amax * amax;
-//        coeffs[2] = 0.2e1;
-//        coeffs[1] = 0;
-//        coeffs[0] = 0.2e1 * dc * amax * a0 + 0.2e1 * v0 * jmax * dc + t7 + 0.2e1 * t9 - 0.2e1 * jmax * stretchToTime * amax;
-//    } else {
-//        double t1 = jmax * v0;
-//        double t6 = a0 * a0;
-//        double t10 = dc * amax;
-//        double t13 = jmax * jmax;
-//        double t24 = t6 * t6;
-//        double t29 = amax * amax;
-//        double t30 = t29 * amax;
-//        double t40 = stretchToTime * stretchToTime;
-//        double t55 = v0 * v0;
-//
-//        coeffs[4] = 0.12e2;
-//        coeffs[3] = - 0.48e2 * t10;
-//        coeffs[2] = 0.48e2 * t29;        
-//        coeffs[1] = 0;
-//        coeffs[0] = -0.24e2 * t1 * a0 * amax - 0.12e2 * amax * jmax * stretchToTime * t6 + 0.48e2 * t10 * x0 * t13 - 0.48e2 * t10 * xTarget * t13 + 0.4e1 * t6 * a0 * dc * amax - 0.3e1 * t24 + 0.12e2 * t1 * dc * t6 - 0.24e2 * dc * t30 * a0 + 0.12e2 * t29 * t6 - 0.24e2 * stretchToTime * t30 * jmax + 0.12e2 * t29 * t40 * t13 + 0.24e2 * t10 * t13 * stretchToTime * v0 + 0.24e2 * dc * t29 * jmax * stretchToTime * a0 - 0.12e2 * t13 * t55;
-//    }
 }
 
 void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileTT(double t[8], double root,
@@ -1749,51 +1700,4 @@ void Stp7Formulars::calcTimeIntervallsStretchedDoubleDecProfileTT(double t[8], d
         t[6] = t56 * frac;
     }
     t[7] = amax/jmax;
-//    if (da > 0) {
-//        double frac;
-//        {
-//            double t4 = jmax * jmax;
-//            double t7 = a0 * a0;
-//            double t10 = amax * amax;
-//            frac = 0.1e1 / (0.6e1 * jmax * amax * a0 + 0.6e1 * v0 * t4 + (0.3e1 * jmax * t7 + 0.6e1 * jmax * t10 - 0.6e1 * amax * stretchToTime * t4) * dc);
-//        }
-//        t[1] = (dc * amax + a0) / dc / jmax;
-//        {
-//            double t1 = amax * amax;
-//            double t8 = a0 * a0;
-//            double t15 = jmax * jmax;
-//            double t24 = v0 * jmax;
-//            double t37 = stretchToTime * stretchToTime;
-//            t[2] = (-0.6e1 * root * t1 + 0.6e1 * amax * root * jmax * stretchToTime - 0.3e1 * root * t8 - 0.9e1 * t1 * a0 - 0.2e1 * t8 * a0 - 0.6e1 * x0 * t15 + 0.6e1 * xTarget * t15 + 0.6e1 * amax * stretchToTime * jmax * a0 - 0.6e1 * t24 * amax + (-0.6e1 * root * a0 * amax - 0.6e1 * root * jmax * v0 - 0.6e1 * amax * t8 - 0.6e1 * t1 * amax - 0.3e1 * amax * t37 * t15 + 0.9e1 * stretchToTime * t1 * jmax - 0.6e1 * t24 * a0) * dc) * frac;
-//        }
-//        t[3] = root / dc / jmax;
-//        t[4] = 0;
-//        t[5] = root / dc / jmax;
-//        {
-//            double t1 = jmax * jmax;
-//            double t5 = a0 * a0;
-//            double t7 = amax * amax;
-//            double t11 = jmax * stretchToTime;
-//            double t39 = stretchToTime * stretchToTime;
-//            double t50 = 0.6e1 * stretchToTime * t1 * v0 - t5 * a0 - 0.6e1 * root * t7 + 0.6e1 * amax * root * t11 + 0.6e1 * amax * stretchToTime * jmax * a0 - 0.3e1 * root * t5 + 0.6e1 * x0 * t1 - 0.6e1 * xTarget * t1 - 0.9e1 * t7 * a0 - 0.6e1 * v0 * jmax * amax + (0.3e1 * t11 * t5 - 0.6e1 * root * jmax * v0 - 0.6e1 * root * a0 * amax - 0.6e1 * t7 * amax - 0.3e1 * amax * t39 * t1 + 0.9e1 * stretchToTime * t7 * jmax - 0.6e1 * amax * t5) * dc;
-//            t[6] = t50 * frac;
-//        }
-//        t[7] = amax / jmax;
-//    } else {
-//        t[1] = (dc * amax - a0) / dc / jmax;
-//        {
-//            double t1 = pow(root, 0.2e1);
-//            double t6 = a0 * a0;
-//            t[2] = (-0.2e1 * t1 + 0.2e1 * amax * jmax * stretchToTime + t6 + (0.2e1 * amax * a0 - 0.2e1 * jmax * v0) * dc) / amax / jmax / 0.4e1;
-//        }
-//        t[3] = (-0.2e1 * dc * amax + root) / dc / jmax;
-//        t[4] = 0;
-//        t[5] = root / dc / jmax;
-//        {
-//            double t1 = pow(root, 0.2e1);
-//            double t6 = a0 * a0;
-//            t[6] = (0.2e1 * t1 + 0.2e1 * amax * jmax * stretchToTime - t6 + (-0.8e1 * amax * root + 0.2e1 * amax * a0 + 0.2e1 * v0 * jmax) * dc) / amax / jmax / 0.4e1;
-//        }
-//        t[7] = amax / jmax;
-//    }
 }

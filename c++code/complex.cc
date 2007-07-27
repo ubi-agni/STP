@@ -1,9 +1,7 @@
-// 
-// File:   Complex.cc
-// Author: erik
-//
-// Created on 23. April 2007, 00:13
-//
+/**
+ * \file complex.cc
+ * \author Erik Weitnauer
+ */
 #include "complex.h"
 #include <math.h>
 #include <iostream>
