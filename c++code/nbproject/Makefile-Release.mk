@@ -55,31 +55,31 @@ dist/Release/GNU-Linux-x86/stp7: ${OBJECTFILES}
 
 ${OBJECTDIR}/polynomial.o: polynomial.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/polynomial.o polynomial.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/polynomial.o polynomial.cc
 
 ${OBJECTDIR}/stp7Formulars.o: stp7Formulars.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/stp7Formulars.o stp7Formulars.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/stp7Formulars.o stp7Formulars.cc
 
 ${OBJECTDIR}/stp7.o: stp7.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/stp7.o stp7.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/stp7.o stp7.cc
 
 ${OBJECTDIR}/complex.o: complex.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/complex.o complex.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/complex.o complex.cc
 
 ${OBJECTDIR}/stp3.o: stp3.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/stp3.o stp3.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/stp3.o stp3.cc
 
 ${OBJECTDIR}/tools.o: tools.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/tools.o tools.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/tools.o tools.cc
 
 ${OBJECTDIR}/runner.o: runner.cc 
 	${MKDIR} -p ${OBJECTDIR}
-	$(COMPILE.cc) -O2 -o ${OBJECTDIR}/runner.o runner.cc
+	$(COMPILE.cc) -O2 -Icxxtest -o ${OBJECTDIR}/runner.o runner.cc
 
 # Subprojects
 .build-subprojects:
