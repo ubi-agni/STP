@@ -1,18 +1,6 @@
-//
-// File:   stp7.cc
-// Author: erik
-//
-// Created on 22. April 2007, 17:06
-//
-
-/*
- * TODO:
- * o) Einspeisen der Lösungen für alle stretched double dec Fälle:
- *      - TW
- *      - TT, TcT
- *      - WT, WcT
- * o) Systematischer Test für stretched profile
- * o) Profiling / Zeitanalyse ==> worst case: wieviele ddec ==> stretched ddec / sec. ?
+/**
+ * \file stp7.cc
+ * \author Erik Weitnauer
  */
 
 #include "polynomial.h"
@@ -27,7 +15,6 @@
 #include <stdexcept>
 #include <sstream>
 #include "math.h"
-#include <cxxtest/TestSuite.h>
 
 using namespace std;
 
@@ -54,7 +41,7 @@ void Stp7::planProfile() {
     
     int dir = 0;
     double xTarget = _x[7];
-    double x_dummy, a_dummy, v_dummy;
+    double a_dummy, v_dummy;
     double xStop;
     
     // (1) Calculation of the direction flag (direction of potential cruising
@@ -145,7 +132,7 @@ void Stp7::planProfileNoCruise(int dir) {
     _bHasCruise = false;
     convertTimePointsToIntervalls();
     
-    double x_dummy, v_dummy, a_dummy;
+    double x_dummy, a_dummy;
     
     // (0)
     if (sign(_j[3]) == sign(_j[5]) && _t[3] < _t[1]) {
@@ -255,7 +242,7 @@ double Stp7::scaleToDuration(double newDuration) {
             _j[3] = -_j[1];
         }    
 
-        double a_dummy, v_dummy, x_dummy;
+        double a_dummy, x_dummy;
 
         double v3;
         calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v3, a_dummy);
@@ -503,10 +490,8 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
     // 2) all other profiles: a(3) == 0, there might be profile [0 0 t3] / [t1 0 0]
     
     double v_dummy, x_dummy;
-    double a3, a7;
+    double a3;
     calcjTracksTimeInt(_t, _j, 3, _x[0], _v[0], _a[0], x_dummy, v_dummy, a3);
-    
-    double tdec[4];
     
     if (isZero(a3)) {
         // We need to differentiate between two cases:
@@ -659,7 +644,7 @@ void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration,
         double x0, double xTarget, double v0, double vmax, 
         double a0, double amax, double jmax) {
     // Compute current velocity decrease achieved during first and second part
-    double curFirst, curLast, t_0acc;
+    double curFirst, curLast;
     double x_dummy, a3, a7;
     calcjTracksTimeInt(t, j, 3, 0, 0, a0, x_dummy, curFirst, a3); // a3=0
     calcjTracksTimeInt(&(t[4]), j, 3, 0., 0., 0., x_dummy, curLast, a7); // a7=0
@@ -667,7 +652,7 @@ void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration,
     curFirst = fabs(curFirst); curLast = fabs(curLast);
 
     double wedgeMax = amax*amax/jmax;
-    double deltaFirst, deltaLast, deltaV, tacc[4], tn[8];
+    double deltaFirst, deltaLast, deltaV, tacc[4];
 
     while (1) {
         // area needed to extend first part to full wedge
@@ -805,6 +790,8 @@ string Stp7::findProfileTimeInt(double t[8], double j[8], int dir, double x0,
         }
         return type;
     }
+    
+    return type;
 }
 
 void Stp7::calc7st_opt_shiftTimeInt(double t[8], double j[8], int dir, double amax,
@@ -1049,8 +1036,8 @@ double Stp7::jer(double t) const {
     return j;
 }
 
-void Stp7::sett(int i, double v) {
-    _t[i] = v;
+void Stp7::sett(int i, double t) {
+    _t[i] = t;
 }
 
 // The function returns an empty string if everything is correct, otherwise

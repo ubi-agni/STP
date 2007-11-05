@@ -243,50 +243,59 @@ void Stp3::planProfile()
     }
 }
 
-//bool Stp3::scaleToDuration (double dNewDuration) {
-//   double A, B, tcruise, deltaT, diff, stopT, stop, dir;
-//   if (dNewDuration <= t3) return false; /* only enlarge duration */
-//
-//   tcruise = t2-t1;  // old cruising time
-//   A = fabs(c[1]) * (dNewDuration - t3) / aMax;
-//   B = dNewDuration - t3 + tcruise;
-//   /* compute time delta to steel from acc + decl phase */
-//   deltaT = -B/2. + sqrt (B*B/4. + A); /* > 0 */
-//
-//   if (!bDoubleDeceleration && t1 - deltaT >= 0) {
-//      t1 += -deltaT;
-//      diff = t3 - t2;
-//      t3 = dNewDuration;
-//      t2 = t3 - diff + deltaT;
-//
-//      c[1] = a[1] + 2. * a[2] * t1;
-//   } else {
-//      /* compute time needed for full stop */
-//      dir = -sign (a[1]); // direction of acceleration to stop
-//      stopT = fabs(a[1] / aMax);
-//      /* compute final position after full stop */
-//      stop = a[0] + stopT * (a[1] + dir * aMax/2. * stopT);
-//
-//      /* cruising speed: */
-//      c[1] = (goal - stop) / (dNewDuration - stopT);
-//      /* turn acceleration into deceleration: */
-//      if (!bDoubleDeceleration) {
-//         a[2] = -a[2];
-//         bDoubleDeceleration = true;
-//      }
-//      /* time to reach cruising speed: */
-//      t1 = fabs(c[1] - a[1]) / aMax;
-//      t2 = dNewDuration - (stopT - t1);
-//      t3 = dNewDuration;
-//   }
-//
-//   c[0] = parabel (t1, a) - c[1] * t1;
-//
-//   d[1] = c[1] - 2. * d[2] * t2;
-//   d[0] = c[0] + t2 * c[1] - t2 * (d[1] + t2 * d[2]);
-//
-//   return true;
-//}
+/**
+ * .
+ * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ */
+double Stp3::scaleToDuration (double dNewDuration) {
+    if (!_plannedProfile) 
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+    
+    if (dNewDuration <= _t[3]) return _t[3]; // only enlarge duration
+    
+    double A, B, tcruise, deltaT, diff, stopT, stop, dir;
+    
+    tcruise = _t[2] - _t[1];  // old cruising time
+	A = fabs(_v[1]) * (dNewDuration - _t[3]) / _amax;
+	B = dNewDuration - _t[3] + tcruise;
+	
+	/* compute time delta to steel from acc + decl phase */
+	deltaT = -B/2. + sqrt (B*B/4. + A); /* > 0 */
+	
+	if (!_bIsddec && (_t[1] - deltaT >= 0)) {
+		_t[1] -= deltaT;
+        _t[2] = dNewDuration - (_t[3] - _t[2]) + deltaT;
+        _t[3] = dNewDuration;
+        
+        _v[1] = _v[0] + _a[1] * _t[1];
+    } else {
+        /* compute time needed for full stop */
+        dir = -sign (_v[0]); // direction of acceleration to stop
+        stopT = fabs(_v[0] / _amax);
+        /* compute final position after full stop */
+        stop = _x[0] + stopT * (_v[0] + dir * _amax/2. * stopT);
+
+	    /* cruising speed: */
+        _v[1] = (_x[3] - stop) / (dNewDuration - stopT);
+        /* turn acceleration into deceleration: */
+        if (!_bIsddec) {
+           _a[1] = -_a[1];
+           _bIsddec = true;
+        }
+        /* time to reach cruising speed: */
+        _t[1] = fabs(_v[1] - _v[0]) / _amax;
+        _t[2] = dNewDuration - (stopT - _t[1]);
+        _t[3] = dNewDuration;
+     }
+     
+     // calculate the missing x and v values
+    for (int i = 1; i < 4; i++) {
+        // calc x,v values for next switch point
+        calcaTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i], _x[i], _v[i]);
+    }
+    
+    return _t[3];
+}
 
 std::string Stp3::toString() const {
     std::ostringstream oss;

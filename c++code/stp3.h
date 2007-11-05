@@ -35,7 +35,7 @@ using namespace std;
  * R. Haschke, E. Weitnauer, H. Ritter; 2007
  *
  * \warning Both the time and the acceleration arrays start at index 1 instead of
- * 0 and therefore the arrays are double[0..4].
+ * 0 and therefore the arrays are double[4].
  */
 class Stp3 {
 public:
@@ -77,7 +77,7 @@ public:
                               double amax);
     
     /// scale a planned profile to a longer duration
-    void scaleToDuration(double newDuration);
+    double scaleToDuration(double newDuration);
     
     /// convert to string
     string toString() const;

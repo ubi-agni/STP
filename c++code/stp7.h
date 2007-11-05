@@ -1,10 +1,35 @@
-// 
-// File:   stp7.h
-// Author: erik
-// Smooth Trajectory Planner, 3rd order (Stp7)
-//
-// Created on 25. April 2007, 08:40
-//
+/**
+ * \file stp7.h
+ * \author Erik Weitnauer
+ */
+ 
+ /**
+ * Smooth Trajectory Planner, 3rd order (Stp7)
+ * \author Erik Weitnauer
+ * \date 2007
+ *
+ * This class is for planning time optimal 3rd order trajectories.
+ * Given a start and target position, an inital and maximum value for velocity
+ * and acceleration and a maximum value for jerk (change of acceleration) you pass
+ * these values to the planFastestProfile method. Afterward the resulting profile
+ * can be accessed by various methods, e.g. getTimeArray and getJerkArray.
+ * To get the movement parameters at specific times, call the move(...)
+ * method.
+ *
+ * \image html 3phases.jpg "typical time optimal 2nd order trajectory"
+ * \image latex 3phases.eps "typical time optimal 2nd order trajectory"
+ *
+ * A time optimal profile can be stretched to any desired duration by calling the
+ * scaleToDuration method. This can be used to synchornise several
+ * movements made at the same time.
+ *
+ * For further information about the theory of the used algorithm
+ * \see "On-Line Planning of Time-Optimal, Jerk-Limited Trajectories";
+ * R. Haschke, E. Weitnauer, H. Ritter; 2007
+ *
+ * \warning Both the time and the jerk arrays start at index 1 instead of
+ * 0 and therefore the arrays are double[8].
+ */
 
 #ifndef _stp7_H
 #define	_stp7_H
@@ -80,7 +105,9 @@ public:
     static void calcjTracksTimeInt(double t[], double j[], int length,
               double x0, double v0, double a0, double &x, double &v, double &a);
     
-        void sett(int i, double v);
+    /// Manuelly set a time value in the time array describing the movement.
+    /// Don't use it - its just intended for testing.
+    void sett(int i, double t);
 protected:
 
 private:
