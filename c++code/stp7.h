@@ -86,6 +86,9 @@ public:
     // new duration.
     double scaleToDuration(double newDuration);
     
+    /// Returns whether the movement is in the final deceleration process already.
+    bool isAfterCruising(double t);
+    
     string toString() const;
     
     // The function returns an empty string if everything is correct, otherwise

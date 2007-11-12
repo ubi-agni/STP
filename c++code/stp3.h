@@ -79,6 +79,9 @@ public:
     /// scale a planned profile to a longer duration
     double scaleToDuration(double newDuration);
     
+    /// Returns whether the movement is in the final deceleration process already.
+    bool isAfterCruising(double t);
+    
     /// convert to string
     string toString() const;
 protected:

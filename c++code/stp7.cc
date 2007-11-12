@@ -997,6 +997,12 @@ void Stp7::calcjTracksTimeInt(double t[], double j[], int length,
     }
 }    
 
+bool Stp7::isAfterCruising(double t) {
+	if (!_plannedProfile)
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+    return t > _t[4];
+}
+
 void Stp7::move(double t, double &x, double &v, double &a, double &j) const {
     if (!_plannedProfile)
         throw invalid_argument("Consider to call planFastestProfile(.) first.");

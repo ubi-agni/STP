@@ -313,6 +313,10 @@ std::string Stp3::toString() const {
     return oss.str();
 }
 
+bool Stp3::isAfterCruising(double t) {
+	return t > _t[2];	
+}
+
 std::ostream& operator<<(std::ostream& os, const Stp3& c) { 
     os << c.toString(); 
     return os; 
