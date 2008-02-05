@@ -6,7 +6,6 @@
 #include "stp3.h"
 #include <sstream>
 #include <iostream>
-#include <stdexcept>
 #include "math.h"
 #include "tools.h"
 
@@ -16,13 +15,7 @@ const string Stp3::PROFILE_STOP = "profile stop";
 const string Stp3::PROFILE_T = "T profile";
 const string Stp3::PROFILE_W = "W profile";
 
-/**
- * .
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
- */
 bool Stp3::isDoubleDecProfile() const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _bIsddec;
 } 
 
@@ -31,8 +24,6 @@ bool Stp3::isDoubleDecProfile() const {
  * \throws invalid_argument if planFastesProfile(..) wasn't called before
  */
 bool Stp3::isTrapezoid() const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return (_t[2] != _t[1]);
 }
 
@@ -41,20 +32,15 @@ bool Stp3::isTrapezoid() const {
  * \throws invalid_argument if planFastesProfile(..) wasn't called before
  */
 string Stp3::getProfileType() const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _sProfileType;
 }
 
 /**
  * .
  * @param[in] i index, 1 <= i <= 3
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
  * \throws out_of_range if i is out of range
  */
 double Stp3::getSwitchTime(int i) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     if (i<0 || i>3)
         throw out_of_range("Index for time must be in {0,...,3}!");
     return _t[i];
@@ -62,35 +48,20 @@ double Stp3::getSwitchTime(int i) const {
 
 /**
  * .
- * @param[in] i index, 1 <= i <= 3
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * \param[in] i index, 1 <= i <= 3
  * \throws out_of_range if i is out of range
  */
 double Stp3::getTimeIntervall(int i) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     if (i<=0 || i>3)
         throw out_of_range("Index for time must be in {1,...,3}!");
     return _t[i]-_t[i-1];
 }
 
-/**
- * .
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
- */
 void Stp3::getAccArray(double a[4]) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 4; i++) a[i] = _a[i];
 }
 
-/**
- * .
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
- */
 void Stp3::getTimeArray(double t[4]) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 4; i++) t[i] = _t[i];
 }
 
@@ -99,17 +70,18 @@ void Stp3::getTimeIntArray(double t[4]) const {
     t[3] = _t[3] - _t[2]; t[4] = _t[4] - _t[3];
 }
 
+bool Stp3::isValidMovement() const {
+	if (_t[0] < 0) return false;
+	for (int i = 1; i < 4; i++) if (_t[i] < _t[i-1]) return false;
+	for (int i = 1; i < 4; i++) if (fabs(_a[i]) > _amax) return false;
+	return true;
+}
+
 /**
  * .
  * For t = 0 returns 1, for t >= duration returns 3.
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
- * \throws invalid_argument if a negative time was passed
- */    
+ */
 int Stp3::getPhaseIndex(double t) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    if (t < 0)
-        throw invalid_argument("Negative time.");
     if (t < _t[1]) return 0;
     if (t < _t[2]) return 1;
     if (t < _t[3]) return 2;
@@ -122,16 +94,7 @@ void Stp3::calcaTrack(double dt, double x0, double v0, double a,
     newv = v0 + a*dt;
 }
 
-/**
- * .
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
- * \throws invalid_argument if a negative time was passed
- */
 void Stp3::move(double t, double &x, double &v, double &a) const {
-    if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    if (t < 0)
-        throw invalid_argument("Negative time.");
     int i = getPhaseIndex(t);
     if (i==3) {
         x = _x[3];
@@ -162,18 +125,25 @@ double Stp3::acc(double t) const {
 
 /**
  * .
+ * @throws logic_error if no solution was found
  * @return duration of planned trajectory
  */
 double Stp3::planFastestProfile(double x0, double xtarget, double v0,
-                                double vmax, double amax) {
-    // first set object fields
+                                double vmax, double amax) throw(logic_error) {
+	// check, whether vmax and amax are greater than zero
+	if (isNegative(vmax) || isNegative(amax))
+		throw invalid_argument("Could not compute 2nd order profile - Values for vmax and amax must be positive!");
+	
+	// first set object fields
     _vmax = vmax; _amax = amax;
     _x[0] = x0; _x[3] = xtarget;
     _v[0] = v0; _a[0] = 0; _t[0] = 0;
     
     // Do the planning algorithm --> we get back the jerks and time points.
     planProfile();
-    
+	// check if we have valid times, if not, throw a logic error
+	if (!isValidMovement()) throw logic_error("No solution found for 3stp profile.");
+
     // calculate the missing x and v values
     for (int i = 1; i < 4; i++) {
         // calc x,v values for next switch point
@@ -245,11 +215,11 @@ void Stp3::planProfile()
 
 /**
  * .
- * \throws invalid_argument if planFastesProfile(..) wasn't called before
+ * @throws logic_error if no solution was found
  */
-double Stp3::scaleToDuration (double dNewDuration) {
+double Stp3::scaleToDuration(double dNewDuration) throw(logic_error) {
     if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+        return 0;
     
     if (dNewDuration <= _t[3]) return _t[3]; // only enlarge duration
     
@@ -294,6 +264,9 @@ double Stp3::scaleToDuration (double dNewDuration) {
         calcaTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i], _x[i], _v[i]);
     }
     
+	// check if we have valid times, if not, throw a logic error
+	if (!isValidMovement()) throw logic_error("No solution found for stretched 3stp profile.");
+	
     return _t[3];
 }
 
@@ -306,15 +279,18 @@ std::string Stp3::toString() const {
         writedArrayToStream(oss, _t, 1,3);
         oss << ", a=";
         writedArrayToStream(oss, _a, 1,3);
-        oss << ")";
+		oss << ", x0 = " << _x[0] << ", xTarget = " << _x[3] << ", v0 = ";
+		oss << _v[0] << ", vmax = " << _vmax << ", amax = " << _amax << ")";
     } else {
         oss << "unplanned profile";
     }
     return oss.str();
 }
 
-bool Stp3::isAfterCruising(double t) {
-	return t > _t[2];	
+double Stp3::getEndOfCruisingTime() {
+	if (!_plannedProfile) 
+        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+	return _t[2];	
 }
 
 std::ostream& operator<<(std::ostream& os, const Stp3& c) { 

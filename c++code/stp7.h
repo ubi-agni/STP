@@ -3,6 +3,14 @@
  * \author Erik Weitnauer
  */
  
+#ifndef _stp7_H
+#define	_stp7_H
+
+using namespace std;
+
+#include <iostream>
+#include <string>
+
  /**
  * Smooth Trajectory Planner, 3rd order (Stp7)
  * \author Erik Weitnauer
@@ -20,9 +28,25 @@
  * \image latex 3phases.eps "typical time optimal 2nd order trajectory"
  *
  * A time optimal profile can be stretched to any desired duration by calling the
- * scaleToDuration method. This can be used to synchornise several
+ * scaleToDuration method. This can be used to synchornize several
  * movements made at the same time.
- *
+ * 
+ * Both planFastestProfile and scaleToDuration throw a logic_error in case
+ * they were unable to find a solution. In praxis could occour for some numerically
+ * unstable cases, e.g. when extremely stretching a movement.
+ * There should be some kind of fallback behaviour if this occours. For example the
+ * much simpler and therefore more stable 2nd order Trajectory planner could be used.
+ * 
+ * However, the only numerically problematic cases where arising when trying to
+ * stretch a very short movement to a long time - which in praxis makes no sence,
+ * since the movement itself is so small that it is barely recognisable and therefore
+ * must not be considered when synchronizing movements of several joints.
+ * To avoid these numerical extreme cases, the stretch algorithm is slightly modified:
+ * In case the algorithm does not lead to an solution and the movement should be
+ * stretched to a time more than MAX_STRETCH_FACTOR times of the optimal time, the
+ * original movement is returned unaltered. This accords to doing the movement at
+ * once and just waiting after finshing it.
+ * 
  * For further information about the theory of the used algorithm
  * \see "On-Line Planning of Time-Optimal, Jerk-Limited Trajectories";
  * R. Haschke, E. Weitnauer, H. Ritter; 2007
@@ -31,22 +55,22 @@
  * 0 and therefore the arrays are double[8].
  */
 
-#ifndef _stp7_H
-#define	_stp7_H
-
-using namespace std;
-
-#include <iostream>
-#include <string>
-
 class Stp7 {
 public:
     // string constants for different profile types
-    const static string PROFILE_TT;
-    const static string PROFILE_WT;
-    const static string PROFILE_TW;
-    const static string PROFILE_WW;
-    const static string PROFILE_STOP;
+    static const string PROFILE_TT; ///< trapezoid - trapezoid shaped acceleration profile
+	static const string PROFILE_WT; ///< wedge- trapezoid shaped acceleration profile
+	static const string PROFILE_TW; ///< trapezoid - wedge shaped acceleration profile
+	static const string PROFILE_WW; ///< wedge - wedge shaped acceleration profile
+	static const string PROFILE_STOP; ///< stop profile
+	
+	/**
+	 * Errors when attempting to stretch a movement to a time more than this factor
+	 * times the original duration are not thrown. Instead the profile is returned
+	 * unchanged.
+	 * Default value is 10.
+	 */
+	static const double MAX_STRETCH_FACTOR;
     
     // constructor
     Stp7(): _plannedProfile(false) {};
@@ -56,14 +80,14 @@ public:
     bool hasCruisingPhase() const;
     string getProfileType() const;
     string getDetailedProfileType() const;
-    // 1 <= i <= 7. Returns the time of switch between phase (i) and (i+1) of
-    // the profile.
+    /// 1 <= i <= 7. Returns the time of switch between phase (i) and (i+1) of
+    /// the profile.
     double getSwitchTime(int i) const;
-    // 1 <= i <= 7. Returns the time length of phase (i).
+    /// 1 <= i <= 7. Returns the time length of phase (i).
     double getTimeIntervall(int i) const;
     double getDuration() const { return getSwitchTime(7); }
-    // gives back in which time intervall the passed time lies inside. For
-    // t = 0 return 1, for t >= duration returns 7.
+    /// gives back in which time intervall the passed time lies inside. For
+    /// t = 0 return 1, for t >= duration returns 7.
     int getPhaseIndex(double t) const;
     
     // getters - they return a copy of the arrays.
@@ -78,38 +102,53 @@ public:
     double acc(double t) const;
     double jer(double t) const;
     
-    // Function for calculating the time optimal profile. Returns the duration.
+    /// Function for calculating the time optimal profile. Returns the duration.
+	/// @throws logic_error if no solution could be found.
     double planFastestProfile(double x0, double xtarget, double v0, double vmax,
-                              double a0, double amax, double jmax);
+                              double a0, double amax, double jmax) throw(logic_error);
     
-    // Function for scaling the profile to the given duration. Gives back the
-    // new duration.
-    double scaleToDuration(double newDuration);
+    /** Function for scaling the profile to the given duration. Gives back the
+     * new duration.
+	 * In case no solution could be found there are two possibilities:
+	 * If the movement should be stretched to more than 10 time of the original
+	 * duration, it is returned unchanged.
+	 * Otherwise a logic_error is thrown.
+	 * @throws logic_error
+	 */
+    double scaleToDuration(double newDuration) throw(logic_error);
     
-    /// Returns whether the movement is in the final deceleration process already.
-    bool isAfterCruising(double t);
+    /// Returns at which time the cruising phase ends.
+    double getEndOfCruisingTime();
     
     string toString() const;
     
-    // The function returns an empty string if everything is correct, otherwise
-    // an error description is returned.
-    string testProfile() const;
+    /** The function throws a logic_error exception, if the limits for jerk, acc or vel
+	 * are broken, or if there are any incorrect time intervalls.
+	 * If everything is correct, it just returns doing nothing
+	.* @throws logic_error
+	 */
+    void testProfile() const throw(logic_error);
+	
+	/// As testProfile(), but also checking, if the target position was reached.
+	/// @throws logic_error
+	void testProfile(double xtarget) const throw(logic_error);
     
     static void calcjTrack(double dt, double x0, double v0, double a0, double j,
                         double &newx, double &newv, double &newa);
-    // Calculates a given 3rd order profile and writes the resulting position,
-    // velocity and acceleration in the passed variables &x, &v, &a.
-    // The t[] array must contain the time points (not intervalls) and indicies
-    // go from t[1] to t[length].
+    /** Calculates a given 3rd order profile and writes the resulting position,
+     * velocity and acceleration in the passed variables &x, &v, &a.
+     * The t[] array must contain the time points (not intervalls) and indicies
+     * go from t[1] to t[length].
+	 */
     static void calcjTracks(double t[], double j[], int length, double x0,
                         double v0, double a0, double &x, double &v, double &a);
     
-    // same as calcjTracks but with time intervalls instead of time points.
+    /// same as calcjTracks but with time intervalls instead of time points.
     static void calcjTracksTimeInt(double t[], double j[], int length,
               double x0, double v0, double a0, double &x, double &v, double &a);
     
     /// Manuelly set a time value in the time array describing the movement.
-    /// Don't use it - its just intended for testing.
+    /// Don't use it unless you are feeling adventurous - its just intended for testing ;)
     void sett(int i, double t);
 protected:
 
@@ -123,8 +162,8 @@ private:
     bool _bHasCruise;
     bool _plannedProfile;
     
-    void planProfile();
-    void planProfileNoCruise(int dir);
+	void planProfile() throw(logic_error);
+	void planProfileNoCruise(int dir) throw(logic_error);
     
     void convertTimePointsToIntervalls();
     void convertTimeIntervallsToPoints();
@@ -154,7 +193,7 @@ private:
     static void splitNoCruiseProfileTimeInt(double t[8], double j[8], double a0);
     
     void findProfileTypeStretchCanonical(double newDuration);
-    void planProfileStretchDoubleDec(double newDuration, double dir, double da);
+	void planProfileStretchDoubleDec(double newDuration, double dir, double da) throw(logic_error);
 };
 
 #endif	/* _stp7_H */

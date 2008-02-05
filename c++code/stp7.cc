@@ -25,7 +25,13 @@ const string Stp7::PROFILE_TW = "TW profile";
 const string Stp7::PROFILE_WT = "WT profile";
 const string Stp7::PROFILE_WW = "WW profile";
 
-void Stp7::planProfile() {
+const double Stp7::MAX_STRETCH_FACTOR = 10.;
+
+/**
+ * .
+ * @throws logic_error if no solution was found
+ */
+void Stp7::planProfile() throw(logic_error) {
     /* Calculates the time optimal third-order trajectory to reach the target
      * position with the given start conditions and according to the limitations
      * for jerk, acc and vel.
@@ -113,7 +119,11 @@ void Stp7::convertTimeIntervallsToPoints() {
     }
 }
 
-void Stp7::planProfileNoCruise(int dir) {
+/**
+ * .
+ * @throws logic_error if no solution was found
+ */
+void Stp7::planProfileNoCruise(int dir) throw(logic_error) {
     // The function must be called with a valid 7-phases profile stored in
     // _t and _j arrays, which is overshooting the target. It will then first do
     // a case distinction to check, which kind of profile we currently have.
@@ -219,16 +229,12 @@ void Stp7::planProfileNoCruise(int dir) {
     return;
 }
 
-/**
- * This function stretches the computed profile to a new (longer) duration.
- */
-double Stp7::scaleToDuration(double newDuration) {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");   
-    if (newDuration < getDuration())
-        throw invalid_argument("Profile can't be scaled to a shorter duration.");
+double Stp7::scaleToDuration(double newDuration) throw(logic_error) {
+    if (!_plannedProfile) return 0;
+    //if (newDuration < getDuration()) return getDuration();
+	if (isNegative(newDuration - getDuration())) return getDuration();
     
-    convertTimePointsToIntervalls();
+	convertTimePointsToIntervalls();
     
     // we can't really stretch a full-stop profile, so check for it first
     if ((isZero(_t[5])) && (isZero(_t[6])) && (isZero(_t[7]))) {
@@ -252,6 +258,7 @@ double Stp7::scaleToDuration(double newDuration) {
         bool useDDec = false;
         double t_orig[8]; for (int i = 0; i < 8; i++) t_orig[i] = _t[i];
         double j_orig[8]; for (int i = 0; i < 8; i++) j_orig[i] = _j[i];
+		double oldDuration = getDuration();
         {
            // Tests for a given profile, whether stretching it to the time T would
            // nead a double deceleration profile.    
@@ -335,7 +342,7 @@ double Stp7::scaleToDuration(double newDuration) {
                 }
             }
         }
-        if (!useDDec) {
+		if (!useDDec) {
             for (int i = 0; i < 8; i++) {
                 _t[i] = t_orig[i];
                 _j[i] = j_orig[i];
@@ -345,19 +352,30 @@ double Stp7::scaleToDuration(double newDuration) {
         double da;
         da = _j[1] == _j[3] ? -1 : 1;
 
-        if (useDDec) {
-            // double deceleration branch
-            planProfileStretchDoubleDec(newDuration, dir, da);
-            _bHasCruise = (_t[4] != 0);
-        } else {
-            // normal profile branch
-            _bIsddec = false;
-            findProfileTypeStretchCanonical(newDuration);
-            _sProfileType = getProfileString(_t);
-            _bHasCruise = (_t[4] != 0);
-            Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
-                        _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
-        }
+		try {
+			if (useDDec) {
+				// double deceleration branch
+				planProfileStretchDoubleDec(newDuration, dir, da);
+				_bHasCruise = (_t[4] != 0);
+			} else {
+				// normal profile branch
+				_bIsddec = false;
+				findProfileTypeStretchCanonical(newDuration);
+				_sProfileType = getProfileString(_t);
+				_bHasCruise = (_t[4] != 0);
+				Stp7Formulars::solveProfile(_t, _sProfileType, _bHasCruise, _bIsddec, da==-1, dir==1,
+							_x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
+			}
+		} catch (logic_error le) {
+			// in case no solution was found and the stetching was less than
+			// factor 10, throw the exception again
+			if (newDuration < Stp7::MAX_STRETCH_FACTOR * oldDuration) throw;
+			// otherwise return the old movement unchanged
+			for (int i = 0; i < 8; i++) {
+				_t[i] = t_orig[i];
+				_j[i] = j_orig[i];
+			}
+		}
     }
     convertTimeIntervallsToPoints();
     
@@ -366,6 +384,9 @@ double Stp7::scaleToDuration(double newDuration) {
         calcjTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i-1], _j[i], _x[i], _v[i], _a[i]);
     }
     
+	// test if solution is valid, if not the test method will throw an exception
+	testProfile();
+	
     return getDuration();
 }
 
@@ -482,7 +503,12 @@ void Stp7::findProfileTypeStretchCanonical(double newDuration) {
     return;
 }
 
-void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da) {
+
+/**
+ * .
+ * @throws logic_error if no solution was found
+ */
+void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da) throw(logic_error) {
     // find correct double deceleration profile by shifting area from second
     // deceleration to first deceleration part.
     // We can get two type of deceleration profiles here:
@@ -550,7 +576,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
             _t[1] = 1; _t[3] = 1;
             _sProfileType = getProfileString(_t);
             _bIsddec = true;
-            // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+            // TODO
             // this is a very ugly solution for the problem that we can't detect
             // cases in which a ddec profile with cruising phase switches into a
             // profile without cruising phase.
@@ -637,7 +663,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
             // oszillation, we need to continue the search
         } catch (exception e) { cCalcs++; }
     }
-    throw logic_error("No solution found for stretched double dec profile.");
+    throw logic_error("No solution found for stretched double dec 3rd order profile.");
 }
 
 void Stp7::shiftDoubleDecArea(double t[8], double j[8], double newDuration, 
@@ -868,7 +894,11 @@ bool Stp7::stillOvershootsTimeInt(double t[8], double j[8], int dir,
 
 double Stp7::planFastestProfile(double x0, double xtarget, double v0,
                                 double vmax, double a0, double amax,
-                                double jmax) {
+                                double jmax) throw(logic_error) {
+	// check, whether vmax, amax and jmax are greater than zero
+	if (isNegative(vmax) || isNegative(amax) || isNegative(jmax))
+		    throw logic_error("Could not compute 3rd order profile - Values for vmax, amax and jmax must be positive!");
+	
     // first set object fields
     _vmax = vmax; _amax = amax; _jmax = jmax;
     _x[0] = x0; _x[7] = xtarget;
@@ -882,40 +912,27 @@ double Stp7::planFastestProfile(double x0, double xtarget, double v0,
         calcjTrack(_t[i]-_t[i-1], _x[i-1], _v[i-1], _a[i-1], _j[i], _x[i], _v[i], _a[i]);
     }
     
-    _plannedProfile = true;
+	_plannedProfile = true;
+
+	// test if solution is valid, if not the test method will throw an exception
+	testProfile(xtarget);
     
-    
-    // test, wether algorithm is correct
-    //cout << this->getProfileType() << endl;
-    //cout << "delta p: " << _x[7]-xtarget << endl;
-    //if (_x[7] != xtarget)
-      //  throw logic_error("The planned profile does not reach the goal!");
-    
-    
-    return _t[7];
+	return _t[7];
 }
 
 bool Stp7::isDoubleDecProfile() const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _bIsddec;
 }
 
 bool Stp7::hasCruisingPhase() const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _bHasCruise;
 }
 
 string Stp7::getProfileType() const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     return _sProfileType;
 }
 
 string Stp7::getDetailedProfileType() const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     string result;
     if (isDoubleDecProfile()) result = "ddec "; else result = "cano ";
     if (hasCruisingPhase()) result += "c";
@@ -923,46 +940,40 @@ string Stp7::getDetailedProfileType() const {
     return result;
 }
 
+/**
+ * .
+ * \throws out_of_range if i is out of range
+ */
 double Stp7::getSwitchTime(int i) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     if (i<0 || i>7)
         throw out_of_range("Index for time must be in {0,...,7}!");
     return _t[i];
 }
 
+/**
+ * .
+ * \throws out_of_range if i is out of range
+ */
 double Stp7::getTimeIntervall(int i) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     if (i<=0 || i>7)
         throw out_of_range("Index for time must be in {1,...,7}!");
     return _t[i]-_t[i-1];
 }
 
 void Stp7::getJerkArray(double j[8]) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 8; i++) j[i] = _j[i];
 }
 
 void Stp7::getTimeArray(double t[8]) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     for (int i = 0; i < 8; i++) t[i] = _t[i];
 }
 
 void Stp7::getTimeIntArray(double t[8]) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
     t[0] = 0; t[1] = _t[1];
     for (int i = 2; i < 8; i++) t[i] = _t[i] - _t[i-1];
 }
 
 int Stp7::getPhaseIndex(double t) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    if (t < 0)
-        throw invalid_argument("Negative time.");
     if (t <= _t[1]) return 0;
     if (t <= _t[2]) return 1;
     if (t <= _t[3]) return 2;
@@ -997,17 +1008,11 @@ void Stp7::calcjTracksTimeInt(double t[], double j[], int length,
     }
 }    
 
-bool Stp7::isAfterCruising(double t) {
-	if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    return t > _t[4];
+double Stp7::getEndOfCruisingTime() {
+    return _t[4];
 }
 
 void Stp7::move(double t, double &x, double &v, double &a, double &j) const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
-    if (t < 0)
-        throw invalid_argument("Negative time.");
     int i = getPhaseIndex(t);
     if (i==7) {
         x = _x[7];
@@ -1046,15 +1051,15 @@ void Stp7::sett(int i, double t) {
     _t[i] = t;
 }
 
-// The function returns an empty string if everything is correct, otherwise
-// an error description is returned.
-string Stp7::testProfile() const {
-    if (!_plannedProfile)
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");   
+void Stp7::testProfile(double xtarget) const throw(logic_error) {
+	if (!isZero(xtarget-_x[7])) throw logic_error("Didn't reach the target position");
+	testProfile();
+}
 
+void Stp7::testProfile() const throw(logic_error) {
     // test whether time intervalls are all positive
     for (int i=1; i<8; i++) {
-        if (!isPositive(_t[i]-_t[i-1])) return "Negative Time Intervalls";
+        if (!isPositive(_t[i]-_t[i-1])) throw logic_error("Negative Time Intervalls");
     }
     
     // test for jerk, acc and vel limits at switching points
@@ -1062,19 +1067,19 @@ string Stp7::testProfile() const {
     for (int i=1; i<8; i++) {
         if (isZero(_t[i])) continue;
         move(_t[i], x, v, a, j);
-        if ((!isZero(fabs(j)-_jmax)) && (!isZero(j))) return "Wrong jerk value!";
+		if ((!isZero(fabs(j)-_jmax)) && (!isZero(j))) throw logic_error("Wrong jerk value!");
         if (!isNegative(fabs(a)-_amax))
-            return "Broke acc limit!";
+			throw logic_error("Broke acc limit!");
         if (!isNegative(fabs(v)-_vmax)) {
-            if ((sign(a) == sign(v))) return "Broke vel limit!";
-            // the only 'excuse' for braking the vec limit is v0>vmax or v1>vmax
+			if ((sign(a) == sign(v))) throw logic_error("Broke vel limit!");
+            // the only 'excuse' for braking the vec limit if v0>vmax or v1>vmax
             // because of a unappropriately starting acceleration.
             if ((!isPositive(fabs(_v[0])-_vmax)) &&
                     (!isNegative(_vmax-fabs(0.5*_a[0]*_a[0]*(double)sign(_a[0])/_jmax+_v[0]))))
-                return "Broke vel limit!";
+				throw logic_error("Broke vel limit!");
         }
     }
-    return "";
+	// everything seems to be allright :)
 }
 
 std::string Stp7::toString() const {

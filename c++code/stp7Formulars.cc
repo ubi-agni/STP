@@ -15,7 +15,6 @@
 #include <stdexcept>
 #include <sstream>
 #include "math.h"
-#include <cxxtest/TestSuite.h>
 
 using namespace std;
 
@@ -41,7 +40,7 @@ using namespace std;
 void Stp7Formulars::solveProfile(double t[8],
         string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
         double x0, double xTarget, double v0, double vmax,
-        double a0, double amax, double jmax, double stretchToTime) {
+        double a0, double amax, double jmax, double stretchToTime) throw(logic_error) {
     // get the coeffients of the polynomial we need to find the roots of
     double coeffs[7] = {0.,0.,0.,0.,0.,0.};
     calcCoeffs(coeffs, type, bCruise, bDoubleDec, bDecAcc, bMoveForward, x0, xTarget,
@@ -53,10 +52,11 @@ void Stp7Formulars::solveProfile(double t[8],
     double root;
     double duration;
     bool found = false;
+	Complex c;
     // iterate through all real roots to find the best valid solution
     for (int i=0; i<p.getDegree(); i++) {
         // get the next root
-        Complex c = p.getRoot(i);
+        c = p.getRoot(i);
         // check if its a real number
         if (c.i != 0) continue;
         root = c.r;
@@ -78,7 +78,7 @@ void Stp7Formulars::solveProfile(double t[8],
          }
     }
     // throw an exception in case we found no solution
-    if (!found) throw logic_error("No solution found for " + type + ".");
+    if (!found) throw logic_error("No solution found for 3rd order trajectory of type " + type + ".");
     
     // otherwise give back the best solution
     root = bestRoot;

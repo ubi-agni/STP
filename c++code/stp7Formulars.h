@@ -10,6 +10,7 @@ using namespace std;
 
 #include <iostream>
 #include <string>
+#include <stdexcept>
 
 /**
  * Class solving the equations for 3rd order trajectories.
@@ -36,6 +37,10 @@ using namespace std;
  * 2) For each root found do:
  * Calculate the time intervalls associated with this root and check whether they
  * are a valid solution (e.g. no negativ time intervalls).
+ * 
+ * For the case that no valid solution for the time values could be found - either due
+ * to incorrectly passed information about the type of the profile or because of possible
+ * numerical instabilities in the algorithm, a logic_error is thrown.
  *
  * For the equations for the different profile types
  * \see fastest.mw, stretch.mw and stretch_doubledec.mw maple worksheet files in "./maple/"
@@ -51,11 +56,12 @@ public:
     /**
      * Most general method to calculate the solution for the time
      * intervalls, taking into account all other parameters passed.
+	 * @throws logic_error if no solution could be found.
      */
     static void solveProfile(double t[8],
             string type, bool bCruise, bool bDoubleDec, bool bDecAcc, bool bMoveForward,
             double x0, double xTarget, double v0, double vmax,
-            double a0, double amax, double jmax, double stretchToTime=0);
+			double a0, double amax, double jmax, double stretchToTime=0) throw(logic_error);
     
     /// method returns true, if all values t[1..7] are positive or zero.
     static bool areValidTimeIntervalls(double t[8]);

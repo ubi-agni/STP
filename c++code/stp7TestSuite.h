@@ -45,6 +45,23 @@ private:
     }
 	
 public:
+	/// most likely a numerical problem in the stp7Formulars.
+	/// The Stp7::MAX_STRETCH_FACTOR must be around 10 or smaller to avoid.
+	void testProblem(void) {
+	    Stp7 stp;
+		
+		stp.planFastestProfile(-1.18682,-1.18681975,0.,0.4,0.,0.523599,0.02);
+		try {
+			stp.scaleToDuration(1);
+		} catch(logic_error le) {
+			cout << le.what() << endl;
+			cout << "Falling back to 2nd order trajectory..." << endl;
+			Stp3 stp3;
+			stp3.planFastestProfile(-1.18682,-1.18681975,0.,0.4,0.523599);
+			stp3.scaleToDuration(1);
+		}
+	}
+	
     /// test some simple basic behavior
     void testBasics( void ) {
         Stp7 stp;
@@ -55,9 +72,9 @@ public:
         TS_ASSERT_DELTA(stp.pos(8.46),30,0.05);
         TS_ASSERT_DELTA(stp.vel(8.46),0,0.1);
         TS_ASSERT_DELTA(stp.acc(8.46),0,0.1);
-        TS_ASSERT_EQUALS(stp.testProfile(), "");
+		TS_ASSERT_THROWS_NOTHING(stp.testProfile());
         stp.sett(1,10);
-        TS_ASSERT_DIFFERS(stp.testProfile(), "");
+		TS_ASSERT_THROWS_ANYTHING(stp.testProfile());
     };
     
     /**
@@ -98,7 +115,9 @@ public:
                 for (int i_v = 0; i_v < 7; i_v++) {
                     double x_fullstop = calcFullstopPosition(x0, v0[i_v], a0[i_a], amax, jmax);
                     TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, x_fullstop, v0[i_v], vmax, a0[i_a], amax, jmax));
-                    testResult = stp.testProfile();
+					testResult = "";
+                    try { stp.testProfile(); }
+					catch(logic_error e) { testResult = e.what(); }
                     if (testResult != "") {
                         cout << stp.toString();
                         cout << setprecision(10) << "Testing planFastestProfile(" << x0 << ", " << x_fullstop
@@ -114,8 +133,10 @@ public:
                     for (int i_x=-5; i_x<15; i_x++) {
                         xtarget = x_neg + i_x*dp;
                         TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, xtarget, v0[i_v], vmax, a0[i_a], amax, jmax));
-                        testResult = stp.testProfile();
-                        if (testResult != "") {
+						testResult = "";
+						try { stp.testProfile(); }
+						catch(logic_error e) { testResult = e.what(); }
+						if (testResult != "") {
                             cout << stp.toString();
                             cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget
                                 << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
@@ -493,13 +514,7 @@ public:
      */
     void testAutomatedStretchedProfileTest(void) {
         Stp7 stp;
-        
-        // TODO TODO last unsolved problem case!!!
-        // stp. planFastestProfile(0, 12.084, 1, 2, -1, 1.07, 1);
-        // stp.scaleToDuration(24.54);
-        
-        //return;
-        
+
         double amax = 1.07;
         double vmax = 0.92;
         double xtarget;
@@ -509,20 +524,22 @@ public:
         double v0[7] = {-1.2,-0.92,-0.7,0.0,0.7,0.92,1.2};
         double dt[10] = {1.0001, 1.125, 1.25, 1.375, 1.5, 1.6667, 1.83333, 2.0, 3.0, 10.0};
         double jmaxs[6] = {0.23, 0.79, 1.0, 1.68, 5.1, 101};
-        
+
         string testResult;
         for (int j = 0; j < 6; j++) {
             int count = 0;
             int error_counter = 0;
             int problem_counter = 0;
             double jmax = jmaxs[j];
-            
+
             for (int i_a = 0; i_a < 7; i_a++) {
                 for (int i_v = 0; i_v < 7; i_v++) {
                     double x_fullstop = calcFullstopPosition(x0, v0[i_v], a0[i_a], amax, jmax);
                     TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, x_fullstop, v0[i_v], vmax, a0[i_a], amax, jmax));
-                    testResult = stp.testProfile();
-                    if (testResult != "") {
+					testResult = "";
+					try { stp.testProfile(); }
+					catch(logic_error e) { testResult = e.what(); }
+					if (testResult != "") {
                         cout << "yellowworld";
                         cout << stp.toString();
                         cout << setprecision(10) << "Testing planFastestProfile(" << x0 << ", " << x_fullstop
@@ -545,9 +562,10 @@ public:
                             TS_ASSERT_THROWS_NOTHING(stp.planFastestProfile(x0, xtarget, v0[i_v], vmax, a0[i_a], amax, jmax));
                             try {
                                 stp.scaleToDuration(Tnew);
-                                testResult = stp.testProfile();
-                                if (testResult != "") {
-                                    testResult = stp.testProfile();
+								testResult = "";
+								try { stp.testProfile(); }
+								catch(logic_error e) { testResult = e.what(); }
+								if (testResult != "") {
                                     cout << stp.toString();
                                     cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget
                                         << ", " << v0[i_v] << ", " << vmax << ", " << a0[i_a]
