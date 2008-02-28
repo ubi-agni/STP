@@ -3,11 +3,11 @@
  * \author Erik Weitnauer
  */
 
-#include "stp3.h"
 #include <sstream>
 #include <iostream>
-#include "math.h"
-#include "tools.h"
+
+#include "stp3.hh"
+#include "tools.hh"
 
 using namespace std;
 

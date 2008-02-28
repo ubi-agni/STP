@@ -1,0 +1,2573 @@
+#<HTML><BODY><PRE>
+{header}
+{folders}
+  +vtk  vtk.so
+  +vortex  vortex.so
+{end}
+{status NEO_V7.9 NST_V7.9 area=710x540 noadapt steps=1 }
+#
+# SUBUNITS:
+#
+<A HREF=#prog_unit0>prog_unit</A>
+<A HREF=#prog_unit1>prog_unit</A>
+<A HREF=#container2>container</A>
+#
+VARNAME_DEFS:  "0,1"
+#
+#  USE DIALOG:
+#
+" num of axes: %3i %n"
+" time step:   %0.5f %n %[%0:1:0:10d %l`Cancel%d%l`Ok%]%H "
+#
+#  USE VARIABLES:
+#
+@0    =  7
+@1    =  0.01
+@2    =  0
+@3    =  1
+------
+
+BEGIN prog_unit { %65,340 #<A NAME=prog_unit0></A>
+INTERFACE:   {s7:s7}{f7f7f7:f7f7:s1}
+LABEL:       prog
+UNIQUE_ID:   2
+OPERANDS:    1
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@ZOOM = 00
+@0    =  "// TEMPFILE=*.c (hint for Ctrl-J cmd)"
+         "#import \"vortex\""
+         ""
+         "INP scalar afOldCur[@0], afOldSpeed[@0];"
+         "OUT {float afGoal[@0], afCur[@0], afSpeed[@0];}"
+         "OUT {float afMaxSpeed[@0], afMaxAcc[@0];}"
+         "OUT scalar fTimeStep;"
+         "float afPos[] = {-1,-1,-1, "
+         "                        1, 1, 1,"
+         "                       -1, 1, 1};"
+         "float afEuler[3];"
+         "float afQuat[4];"
+         ""
+         "static int N=0;"
+         ""
+         "afCur := afOldCur;"
+         "afSpeed := afOldSpeed;"
+         ""
+         "N++; if (N >= dimof (afPos) / 3) N=0;"
+         "rect (afGoal, 0, 0, 3, 1, 1) := row (afPos, N, 3); "
+         "afEuler := M_PI; afEuler := rnd (afEuler);"
+         "QuaternionFromEuler (afQuat, afEuler);"
+         "rect (afGoal, 3, 0, 4, 1, 1) := afQuat;"
+         "exec_opnds ();"
+         "return;"
+         ""
+         "INIT:"
+         "rect (afGoal, 0, 0, 3, 1, 1) := row (afPos, N, 3); "
+         "afEuler := M_PI; afEuler := rnd (afEuler);"
+         "QuaternionFromEuler (afQuat, afEuler);"
+         "rect (afGoal, 3, 0, 4, 1, 1) := afQuat;"
+         "afMaxSpeed := 10;"
+         "afMaxAcc := 1;"
+         "fTimeStep = @1;"
+@1    =  2
+@2    =  1
+@3    =  0
+@4    =  2
+@5    =  1
+@6    =  0
+@7    =  2
+@8    =  1
+@9    =  0
+@10   =  2
+@11   =  1
+@12   =  0
+@13   =  0
+@14   =  1
+@15   =  0
+------
+
+#
+# CONFIGURE WITH:
+#
+@0    =  "prog"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF prog_unit }
+
+BEGIN prog_unit { %215,305 #<A NAME=prog_unit1></A>
+INTERFACE:   {f7f7f7:f7f7:s1}{s7:s7:s7:s1}
+LABEL:       stp
+UNIQUE_ID:   1
+OPERANDS:    1
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@ZOOM = 00
+@0    =  "// TEMPFILE=*.c (hint for Ctrl-J cmd)"
+         "#noimplicit"
+         "#import \"stp\""
+         ""
+         "INP {float afGoal[7], afCur[7], afSpeed[7];} // goal, cur pos, cur speed"
+         "INP {float afMaxSpeed[7], afMaxAcc[7];} // max speed, max acc"
+         "INP scalar fTimeStep; // time step"
+         ""
+         "OUT scalar afCurValue[7], afCurSpeed[7], afCurAcc[7];"
+         "OUT scalar tDuration;"
+         "float t;"
+         "int iBreak, i, nSteps;"
+         ""
+         "class STP stp (7, 1);"
+         "float afMaxJerk[7];"
+         "afMaxJerk:=0.5;"
+         ""
+         "stp.setMax (afMaxSpeed, afMaxAcc, afMaxJerk);"
+         "tDuration = stp.planFastestProfile (afGoal, afCur, afSpeed);"
+         "nSteps = ceil (tDuration / fTimeStep) + 2 / fTimeStep;"
+         "if (rnd (1) > 0.0) iBreak = 1; else iBreak = 0;"
+         ""
+         "for (i=0; i <= nSteps; i++) {"
+         "   t = i * fTimeStep;"
+         "   stp.getPos (t, afCurValue);"
+         "   stp.getVel (t, afCurSpeed);"
+         "   stp.getAcc (t, afCurAcc);"
+         "   if (iBreak && stp.isAfterCruising (t)) break;"
+         "   exec_opnds (); // do the drawing"
+         "}"
+         ""
+@1    =  2
+@2    =  1
+@3    =  0
+@4    =  2
+@5    =  1
+@6    =  0
+@7    =  2
+@8    =  1
+@9    =  0
+@10   =  2
+@11   =  1
+@12   =  0
+@13   =  0
+@14   =  1
+@15   =  0
+------
+
+#
+# CONFIGURE WITH:
+#
+@0    =  "stp"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF prog_unit }
+
+BEGIN container { %380,305 #<A NAME=container2></A>
+INTERFACE:   {s7}{}
+LABEL:       con|tainer
+UNIQUE_ID:   1
+#
+# SUBUNITS:
+#
+<A HREF=#render1:0>render</A>
+<A HREF=#universe1:1>universe</A>
+<A HREF=#vtkViewer1:2>vtkViewer</A>
+<A HREF=#scene1:3>scene</A>
+<A HREF=#axes1:4>axes</A>
+<A HREF=#box1:5>box</A>
+<A HREF=#splitter1:6>splitter</A>
+<A HREF=#use_method1:7>use_method</A>
+<A HREF=#use_method1:8>use_method</A>
+<A HREF=#use_method1:9>use_method</A>
+#
+------
+
+#
+# CONFIGURE WITH:
+#
+@0    =  "con|tainer"
+@1    =  0
+@2    =  1
+------
+
+BEGIN render { %10,450 #<A NAME=render1:0></A>
+INTERFACE:   {}{}
+LABEL:       Render
+NAME:        "Render"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  "viewer"
+@1    =  400
+@2    =  400
+@3    =  0
+@4    =  0
+@5    =  ""
+@6    =  0
+@7    =  1
+@8    =  0
+------
+#
+# Defs for Class Icon:
+#
+
+{ Update }
+{ Reset_Camera }
+{ Set CONTAINS
+   { Backgnd }
+   { Ambient }
+   { ParProj }
+   { Light_FllwCam }
+   { PickTol }
+   { Style CONTAINS
+      { Track }
+      { Joy }
+      { Cam }
+      { Actor }
+   }
+   { Time }
+}
+{ Camera CONTAINS
+   { Set CONTAINS
+      { ViewAngle }
+      { View }
+      { Orientation }
+      { TM }
+   }
+   { Get CONTAINS
+      { ViewAngle }
+      { View }
+      { Orientation }
+      { TM }
+   }
+   { Reset }
+}
+{ World2Win }
+{ Win2World }
+{ GetImage }
+{ Event CONTAINS
+   { Char IS  }
+   { Mouse IS  }
+   { Mask }
+   { Pick }
+   { CtrlShift }
+}
+{ Process_Events }
+ENDOF render }
+
+BEGIN universe { %10,365 #<A NAME=universe1:1></A>
+INTERFACE:   {}{}
+LABEL:       universe
+NAME:        "universe"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  10
+@1    =  10
+@2    =  10
+@3    =  20
+@4    =  0
+@5    =  1
+------
+#
+# Defs for Class Icon:
+#
+
+{ Set CONTAINS
+   { TimeStep }
+   { Gravity }
+   { Epsilon }
+   { Gamma }
+   { MinVel }
+   { MinAngVel }
+   { MinAcc }
+   { AliveSteps }
+   { Options }
+}
+{ Get CONTAINS
+   { TimeStep }
+   { Time }
+   { Marked }
+   { Gravity }
+   { Epsilon }
+   { Gamma }
+   { MinVel }
+   { MinAngVel }
+   { MinAcc }
+   { AliveSteps }
+   { Options }
+}
+{ step }
+{ draw }
+{ reset }
+ENDOF universe }
+
+BEGIN vtkViewer { %10,280 #<A NAME=vtkViewer1:2></A>
+INTERFACE:   {}{}
+LABEL:       vtkViewer
+NAME:        "vtkViewer"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  "universe"
+@1    =  "Render"
+@2    =  1
+@3    =  0
+------
+#
+# Defs for Class Icon:
+#
+
+{ SimulationStep IS  }
+ENDOF vtkViewer }
+
+BEGIN scene { %30,95 #<A NAME=scene1:3></A>
+INTERFACE:   {}{}
+LABEL:       scene
+NAME:        "scene"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  "universe"
+@1    =  "/local/homes/rhaschke/src/stp/7/c++code/STP7/examples/"
+@2    =  "*.me"
+@3    =  "/local/homes/rhaschke/src/stp/7/c++code/STP7/examples/"
+@4    =  1
+@9    =  1
+@14   =  1
+@19   =  1
+@20   =  1
+@21   =  "0"
+@22   =  1
+@23   =  0
+------
+ENDOF scene }
+
+BEGIN axes { %30,10 #<A NAME=axes1:4></A>
+INTERFACE:   {}{}
+LABEL:       Axes
+NAME:        "Axes"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  "Render"
+@1    =  ""
+@2    =  0
+@3    =  1
+------
+#
+# Defs for Class Icon:
+#
+
+{ Set CONTAINS
+   { Bounds }
+   { Labels }
+   { Num_Labels }
+   { Scaling }
+   { Fly_Mode }
+   { Label_Format }
+   { Font_Factor }
+   { Corner_Offset }
+   { Visibility }
+   { Color CONTAINS
+      { Axes }
+      { Cube }
+   }
+}
+ENDOF axes }
+
+BEGIN box { %120,95 #<A NAME=box1:5></A>
+INTERFACE:   {}{}
+LABEL:       box
+NAME:        "obj"
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    =  "scene"
+@1    =  0.1
+@2    =  0.2
+@3    =  0.4
+@4    =  3
+@5    =  0
+@6    =  0
+@7    =  1
+------
+#
+# Defs for Class Icon:
+#
+
+{ Set CONTAINS
+   { TM }
+   { TM_and_Update }
+   { Pos }
+   { Quat }
+   { Mass }
+   { Inertia }
+   { v }
+   { w }
+   { LinDamp }
+   { AngDamp }
+   { Force }
+   { Torque }
+   { Type }
+   { Enable }
+}
+{ Get CONTAINS
+   { TM }
+   { COMTM }
+   { Pos }
+   { Quat }
+   { Mass }
+   { Inertia }
+   { v }
+   { w }
+   { a }
+   { LinDamp }
+   { AngDamp }
+   { Force }
+   { Torque }
+   { Total_Force }
+   { Total_Torque }
+   { Type }
+   { Enable }
+   { Valid }
+}
+{ Contacts CONTAINS
+   { withSolid }
+   { withType }
+}
+{ Freeze }
+{ UnFreeze }
+ENDOF box }
+
+BEGIN splitter { %160,230 #<A NAME=splitter1:6></A>
+INTERFACE:   {s7}{f3:f4}
+LABEL:       split|ter
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@0    = -3
+@1    = -4
+@17   =  0
+@18   =  0
+@19   =  1
+------
+ENDOF splitter }
+
+BEGIN use_method { %295,280 #<A NAME=use_method1:7></A>
+INTERFACE:   {f3}{}
+LABEL:       obj:Set:Pos
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@0    =  "obj:Set:Pos"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF use_method }
+
+BEGIN use_method { %295,185 #<A NAME=use_method1:8></A>
+INTERFACE:   {f4}{}
+LABEL:       obj:Set:Quat
+UNIQUE_ID:   2
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@0    =  "obj:Set:Quat"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF use_method }
+
+BEGIN use_method { %410,225 #<A NAME=use_method1:9></A>
+INTERFACE:   {}{}
+LABEL:       Render:Update
+UNIQUE_ID:   2
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@0    =  "Render:Update"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF use_method }
+
+WIRE          -1 0 -> 6 0 %90.8854,270+0
+CONNECTIONS:  7 0->0 1->1 2->2 3->3 4->4 5->5 6->6
+
+WIRE          6 0 -> 7 0 %268,305+0
+CONNECTIONS:  1 0->0
+
+WIRE          6 1 -> 8 0 %268,237.5+0
+CONNECTIONS:  1 0->0
+ENDOF container }
+
+WIRE          0 2 -> 1 2 %158,335.833+0
+CONNECTIONS:  1 0->0
+
+WIRE          1 0 -> 0 0 %179,432-131
+CONNECTIONS:  7 0->0 1->1 2->2 3->3 4->4 5->5 6->6
+
+WIRE          1 1 -> 0 1 %179,288-131
+CONNECTIONS:  7 0->0 1->1 2->2 3->3 4->4 5->5 6->6
+
+WIRE          0 0 -> 1 0 %180.5,388.5+0
+CONNECTIONS:  3 0->0 1->1 2->2
+
+WIRE          0 1 -> 1 1 %163,362.5+0
+CONNECTIONS:  2 0->0 1->1
+
+WIRE          1 0 -> 2 0 %338,360+0
+CONNECTIONS:  7 0->0 1->1 2->2 3->3 4->4 5->5 6->6
+
+##_____END_OF_CIRCUIT_____
+#</PRE></BODY></HTML>
+##_____BGN_OF_NSTDATA_____
+
+
+!BeginOfUnit: prog_unit#1407 {
+
+Format=NST5 Flags: 0
+
+2 ifields of dim: s7 s7
+values:
+inp_0:
+    -1.00000560e+00  -9.99993324e-01  -9.99993324e-01  -5.06372750e-03   6.96361065e-01 
+    -1.54844031e-01   7.00755537e-01 
+inp_1:
+     2.91988457e-04  -4.63237171e-04  -4.63237171e-04   4.63237171e-04   4.63237171e-04 
+    -4.63237171e-04   4.63237171e-04 
+3 ofields of dim: f7f7f7 f7f7 s1
+@VARIABLES
+global program
+  float afCur[7]  -9.98728871e-01  1.00098813e+00  1.00098813e+00 -4.03221667e-01 -3.84784609e-01
+  6.84938133e-01 -4.64081824e-01
+  float afGoal[7]  -1.00000000e+00 -1.00000000e+00 -1.00000000e+00 -5.05708065e-03  6.96367741e-01
+ -1.54850677e-01  7.00762212e-01
+  float afMaxAcc[7]   1.00000000e+00  1.00000000e+00  1.00000000e+00  1.00000000e+00  1.00000000e+00
+  1.00000000e+00  1.00000000e+00
+  float afMaxSpeed[7]   1.00000000e+01  1.00000000e+01  1.00000000e+01  1.00000000e+01  1.00000000e+01
+  1.00000000e+01  1.00000000e+01
+  float afSpeed[7]  -1.53765706e-02 -8.25997349e-03 -8.25997349e-03 -1.15550170e-02 -1.53765706e-02
+  1.53765706e-02 -1.53765706e-02
+  scalar fTimeStep[1]   9.99999978e-03
+end data
+
+#EndOfUnit:prog_unit#1407}DoNotEdit!#
+
+
+!BeginOfUnit: prog_unit#1413 {
+
+Format=NST5 Flags: 0
+
+3 ifields of dim: f7f7f7 f7f7 s1
+values:
+inp_2:
+     9.99999978e-03 
+4 ofields of dim: s7 s7 s7 s1
+@VARIABLES
+global program
+  scalar afCurAcc[7]  -3.01625929e-03  2.15229448e-02  2.15229448e-02 -2.15229448e-02 -2.15229448e-02
+  2.15229448e-02 -2.15229448e-02
+  scalar afCurSpeed[7]   2.91988457e-04 -4.63237171e-04 -4.63237171e-04  4.63237171e-04  4.63237171e-04
+ -4.63237171e-04  4.63237171e-04
+  scalar afCurValue[7]  -1.00000560e+00 -9.99993324e-01 -9.99993324e-01 -5.06372750e-03  6.96361065e-01
+ -1.54844031e-01  7.00755537e-01
+  scalar tDuration[1]   5.02304602e+00
+end data
+
+#EndOfUnit:prog_unit#1413}DoNotEdit!#
+
+
+!BeginOfUnit: CONTAINER#1417 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s7
+values:
+inp_0:
+    -1.00000560e+00  -9.99993324e-01  -9.99993324e-01  -5.06372750e-03   6.96361065e-01 
+    -1.54844031e-01   7.00755537e-01 
+0 ofields
+
+
+!BeginOfUnit: Render#[120] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+Status: Open 1 v3 86 628
+view angle: 30.000000
+camera pos: 0.000000  0.000000  6.971281
+focal point: 0.000000  0.000000  0.000000
+view up: 0.000000  1.000000  0.000000
+
+
+!BeginOfUnit: return_unit#1421 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1421}DoNotEdit!#
+
+
+!BeginOfUnit: Update#[121] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Update#[121]}DoNotEdit!#
+
+
+!BeginOfUnit: Reset_Camera#[122] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Reset_Camera#[122]}DoNotEdit!#
+
+
+!BeginOfUnit: Set#[123] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1425 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1425}DoNotEdit!#
+
+
+!BeginOfUnit: Backgnd#[124] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Backgnd#[124]}DoNotEdit!#
+
+
+!BeginOfUnit: Ambient#[125] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Ambient#[125]}DoNotEdit!#
+
+
+!BeginOfUnit: ParProj#[126] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:ParProj#[126]}DoNotEdit!#
+
+
+!BeginOfUnit: Light_FllwCam#[127] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Light_FllwCam#[127]}DoNotEdit!#
+
+
+!BeginOfUnit: PickTol#[128] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:PickTol#[128]}DoNotEdit!#
+
+
+!BeginOfUnit: Style#[129] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1432 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1432}DoNotEdit!#
+
+
+!BeginOfUnit: Track#[130] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Track#[130]}DoNotEdit!#
+
+
+!BeginOfUnit: Joy#[131] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Joy#[131]}DoNotEdit!#
+
+
+!BeginOfUnit: Cam#[132] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Cam#[132]}DoNotEdit!#
+
+
+!BeginOfUnit: Actor#[133] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Actor#[133]}DoNotEdit!#
+
+#EndOfUnit:Style#[129]}DoNotEdit!#
+
+
+!BeginOfUnit: Time#[134] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Time#[134]}DoNotEdit!#
+
+#EndOfUnit:Set#[123]}DoNotEdit!#
+
+
+!BeginOfUnit: Camera#[135] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1439 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1439}DoNotEdit!#
+
+
+!BeginOfUnit: Set#[136] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1441 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1441}DoNotEdit!#
+
+
+!BeginOfUnit: ViewAngle#[137] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:ViewAngle#[137]}DoNotEdit!#
+
+
+!BeginOfUnit: View#[138] {
+
+Format=NST5 Flags: 0
+
+3 ifields of dim: s3 s3 s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+inp_1:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+inp_2:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:View#[138]}DoNotEdit!#
+
+
+!BeginOfUnit: Orientation#[139] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Orientation#[139]}DoNotEdit!#
+
+
+!BeginOfUnit: TM#[140] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f16
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:TM#[140]}DoNotEdit!#
+
+#EndOfUnit:Set#[136]}DoNotEdit!#
+
+
+!BeginOfUnit: Get#[141] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1447 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1447}DoNotEdit!#
+
+
+!BeginOfUnit: ViewAngle#[142] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:ViewAngle#[142]}DoNotEdit!#
+
+
+!BeginOfUnit: View#[143] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+3 ofields of dim: s3 s3 s3
+#EndOfUnit:View#[143]}DoNotEdit!#
+
+
+!BeginOfUnit: Orientation#[144] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s3
+#EndOfUnit:Orientation#[144]}DoNotEdit!#
+
+
+!BeginOfUnit: TM#[145] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f16
+#EndOfUnit:TM#[145]}DoNotEdit!#
+
+#EndOfUnit:Get#[141]}DoNotEdit!#
+
+
+!BeginOfUnit: Reset#[146] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Reset#[146]}DoNotEdit!#
+
+#EndOfUnit:Camera#[135]}DoNotEdit!#
+
+
+!BeginOfUnit: World2Win#[147] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+1 ofields of dim: s3
+#EndOfUnit:World2Win#[147]}DoNotEdit!#
+
+
+!BeginOfUnit: Win2World#[148] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+1 ofields of dim: s3
+#EndOfUnit:Win2World#[148]}DoNotEdit!#
+
+
+!BeginOfUnit: GetImage#[149] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: <C>
+#EndOfUnit:GetImage#[149]}DoNotEdit!#
+
+
+!BeginOfUnit: Event#[150] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1457 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1457}DoNotEdit!#
+
+
+!BeginOfUnit: Char#[151] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Char#[151]}DoNotEdit!#
+
+
+!BeginOfUnit: Mouse#[152] {
+
+Format=NST5 Flags: 0
+
+2 ifields of dim: s2 s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00 
+inp_1:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Mouse#[152]}DoNotEdit!#
+
+
+!BeginOfUnit: Mask#[153] {
+
+Format=NST5 Flags: 0
+
+2 ifields of dim: s1 s6
+values:
+inp_0:
+     0.00000000e+00 
+inp_1:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00 
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Mask#[153]}DoNotEdit!#
+
+
+!BeginOfUnit: Pick#[154] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s2
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Pick#[154]}DoNotEdit!#
+
+
+!BeginOfUnit: CtrlShift#[155] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s2
+#EndOfUnit:CtrlShift#[155]}DoNotEdit!#
+
+#EndOfUnit:Event#[150]}DoNotEdit!#
+
+
+!BeginOfUnit: Process_Events#[156] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Process_Events#[156]}DoNotEdit!#
+
+#EndOfUnit:Render#[120]}DoNotEdit!#
+
+
+!BeginOfUnit: universe#[157] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+<UNIVERSE>
+	<GRAVITY>0, 0, 0</GRAVITY>
+	<EPSILON>0.01</EPSILON>
+	<GAMMA>0.2</GAMMA>
+	<VEL_THRESH>0.02</VEL_THRESH>
+	<ANGVEL_THRESH>0.001</ANGVEL_THRESH>
+	<ACC_THRESH>-8.9895e-41</ACC_THRESH>
+	<ANGACC_THRESH>0.002</ANGACC_THRESH>
+	<ALIVE_WINDOW>10</ALIVE_WINDOW>
+	<OPTIONS>7</OPTIONS>
+	<TIMESTEP>0.05</TIMESTEP>
+	<MATERIAL>
+		<NUM>0</NUM>
+		<ID>metal</ID>
+		<DENSITY>0.0078</DENSITY>
+		<COLOR>0.47, 0.7, 1, 1</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>1</NUM>
+		<ID>glass</ID>
+		<DENSITY>0.0025</DENSITY>
+		<COLOR>1, 0.89, 0.87, 0.5</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>2</NUM>
+		<ID>plastic</ID>
+		<DENSITY>0.00135</DENSITY>
+		<COLOR>1, 0.84, 0, 1</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>3</NUM>
+		<ID>wood</ID>
+		<DENSITY>0.0008</DENSITY>
+		<COLOR>0.75, 0.38, 0, 1</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>4</NUM>
+		<ID>rubber</ID>
+		<DENSITY>0.0011</DENSITY>
+		<COLOR>1, 1, 1, 1</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>5</NUM>
+		<ID>user</ID>
+		<DENSITY>0.001</DENSITY>
+		<COLOR>0.8, 0.2, 0.2, 1</COLOR>
+	</MATERIAL>
+	<MATERIAL>
+		<NUM>6</NUM>
+		<ID>nofriction</ID>
+		<DENSITY>0.001</DENSITY>
+		<COLOR>0, 1, 0, 1</COLOR>
+	</MATERIAL>
+	<MATERIALPAIR>
+		<IDS>0, 0</IDS>
+		<RESTITUTION>0.01</RESTITUTION>
+		<SOFTNESS>1e-06</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.2, 0.06</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 1</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-06</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.2, 0.06</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 2</IDS>
+		<RESTITUTION>0.001</RESTITUTION>
+		<SOFTNESS>5.5e-06</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.2, 0.06</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 3</IDS>
+		<RESTITUTION>0.001</RESTITUTION>
+		<SOFTNESS>5.05e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.3, 0.09</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 4</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0050005</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>1, 0.3</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.05e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>0, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.05e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 1</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>1e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.2, 0.06</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 2</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>1e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.2, 0.06</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 3</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.3, 0.09</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 4</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.005005</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>1, 0.3</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>1, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>2, 2</IDS>
+		<RESTITUTION>0.0001</RESTITUTION>
+		<SOFTNESS>1e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.3, 0.09</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>2, 3</IDS>
+		<RESTITUTION>0.0001</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.4, 0.12</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>2, 4</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.005005</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>1, 0.3</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>2, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>2, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>5.5e-05</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>3, 3</IDS>
+		<RESTITUTION>0.0001</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0.4, 0.12</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>3, 4</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.00505</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>1, 0.3</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>3, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>3, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>4, 4</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.01</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>2, 0.6</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>4, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.00505</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>4, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.00505</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>5, 5</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>5, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+	<MATERIALPAIR>
+		<IDS>6, 6</IDS>
+		<RESTITUTION>0</RESTITUTION>
+		<SOFTNESS>0.0001</SOFTNESS>
+		<MINSPEED>0.001</MINSPEED>
+		<MU>0, 0</MU>
+		<FORCES>1.79769e+308, 1.79769e+308</FORCES>
+	</MATERIALPAIR>
+</UNIVERSE>
+
+
+!BeginOfUnit: return_unit#1505 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1505}DoNotEdit!#
+
+
+!BeginOfUnit: Set#[158] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1507 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1507}DoNotEdit!#
+
+
+!BeginOfUnit: TimeStep#[159] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     5.00000007e-02 
+0 ofields
+
+#EndOfUnit:TimeStep#[159]}DoNotEdit!#
+
+
+!BeginOfUnit: Gravity#[160] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Gravity#[160]}DoNotEdit!#
+
+
+!BeginOfUnit: Epsilon#[161] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f1
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Epsilon#[161]}DoNotEdit!#
+
+
+!BeginOfUnit: Gamma#[162] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f1
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Gamma#[162]}DoNotEdit!#
+
+
+!BeginOfUnit: MinVel#[163] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f1
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:MinVel#[163]}DoNotEdit!#
+
+
+!BeginOfUnit: MinAngVel#[164] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f1
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:MinAngVel#[164]}DoNotEdit!#
+
+
+!BeginOfUnit: MinAcc#[165] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f1
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:MinAcc#[165]}DoNotEdit!#
+
+
+!BeginOfUnit: AliveSteps#[166] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:AliveSteps#[166]}DoNotEdit!#
+
+
+!BeginOfUnit: Options#[167] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Options#[167]}DoNotEdit!#
+
+#EndOfUnit:Set#[158]}DoNotEdit!#
+
+
+!BeginOfUnit: Get#[168] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1518 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1518}DoNotEdit!#
+
+
+!BeginOfUnit: TimeStep#[169] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:TimeStep#[169]}DoNotEdit!#
+
+
+!BeginOfUnit: Time#[170] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Time#[170]}DoNotEdit!#
+
+
+!BeginOfUnit: Marked#[171] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: <vx.SolidRef>
+#EndOfUnit:Marked#[171]}DoNotEdit!#
+
+
+!BeginOfUnit: Gravity#[172] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Gravity#[172]}DoNotEdit!#
+
+
+!BeginOfUnit: Epsilon#[173] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f1
+#EndOfUnit:Epsilon#[173]}DoNotEdit!#
+
+
+!BeginOfUnit: Gamma#[174] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f1
+#EndOfUnit:Gamma#[174]}DoNotEdit!#
+
+
+!BeginOfUnit: MinVel#[175] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f1
+#EndOfUnit:MinVel#[175]}DoNotEdit!#
+
+
+!BeginOfUnit: MinAngVel#[176] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f1
+#EndOfUnit:MinAngVel#[176]}DoNotEdit!#
+
+
+!BeginOfUnit: MinAcc#[177] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f1
+#EndOfUnit:MinAcc#[177]}DoNotEdit!#
+
+
+!BeginOfUnit: AliveSteps#[178] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:AliveSteps#[178]}DoNotEdit!#
+
+
+!BeginOfUnit: Options#[179] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Options#[179]}DoNotEdit!#
+
+#EndOfUnit:Get#[168]}DoNotEdit!#
+
+
+!BeginOfUnit: step#[180] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:step#[180]}DoNotEdit!#
+
+
+!BeginOfUnit: draw#[181] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:draw#[181]}DoNotEdit!#
+
+
+!BeginOfUnit: reset#[182] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:reset#[182]}DoNotEdit!#
+
+#EndOfUnit:universe#[157]}DoNotEdit!#
+
+
+!BeginOfUnit: vtkViewer#[183] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1561 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1561}DoNotEdit!#
+
+
+!BeginOfUnit: SimulationStep#[184] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:SimulationStep#[184]}DoNotEdit!#
+
+#EndOfUnit:vtkViewer#[183]}DoNotEdit!#
+
+
+!BeginOfUnit: scene#[185] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+<SCENE>
+	<OBJECT OBJ_1>
+		<POS>-1.00001, -0.999988, -0.999988</POS>
+		<QUAT>-0.00506962, 0.696369, -0.154841, 0.700763</QUAT>
+		<VLIN>0, 0, 0</VLIN>
+		<VROT>0, 0, 0</VROT>
+		<COLOR>0.75, 0.38, 0, 1</COLOR>
+		<OPT>8</OPT>
+	</OBJECT>
+</SCENE>
+
+#EndOfUnit:scene#[185]}DoNotEdit!#
+
+
+!BeginOfUnit: Axes#[186] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1573 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1573}DoNotEdit!#
+
+
+!BeginOfUnit: Set#[187] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1579 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1579}DoNotEdit!#
+
+
+!BeginOfUnit: Bounds#[188] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s6
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00   0.00000000e+00 
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Bounds#[188]}DoNotEdit!#
+
+
+!BeginOfUnit: Labels#[189] {
+
+Format=NST5 Flags: 0
+
+3 ifields of dim: t20 t20 t20
+values:
+inp_0:
+0 {""}
+
+inp_1:
+0 {""}
+
+inp_2:
+0 {""}
+
+0 ofields
+
+#EndOfUnit:Labels#[189]}DoNotEdit!#
+
+
+!BeginOfUnit: Num_Labels#[190] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Num_Labels#[190]}DoNotEdit!#
+
+
+!BeginOfUnit: Scaling#[191] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Scaling#[191]}DoNotEdit!#
+
+
+!BeginOfUnit: Fly_Mode#[192] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Fly_Mode#[192]}DoNotEdit!#
+
+
+!BeginOfUnit: Label_Format#[193] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: t20
+values:
+inp_0:
+0 {""}
+
+0 ofields
+
+#EndOfUnit:Label_Format#[193]}DoNotEdit!#
+
+
+!BeginOfUnit: Font_Factor#[194] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Font_Factor#[194]}DoNotEdit!#
+
+
+!BeginOfUnit: Corner_Offset#[195] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Corner_Offset#[195]}DoNotEdit!#
+
+
+!BeginOfUnit: Visibility#[196] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Visibility#[196]}DoNotEdit!#
+
+
+!BeginOfUnit: Color#[197] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1590 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1590}DoNotEdit!#
+
+
+!BeginOfUnit: Axes#[198] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Axes#[198]}DoNotEdit!#
+
+
+!BeginOfUnit: Cube#[199] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s3
+values:
+inp_0:
+     0.00000000e+00   0.00000000e+00   0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Cube#[199]}DoNotEdit!#
+
+#EndOfUnit:Color#[197]}DoNotEdit!#
+
+#EndOfUnit:Set#[187]}DoNotEdit!#
+
+#EndOfUnit:Axes#[186]}DoNotEdit!#
+
+
+!BeginOfUnit: obj#[200] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1719 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1719}DoNotEdit!#
+
+
+!BeginOfUnit: Set#[201] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1721 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1721}DoNotEdit!#
+
+
+!BeginOfUnit: TM#[202] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f16
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:TM#[202]}DoNotEdit!#
+
+
+!BeginOfUnit: TM_and_Update#[203] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f16
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:TM_and_Update#[203]}DoNotEdit!#
+
+
+!BeginOfUnit: Pos#[204] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Pos#[204]}DoNotEdit!#
+
+
+!BeginOfUnit: Quat#[205] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f4
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Quat#[205]}DoNotEdit!#
+
+
+!BeginOfUnit: Mass#[206] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:Mass#[206]}DoNotEdit!#
+
+
+!BeginOfUnit: Inertia#[207] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f9
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Inertia#[207]}DoNotEdit!#
+
+
+!BeginOfUnit: v#[208] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:v#[208]}DoNotEdit!#
+
+
+!BeginOfUnit: w#[209] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:w#[209]}DoNotEdit!#
+
+
+!BeginOfUnit: LinDamp#[210] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:LinDamp#[210]}DoNotEdit!#
+
+
+!BeginOfUnit: AngDamp#[211] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:AngDamp#[211]}DoNotEdit!#
+
+
+!BeginOfUnit: Force#[212] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Force#[212]}DoNotEdit!#
+
+
+!BeginOfUnit: Torque#[213] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:Torque#[213]}DoNotEdit!#
+
+
+!BeginOfUnit: Type#[214] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+0 ofields
+
+#EndOfUnit:Type#[214]}DoNotEdit!#
+
+
+!BeginOfUnit: Enable#[215] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:Enable#[215]}DoNotEdit!#
+
+#EndOfUnit:Set#[201]}DoNotEdit!#
+
+
+!BeginOfUnit: Get#[216] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1737 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1737}DoNotEdit!#
+
+
+!BeginOfUnit: TM#[217] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f16
+#EndOfUnit:TM#[217]}DoNotEdit!#
+
+
+!BeginOfUnit: COMTM#[218] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f16
+#EndOfUnit:COMTM#[218]}DoNotEdit!#
+
+
+!BeginOfUnit: Pos#[219] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Pos#[219]}DoNotEdit!#
+
+
+!BeginOfUnit: Quat#[220] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f4
+#EndOfUnit:Quat#[220]}DoNotEdit!#
+
+
+!BeginOfUnit: Mass#[221] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Mass#[221]}DoNotEdit!#
+
+
+!BeginOfUnit: Inertia#[222] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f9
+#EndOfUnit:Inertia#[222]}DoNotEdit!#
+
+
+!BeginOfUnit: v#[223] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:v#[223]}DoNotEdit!#
+
+
+!BeginOfUnit: w#[224] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:w#[224]}DoNotEdit!#
+
+
+!BeginOfUnit: a#[225] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:a#[225]}DoNotEdit!#
+
+
+!BeginOfUnit: LinDamp#[226] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:LinDamp#[226]}DoNotEdit!#
+
+
+!BeginOfUnit: AngDamp#[227] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:AngDamp#[227]}DoNotEdit!#
+
+
+!BeginOfUnit: Force#[228] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Force#[228]}DoNotEdit!#
+
+
+!BeginOfUnit: Torque#[229] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Torque#[229]}DoNotEdit!#
+
+
+!BeginOfUnit: Total_Force#[230] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Total_Force#[230]}DoNotEdit!#
+
+
+!BeginOfUnit: Total_Torque#[231] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: f3
+#EndOfUnit:Total_Torque#[231]}DoNotEdit!#
+
+
+!BeginOfUnit: Type#[232] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Type#[232]}DoNotEdit!#
+
+
+!BeginOfUnit: Enable#[233] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Enable#[233]}DoNotEdit!#
+
+
+!BeginOfUnit: Valid#[234] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+1 ofields of dim: s1
+#EndOfUnit:Valid#[234]}DoNotEdit!#
+
+#EndOfUnit:Get#[216]}DoNotEdit!#
+
+
+!BeginOfUnit: Contacts#[235] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+
+!BeginOfUnit: return_unit#1757 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     1.00000000e+00 
+0 ofields
+
+#EndOfUnit:return_unit#1757}DoNotEdit!#
+
+
+!BeginOfUnit: withSolid#[236] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: <vx.SolidRef>
+(only_vector_inputs)
+1 ofields of dim: <vx.ContactList>
+#EndOfUnit:withSolid#[236]}DoNotEdit!#
+
+
+!BeginOfUnit: withType#[237] {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s1
+values:
+inp_0:
+     0.00000000e+00 
+1 ofields of dim: <vx.ContactList>
+#EndOfUnit:withType#[237]}DoNotEdit!#
+
+#EndOfUnit:Contacts#[235]}DoNotEdit!#
+
+
+!BeginOfUnit: Freeze#[238] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:Freeze#[238]}DoNotEdit!#
+
+
+!BeginOfUnit: UnFreeze#[239] {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:UnFreeze#[239]}DoNotEdit!#
+
+#EndOfUnit:obj#[200]}DoNotEdit!#
+
+
+!BeginOfUnit: splitter1#1693 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: s7
+values:
+inp_0:
+    -1.00000560e+00  -9.99993324e-01  -9.99993324e-01  -5.06372750e-03   6.96361065e-01 
+    -1.54844031e-01   7.00755537e-01 
+2 ofields of dim: f3 f4
+#EndOfUnit:splitter1#1693}DoNotEdit!#
+
+
+!BeginOfUnit: use_method#1806 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f3
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:use_method#1806}DoNotEdit!#
+
+
+!BeginOfUnit: use_method#1809 {
+
+Format=NST5 Flags: 0
+
+1 ifields of dim: f4
+(only_vector_inputs)
+0 ofields
+
+#EndOfUnit:use_method#1809}DoNotEdit!#
+
+
+!BeginOfUnit: use_method#1702 {
+
+Format=NST5 Flags: 0
+
+0 ifields
+
+0 ofields
+
+#EndOfUnit:use_method#1702}DoNotEdit!#
+
+#EndOfUnit:CONTAINER#1417}DoNotEdit!#
+
+##_____END_OF_NSTFILE_____

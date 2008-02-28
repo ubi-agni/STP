@@ -3,18 +3,17 @@
  * \author Erik Weitnauer
  */
 
-#include "polynomial.h"
-#include "complex.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include "tools.h"
-#include "stp3.h"
-#include "stp7.h"
-#include "stp7Formulars.h"
-#include <stdexcept>
 #include <sstream>
-#include "math.h"
+
+#include "polynomial.hh"
+#include "complex.hh"
+#include "tools.hh"
+#include "stp3.hh"
+#include "stp7.hh"
+#include "stp7Formulars.hh"
 
 using namespace std;
 
@@ -585,7 +584,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
                 Stp7Formulars::solveProfile(_t, _sProfileType, true, _bIsddec, da==-1, dir==1,
                         _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
                 return;
-            } catch (exception e) {}
+            } catch (exception &e) {}
             // it didnt work --> try the one without cruising phase
             Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
                 _x[0], _x[7], _v[0], _vmax, _a[0], _amax, _jmax, newDuration);
@@ -646,7 +645,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
                return;
             }
             // oszillation, we need to continue the search
-        } catch (exception e) { cCalcs++; }
+        } catch (exception &e) { cCalcs++; }
         try {
             // without cruising phase
             Stp7Formulars::solveProfile(_t, _sProfileType, false, _bIsddec, da==-1, dir==1,
@@ -661,7 +660,7 @@ void Stp7::planProfileStretchDoubleDec(double newDuration, double dir, double da
                return;
             }
             // oszillation, we need to continue the search
-        } catch (exception e) { cCalcs++; }
+        } catch (exception &e) { cCalcs++; }
     }
     throw logic_error("No solution found for stretched double dec 3rd order profile.");
 }

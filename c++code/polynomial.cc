@@ -3,12 +3,13 @@
  * \author Erik Weitnauer
  */
 
-#include "polynomial.h"
-#include "complex.h"
 #include <math.h>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+
+#include "polynomial.hh"
+#include "complex.hh"
 
 /*** DEFINES for Polynomial::findRoots ***/
 // fraction for rounding off imaginary part to zero

@@ -2,7 +2,7 @@
  * \file complex.cc
  * \author Erik Weitnauer
  */
-#include "complex.h"
+#include "complex.hh"
 #include <math.h>
 #include <iostream>
 #include <sstream>

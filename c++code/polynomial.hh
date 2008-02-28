@@ -1,14 +1,14 @@
 /**
- * \file polynomial.h
+ * \file polynomial.hh
  * \author Erik Weitnauer
  */
 
 #ifndef _polynomial_H
 #define	_polynomial_H
 
-#include "complex.h"
 #include <iostream>
 #include <string>
+#include "complex.hh"
 
 /**
  * \brief Class for holding and root finding of polynomials.

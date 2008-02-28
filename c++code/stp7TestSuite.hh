@@ -576,7 +576,7 @@ public:
                                 TS_ASSERT_EQUALS(testResult, "");
                                 //cout << stp.getDetailedProfileType();
                                 count++;
-                            } catch (exception e) {
+                            } catch (exception &e) {
                                 cout << e.what() << endl;
                                 cout << stp.toString();
                                     cout << setprecision(100) << "Testing planFastestProfile(" << x0 << ", " << xtarget

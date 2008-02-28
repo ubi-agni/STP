@@ -3,18 +3,17 @@
  * \author Erik Weitnauer
  */
 
-#include "stp7Formulars.h"
-#include "polynomial.h"
-#include "complex.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include "tools.h"
-#include "stp3.h"
-#include "stp7.h"
-#include <stdexcept>
+#include <exception>
 #include <sstream>
-#include "math.h"
+
+#include "stp7Formulars.hh"
+#include "polynomial.hh"
+#include "tools.hh"
+#include "stp3.hh"
+#include "stp7.hh"
 
 using namespace std;
 

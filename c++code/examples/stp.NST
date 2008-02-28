@@ -1,0 +1,377 @@
+#<HTML><BODY><PRE>
+{header}
+{status NEO_V7.9 NST_V7.9 area=710x540 noadapt steps=10 }
+#
+# SUBUNITS:
+#
+<A HREF=#prog_unit0>prog_unit</A>
+<A HREF=#prog_unit1>prog_unit</A>
+<A HREF=#plot_series2>plot_series</A>
+<A HREF=#plot_series3>plot_series</A>
+<A HREF=#plot_xy4>plot_xy</A>
+#
+VARNAME_DEFS:  "0,1,2,3,4,5"
+#
+#  USE DIALOG:
+#
+" num of axes: %3i %n"
+" smoothing:   %3:7:7b%l2nd~order|3rd~order %n"
+" time step:   %0.5f %n"
+" break prob:  %0:1:0.5f %n"
+" speed prob:  %0:1:0.5f %n"
+" sync mode:   %0:1:1b%lnot~synced|synced %n %[%0:1:0:10d %l`Cancel%d%l`Ok%]%H "
+#
+#  USE VARIABLES:
+#
+@0    =  3
+@1    =  7
+@2    =  0.5
+@3    =  0.5
+@4    =  0.5
+@5    =  1
+@6    =  0
+@7    =  1
+------
+
+BEGIN prog_unit { %65,340 #<A NAME=prog_unit0></A>
+INTERFACE:   {s3:s3}{f3f3f3:f3f3:s1}
+LABEL:       prog
+UNIQUE_ID:   2
+OPERANDS:    1
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@ZOOM = 00
+@0    =  "// TEMPFILE=*.c (hint for Ctrl-J cmd)"
+         ""
+         "INP scalar afOldCur[@0], afOldSpeed[@0];"
+         "OUT {float afGoal[@0], afCur[@0], afSpeed[@0];}"
+         "OUT {float afMaxSpeed[@0], afMaxAcc[@0];}"
+         "OUT scalar fTimeStep;"
+         ""
+         "afCur := afOldCur;"
+         "afSpeed := afOldSpeed;"
+         "afGoal := 360; afGoal := -180 + rnd (afGoal);"
+         "if (rnd(1) < @4) afMaxSpeed := 10; else afMaxSpeed := 5;"
+         "exec_opnds ();"
+         "return;"
+         ""
+         "INIT:"
+         "afMaxSpeed := 10;"
+         "afMaxAcc := 1;"
+         "fTimeStep = @2;"
+@1    =  2
+@2    =  1
+@3    =  0
+@4    =  2
+@5    =  1
+@6    =  0
+@7    =  2
+@8    =  1
+@9    =  0
+@10   =  2
+@11   =  1
+@12   =  0
+@13   =  0
+@14   =  0
+@15   =  1
+------
+
+#
+# CONFIGURE WITH:
+#
+@0    =  "prog"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF prog_unit }
+
+BEGIN prog_unit { %215,305 #<A NAME=prog_unit1></A>
+INTERFACE:   {f3f3f3:f3f3:s1}{s3:s3:s3:s1}
+LABEL:       stp
+UNIQUE_ID:   1
+OPERANDS:    3
+------
+#
+# CREATE WITH:
+#
+@PLEV =  2
+@ZOOM = 00
+@0    =  "// TEMPFILE=*.c (hint for Ctrl-J cmd)"
+         "#noimplicit"
+         "#import \"stp\""
+         ""
+         "INP {float afGoal[@0], afCur[@0], afSpeed[@0];} // goal, cur pos, cur speed"
+         "INP {float afMaxSpeed[@0], afMaxAcc[@0];} // max speed, max acc"
+         "INP scalar fTimeStep; // time step"
+         ""
+         "OUT scalar afCurValue[@0], afCurSpeed[@0], afCurAcc[@0];"
+         "OUT scalar tDuration;"
+         "float afMaxJerk[@0];"
+         "float t;"
+         "int iBreak, i, nSteps;"
+         ""
+         "class STP stp (@0,@1);"
+         ""
+         "afMaxJerk := 0.2;"
+         "stp.setMax (afMaxSpeed, afMaxAcc, afMaxJerk);"
+         "tDuration = stp.planFastestProfile (afGoal, afCur, afSpeed);"
+         "nSteps = ceil (tDuration / fTimeStep) + 2 / fTimeStep;"
+         "if (rnd (1) < @3) iBreak = 1; else iBreak = 0;"
+         ""
+         "for (i=0; i <= nSteps; i++) {"
+         "   t = i * fTimeStep;"
+         "   stp.getPos (t, afCurValue);"
+         "   stp.getVel (t, afCurSpeed);"
+         "   stp.getAcc (t, afCurAcc);"
+         "   if (iBreak && stp.isAfterCruising (t)) break;"
+         "   exec_opnds (); // do the drawing"
+         "}"
+         "return;"
+         ""
+         "INIT:"
+         "stp.setSynced (@5);"
+         ""
+@1    =  2
+@2    =  1
+@3    =  0
+@4    =  2
+@5    =  1
+@6    =  0
+@7    =  2
+@8    =  1
+@9    =  0
+@10   =  2
+@11   =  1
+@12   =  0
+@13   =  0
+@14   =  1
+@15   =  0
+------
+
+#
+# CONFIGURE WITH:
+#
+@0    =  "stp"
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  1
+------
+ENDOF prog_unit }
+
+BEGIN plot_series { %355,240 #<A NAME=plot_series2></A>
+INTERFACE:   {s1:s1:s1:s1}{}
+LABEL:       plot_series
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@ZOOM = 1
+@0    =  "speed"
+@1    =  800
+@2    =  200
+@3    =  0
+@4    =  0
+@5    = -10
+@6    =  10
+@7    =  100
+@8    =  @2
+@9    =  1
+@10   = -1
+@11   =  1
+@12   =  2
+@13   = -1
+@14   =  1
+@15   =  3
+@16   = -1
+@17   =  1
+@39   =  0
+@40   =  "%0:0t"
+@41   =  0
+@42   =  1
+------
+
+#
+# CONFIGURE WITH:
+#
+@PLEV =  1
+@0    =  0
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  0
+@5    =  0
+@6    =  0
+@7    =  0
+@8    =  0
+@9    =  1
+------
+ENDOF plot_series }
+
+BEGIN plot_series { %360,335 #<A NAME=plot_series3></A>
+INTERFACE:   {s1:s1:s1:s1}{}
+LABEL:       plot_series
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@ZOOM = 1
+@0    =  "position"
+@1    =  800
+@2    =  400
+@3    =  0
+@4    =  0
+@5    = -180
+@6    =  180
+@7    =  100
+@8    =  @2
+@9    =  1
+@10   = -1
+@11   =  1
+@12   =  2
+@13   = -1
+@14   =  1
+@15   =  3
+@16   = -1
+@17   =  1
+@39   =  0
+@40   =  "%0:0t"
+@41   =  0
+@42   =  1
+------
+
+#
+# CONFIGURE WITH:
+#
+@PLEV =  1
+@0    =  0
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  0
+@5    =  0
+@6    =  0
+@7    =  0
+@8    =  0
+@9    =  1
+------
+ENDOF plot_series }
+
+BEGIN plot_xy { %475,300 #<A NAME=plot_xy4></A>
+INTERFACE:   {s2:s1}{}
+LABEL:       plot|xy
+UNIQUE_ID:   1
+------
+#
+# CREATE WITH:
+#
+@ZOOM = 0
+@0    =  "xy"
+@1    =  300
+@2    =  300
+@3    =  0
+@4    =  0
+@5    = -180
+@6    =  180
+@7    = -180
+@8    =  180
+@9    =  2
+@10   = -1
+@11   =  1
+@12   =  0
+@16   =  0
+@20   =  0
+@24   =  0
+@28   =  0
+@32   =  0
+@36   =  0
+@40   =  0
+@44   =  0
+@48   =  0
+@49   =  0
+@50   =  1
+@51   =  0
+@52   =  0
+@53   =  0
+@54   =  "%20:20:25:10M%4:4t"
+@55   =  0
+@56   =  1
+------
+
+#
+# CONFIGURE WITH:
+#
+@PLEV =  1
+@0    =  0
+@1    =  0
+@2    =  0
+@3    =  0
+@4    =  0
+@5    =  0
+@6    =  0
+@7    =  0
+@8    =  0
+@9    =  0
+@10   =  0
+@11   =  0
+@12   =  1
+@13   =  0
+@14   =  1
+------
+ENDOF plot_xy }
+
+WIRE          0 2 -> 1 2 %158,335.5+0
+CONNECTIONS:  1 0->0
+
+WIRE          1 1 -> 0 1 %179,288-131
+CONNECTIONS:  3 0->0 1->1 2->2
+
+WIRE          1 0 -> 0 0 %179,432-131
+CONNECTIONS:  3 0->0 1->1 2->2
+
+WIRE          1 1 -> 2 2 %318,312.5+0
+CONNECTIONS:  1 2->0
+
+WIRE          1 1 -> 2 1 %323,322.5+0
+CONNECTIONS:  1 1->0
+
+WIRE          1 1 -> 2 0 %307,332.5+0
+CONNECTIONS:  1 0->0
+
+WIRE          1 0 -> 3 2 %310,370+0
+CONNECTIONS:  1 2->0
+
+WIRE          1 0 -> 3 1 %318,380+0
+CONNECTIONS:  1 1->0
+
+WIRE          1 0 -> 3 0 %323,390+0
+CONNECTIONS:  1 0->0
+
+WIRE          0 1 -> 1 1 %163,362.5+0
+CONNECTIONS:  2 0->0 1->1
+
+WIRE          0 0 -> 1 0 %180.5,388.5+0
+CONNECTIONS:  3 0->0 1->1 2->2
+
+WIRE          1 0 -> 4 0 %387,432+69
+CONNECTIONS:  2 0->0 1->1
+
+##_____END_OF_CIRCUIT_____
+#</PRE></BODY></HTML>
+
+##_____BGN_OF_POSINFO_____
+
+Status: Open 1 v3 86 403
+
+Status: Open 1 v3 86 628
+
+Status: Open 1 v3 896 728
+
+##_____END_OF_POSINFO_____
