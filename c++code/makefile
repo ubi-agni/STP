@@ -1,6 +1,6 @@
-INSTALL_DIR ?= /vol/greifen
-#CXXFLAGS += -O4 -mfpmath=sse -march=pentium4
-CXXFLAGS += -g3
+INSTALL_DIR ?= /vol/nirobots
+CXXFLAGS += -O4 -mfpmath=sse -march=pentium4
+#CXXFLAGS += -g3
 
 BUILD=o.$(ARCH)
 
@@ -15,7 +15,7 @@ clean:
 	rm -f $(BUILD)/*.o
 
 veryclean: clean
-	rm -f libSTP.so
+	rm -f libSTP.so stp.so
 
 SOURCES=complex.cc polynomial.cc tools.cc \
 	     stp3.cc stp7.cc stp7Formulars.cc STP.cc MultiSTP.cc
