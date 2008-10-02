@@ -36,7 +36,7 @@ const char *MultiSTP_c[] = {
 MultiSTP* STP_STP (int *piDim, void **ppvArg) {
    int iOrder = *((int*)ppvArg[1]);
    return new MultiSTP (*((int*)ppvArg[0]), 
-                        iOrder != 0 && iOrder != 3);
+                        iOrder == 1 || iOrder == 3);
 }
 // class destructor
 void STP_FREE_STP (MultiSTP* pSTP) {
