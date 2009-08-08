@@ -24,6 +24,9 @@ libSTP.so: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX
 libSTP.so: $(SOURCES:%.cc=$(BUILD)/%.o)
 	$(CXX) -shared $^ -o $(@F) -L$(INSTALL_DIR)/lib -lLogger
 
+libSTP.a: $(SOURCES:%.cc=$(BUILD)/%.o)
+	ar rcs $(@F) $^
+
 stp.so: LDFLAGS += -L$(INSTALL_DIR)/lib -Wl,-rpath -Wl,$(INSTALL_DIR)/lib -lSTP
 stp.so: CXXFLAGS += -I/vol/nst/include -Wno-write-strings
 stp.so: $(BUILD)/progaux_stp.o
