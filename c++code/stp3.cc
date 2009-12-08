@@ -287,9 +287,7 @@ std::string Stp3::toString() const {
     return oss.str();
 }
 
-double Stp3::getEndOfCruisingTime() {
-	if (!_plannedProfile) 
-        throw invalid_argument("Consider to call planFastestProfile(.) first.");
+double Stp3::getEndOfCruisingTime() const {
 	return _t[2];	
 }
 

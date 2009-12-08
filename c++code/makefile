@@ -18,7 +18,7 @@ veryclean: clean
 	rm -f libSTP.so stp.so
 
 SOURCES=complex.cc polynomial.cc tools.cc \
-	     stp3.cc stp7.cc stp7Formulars.cc STP.cc MultiSTP.cc
+	     stp1.cc stp3.cc stp7.cc stp7Formulars.cc STP.cc MultiSTP.cc
 
 libSTP.so: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX
 libSTP.so: $(SOURCES:%.cc=$(BUILD)/%.o)

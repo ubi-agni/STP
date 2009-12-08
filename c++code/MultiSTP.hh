@@ -23,9 +23,7 @@
  * R. Haschke, E. Weitnauer, H. Ritter; 2007
  */
  
-#ifndef __MULTI_STP_HH
-#define __MULTI_STP_HH
-
+#pragma once
 #include <vector>
 #include "STP.hh"
 
@@ -38,9 +36,8 @@ public:
 	/** Constructor
 	 * Takes argument how many joints and which order of equations to use.
 	 */  
-   MultiSTP (int nAxes, bool use3rdOrder);
-
-	virtual ~MultiSTP();
+   MultiSTP (int nAxes, STP::order o);
+	~MultiSTP();
 
    /// Plans the fastest profile, using the start and goal conditions
    /// passed in double vectors (with one element per joint).
@@ -130,8 +127,4 @@ protected:
    double             dMinDuration;
    double             dDuration;
    double		       dSwitchTime;
-   
-   bool use3rdOrder;
 };
-
-#endif // __MULTI_STP_HH

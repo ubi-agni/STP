@@ -1,6 +1,5 @@
-#ifndef __STP_HH
-#define __STP_HH
-
+#pragma once
+#include "stp1.hh"
 #include "stp3.hh"
 #include "stp7.hh"
 
@@ -46,12 +45,14 @@
  */
 
 class STP {
+	friend std::ostream& operator<<(std::ostream& os, const STP& c);
+
 public:
+	typedef unsigned char order;
+
    /// Constructor
 	/// Complexity of used equations can be passed.
-   STP(bool use3rdOrder=true);
-
-   STP(const STP&);
+   STP(order o);
 
    // destructor
    ~STP();
@@ -60,10 +61,11 @@ public:
     * Set limit values for movement parameters.
     * In 3rd order mode you have to provide values for vel, acc, jerk.
     * In 2nd order mode only for vel and acc.
+	 * In 1st order mode only vel is needed.
     */
    void setMax (double maxvel, double maxacc, double maxjerk);
-   void setMax (double maxvel, double maxacc)
-      {setMax (maxvel, maxacc, jmax);}
+   void setMax (double maxvel, double maxacc) {setMax (maxvel, maxacc, jmax);}
+	void setMax (double maxvel) {setMax (maxvel, amax, jmax);}
 
    /**
 	 * Function for calculating the time optimal profile.
@@ -71,40 +73,47 @@ public:
 	 * In 3rd order mode you additionally provide the cur. acceleration.
 	 * Returns the duration.
 	 */
-   double planFastestProfile(double xtarget, double x0, double v0, double a0=0);
+   double planFastestProfile(double xtarget, double x0, double v0=0, double a0=0);
     
    /// Scales an already planned profile to a longer duration.
    /// Returns new duration.
    double scaleToDuration(double newDuration);
 
    /// Returns the duration the full movement will need.
-   double getDuration();
+   double getDuration() const {return pCurrent->getDuration();}
 
    /// Returns the time at which the cruising time ends.    
-   double getEndOfCruisingTime() const;
+   double getEndOfCruisingTime() const
+		{return pCurrent->getEndOfCruisingTime();}
 
-   /// 2nd oder: get the pos, velocity and acceleration at passed time >= 0
+   /// 1st oder: get the pos and velocity at passed time t >= 0
+   void move(double t, double &x, double &v) const
+      {double a,j; move (t, x, v, a, j);}
+
+   /// 2nd oder: get the pos, velocity and acceleration at passed time t >= 0
    void move(double t, double &x, double &v, double &a) const
       {double j; move (t, x, v, a, j);}
 
    /// 3rd oder: get the pos, vel, acc and jerk at passed time >= 0
    void move(double t, double &x, double &v, double &a, double &j) const;
 
-   double pos(double t) const; ///< get the position at passed time >= 0
-   double vel(double t) const; ///< get the velocity at passed time >= 0
-   double acc(double t) const; ///< get the acceleration at passed time >= 0
-   double jerk(double t) const; ///< get the jerk at passed time >= 0
+   double pos(double t) const {return pCurrent->pos(t);}
+   double vel(double t) const {return pCurrent->vel(t);}
+   double acc(double t) const {return pCurrent->acc(t);}
+   double jerk(double t) const {return pCurrent->jerk(t);}
 
-   /// convert to string
-   std::string toString() const;
+private:
+   STP(const STP&);
 
 private:
    Stp7* pStp7;
    Stp3* pStp3;
-   bool  use3rdOrder, fallback2ndOrder, shutdown;
+	Stp1* pStp1;
+	StpBase* pCurrent;
+
+	order desiredOrder, usedOrder;
    double vmax; ///< limit for velocity
    double amax; ///< limit for acceleration
    double jmax; ///< limit for jerk
+	double xtarget; ///< target position
 };
-
-#endif // __STP_HH

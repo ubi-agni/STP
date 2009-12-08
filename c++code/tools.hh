@@ -5,7 +5,6 @@
 #define	_tools_H
 
 #include <iostream>
-#include <sstream>
 #include <math.h>
 
 #define MIN_VALUE_EQ_ZERO (1.e-8)
@@ -35,7 +34,7 @@ inline bool isPositive(double x) { return x > -MIN_VALUE_EQ_ZERO; };
 inline bool isNegative(double x) { return x < MIN_VALUE_EQ_ZERO; };
 
 /// write an array of doubles to a stream
-void writedArrayToStream(std::ostringstream &oss, const double* a,
+void writedArrayToStream(std::ostream &oss, const double* a,
                          int start, int end);
 
 #endif	/* _tools_H */

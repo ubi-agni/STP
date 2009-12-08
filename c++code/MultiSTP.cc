@@ -14,12 +14,11 @@ GETLOGGER ("stp");
 
 using namespace std;
 
-MultiSTP::MultiSTP (int axes, bool use3rdOrder) :
+MultiSTP::MultiSTP (int axes, STP::order o) :
    vPos(axes), vVel (axes), vAcc (axes), vJer(axes), vZero(axes), nAxes (axes)
 {
-	this->use3rdOrder = use3rdOrder;
 	for (int i=0; i<axes; i++) {
-		vSTP.push_back(new STP(use3rdOrder));
+		vSTP.push_back(new STP(o));
 	}
    dDuration = dMinDuration = 0.0;
    sync = synced;
@@ -77,7 +76,7 @@ double MultiSTP::planFastestProfile (const ValueArray& vGoal,
    for (unsigned int i=0; i < nAxes; i++) {
       dMinDuration = std::max (dMinDuration, 
          vSTP[i]->planFastestProfile (vGoal[i], vCurrent[i], vVel[i], vAcc[i]));
-      SDEBUG ("Joint " << i << " (fastest): " << vSTP[i]->toString());
+      SDEBUG ("Joint " << i << " (fastest): " << *vSTP[i]);
    }
 
    dDuration = dMinDuration;
@@ -97,7 +96,7 @@ bool MultiSTP::scaleToDuration (double dNewDuration) {
 		} catch (...) {
 			SWARN ("caught unknown exception");
 		}
-		SDEBUG("Joint " << i << " (stretched): " << vSTP[i]->toString());
+		SDEBUG("Joint " << i << " (stretched): " << *vSTP[i]);
 	}
 	dDuration = dNewDuration;
 	findSwitchTime ();

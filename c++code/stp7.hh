@@ -3,11 +3,9 @@
  * \author Erik Weitnauer
  */
  
-#ifndef _stp7_H
-#define _stp7_H
-
+#pragma once
+#include "stp.hh"
 #include <iostream>
-#include <string>
 
 /**
  * Smooth Trajectory Planner, 3rd order (Stp7)
@@ -53,7 +51,9 @@
  * 0 and therefore the arrays are double[8].
  */
 
-class Stp7 {
+class Stp7 : public StpBase {
+	friend std::ostream& operator<<(std::ostream& os, const Stp7& c);
+
 public:
    // string constants for different profile types
    static const std::string PROFILE_TT; ///< trapezoid - trapezoid shaped acceleration profile
@@ -83,7 +83,7 @@ public:
    double getSwitchTime(int i) const;
    /// 1 <= i <= 7. Returns the time length of phase (i).
    double getTimeIntervall(int i) const;
-   double getDuration() const { return getSwitchTime(7); }
+   virtual double getDuration() const { return getSwitchTime(7); }
    /// gives back in which time intervall the passed time lies inside. For
    /// t = 0 return 1, for t >= duration returns 7.
    int getPhaseIndex(double t) const;
@@ -95,10 +95,10 @@ public:
     
    // function for getting the pos/vel/acc/jerk at different times >= 0
    void move(double t, double &x, double &v, double &a, double &j) const;
-   double pos(double t) const;
-   double vel(double t) const;
-   double acc(double t) const;
-   double jer(double t) const;
+   virtual double pos(double t) const;
+   virtual double vel(double t) const;
+   virtual double acc(double t) const;
+   virtual double jer(double t) const;
     
    /// Function for calculating the time optimal profile. Returns the duration.
 	/// @throws std::logic_error if no solution could be found.
@@ -113,12 +113,10 @@ public:
 	 * Otherwise a std::logic_error is thrown.
 	 * @throws std::logic_error
 	 */
-   double scaleToDuration(double newDuration) throw(std::logic_error);
+   virtual double scaleToDuration(double newDuration) throw(std::logic_error);
     
    /// Returns at which time the cruising phase ends.
-   double getEndOfCruisingTime();
-    
-   std::string toString() const;
+   virtual double getEndOfCruisingTime() const;
     
    /** The function throws a logic_error exception, if the limits for jerk, acc or vel
 	 * are broken, or if there are any incorrect time intervalls.
@@ -147,7 +145,7 @@ public:
     
    /// Manuelly set a time value in the time array describing the movement.
    /// Don't use it unless you are feeling adventurous - its just intended for testing ;)
-   void sett(int i, double t);
+   void setT(int i, double t);
 protected:
 
 private:
@@ -193,6 +191,4 @@ private:
    void findProfileTypeStretchCanonical(double newDuration);
 	void planProfileStretchDoubleDec(double newDuration, double dir, double da) throw(std::logic_error);
 };
-
-#endif /* _stp7_H */
 

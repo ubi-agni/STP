@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
-#include <sstream>
 
 #include "polynomial.hh"
 #include "complex.hh"
@@ -1007,7 +1006,7 @@ void Stp7::calcjTracksTimeInt(double t[], double j[], int length,
     }
 }    
 
-double Stp7::getEndOfCruisingTime() {
+double Stp7::getEndOfCruisingTime() const {
     return _t[4];
 }
 
@@ -1046,7 +1045,7 @@ double Stp7::jer(double t) const {
     return j;
 }
 
-void Stp7::sett(int i, double t) {
+void Stp7::setT(int i, double t) {
     _t[i] = t;
 }
 
@@ -1081,28 +1080,22 @@ void Stp7::testProfile() const throw(logic_error) {
 	// everything seems to be allright :)
 }
 
-std::string Stp7::toString() const {
-    std::ostringstream oss;
-    if (_plannedProfile) {
-        if (_bIsddec) oss << "double decceleration ";
-        else oss << "canonical ";
-        oss << getProfileType() << " ";
-        if (_bHasCruise) oss << "with ";
-        else oss << " without ";
-        oss << "cruising phase (t=";
-        writedArrayToStream(oss, _t, 1, 7);
-        oss << ", j=";
-        writedArrayToStream(oss, _j, 1, 7);
-        oss << ", x0 = " << _x[0] << ", xTarget = " << _x[7] << ", v0 = ";
-        oss << _v[0] << ", vmax = " << _vmax << ", a0 = " << _a[0];
-        oss << ", amax = " << _amax << ")";
+std::ostream& operator<<(std::ostream& os, const Stp7& c) { 
+    if (c._plannedProfile) {
+        if (c._bIsddec) os << "double decceleration ";
+        else os << "canonical ";
+        os << c.getProfileType() << " ";
+        if (c._bHasCruise) os << "with ";
+        else os << " without ";
+        os << "cruising phase (t=";
+        writedArrayToStream(os, c._t, 1, 7);
+        os << ", j=";
+        writedArrayToStream(os, c._j, 1, 7);
+        os << ", x0 = " << c._x[0] << ", xTarget = " << c._x[7] << ", v0 = ";
+        os << c._v[0] << ", vmax = " << c._vmax << ", a0 = " << c._a[0];
+        os << ", amax = " << c._amax << ")";
     } else {
-        oss << "unplanned profile";
+        os << "unplanned profile";
     }
-    return oss.str();
-}
-
-std::ostream& operator<<(std::ostream& os, const Stp7& c) {
-    os << c.toString();
     return os;
 }

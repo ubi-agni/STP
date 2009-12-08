@@ -2,12 +2,9 @@
  * \file stp3.hh
  * \author Robert Haschke, Erik Weitnauer
  */
-#ifndef _stp3_H
-#define _stp3_H
-
+#pragma once
+#include "stp.hh"
 #include <iostream>
-#include <string>
-#include <stdexcept>
 
 /**
  * Smooth Trajectory Planner, 2nd order (Stp3)
@@ -41,7 +38,9 @@
  * \warning Both the time and the acceleration arrays start at index 1 instead of
  * 0 and therefore the arrays are double[4].
  */
-class Stp3 {
+class Stp3 : public StpBase {
+	friend std::ostream& operator<<(std::ostream& os, const Stp3& c);
+
 public:
 	static const std::string PROFILE_T;  ///< trapezoid shaped profile
 	static const std::string PROFILE_W;  ///< wedge shaped profile
@@ -61,7 +60,7 @@ public:
    /// returns duration of phase (i).
 	double getTimeIntervall(int i) const;
    /// returns total duration of the trajectory.
-   double getDuration() const { return getSwitchTime(3); }
+   virtual double getDuration() const { return getSwitchTime(3); }
    /// returns index of time intervall the passed times lies in
    int getPhaseIndex(double t) const;
     
@@ -71,9 +70,9 @@ public:
     
    /// get the position, velocity and acceleration at passed time >= 0
    void move(double t, double &x, double &v, double &a) const;
-   double pos(double t) const; ///< get the position at passed time >= 0
-   double vel(double t) const; ///< get the velocity at passed time >= 0
-   double acc(double t) const; ///< get the acceleration at passed time >= 0
+   virtual double pos(double t) const;
+   virtual double vel(double t) const;
+   virtual double acc(double t) const;
     
    /// Function for calculating the time optimal profile. Read the results with
    /// e.g. getTimeArray(..) or move(...).
@@ -81,10 +80,10 @@ public:
                              double amax) throw(std::logic_error);
     
    /// scale a planned profile to a longer duration
-   double scaleToDuration(double newDuration) throw(std::logic_error);
+   virtual double scaleToDuration(double newDuration) throw(std::logic_error);
     
    /// Returns at which time the cruising phase ends.
-   double getEndOfCruisingTime();
+   virtual double getEndOfCruisingTime() const;
         
    /// convert to string
    std::string toString() const;
@@ -108,8 +107,3 @@ private:
     
    void planProfile();
 };
-
-std::ostream& operator<<(std::ostream& os, const Stp3& c);
-
-#endif /* _stp3_H */
-

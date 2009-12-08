@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void writedArrayToStream(ostringstream &oss, const double* a,
+void writedArrayToStream(ostream &oss, const double* a,
                          int start, int end) {
     oss << "[";
     for (int i = start; i <= end; i++) {
