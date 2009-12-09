@@ -95,7 +95,7 @@ double STP::scaleToDuration(double dNewDuration) {
 			desiredOrder = oldDesired;
 		}
 	}
-	return 0;
+	return 0; // this should not happen
 }
 
 void STP::move(double t, double &x, double &v, double &a, double &j) const {
