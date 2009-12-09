@@ -10,7 +10,7 @@
 using namespace std;
 
 STP::STP (order o) : pStp7(0), pStp3(0), pStp1(0), pCurrent(0), desiredOrder(o) {
-	switch (0) {
+	switch (o) {
 	  // do not break to initialize fallback planners
 	  case 3: pStp7 = new Stp7(); 
 	  case 2: pStp3 = new Stp3();

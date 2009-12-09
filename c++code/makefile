@@ -1,5 +1,6 @@
 INSTALL_DIR ?= /vol/nirobots
 CXXFLAGS += -O4 -mfpmath=sse -march=pentium4
+#CXXFLAGS += -O4 -mfpmath=sse -march=pentium3
 #CXXFLAGS += -g3
 
 BUILD=o.$(ARCH)
@@ -24,6 +25,7 @@ libSTP.so: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX
 libSTP.so: $(SOURCES:%.cc=$(BUILD)/%.o)
 	$(CXX) -shared $^ -o $(@F) -L$(INSTALL_DIR)/lib -lLogger
 
+libSTP.a: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX
 libSTP.a: $(SOURCES:%.cc=$(BUILD)/%.o)
 	ar rcs $(@F) $^
 
@@ -41,7 +43,7 @@ LIB_DIR=$(INSTALL_DIR)/lib
 install: all
 	rm -f $(INCLUDE_DIR)/*
 	install -d $(INCLUDE_DIR)
-	install --mode=444 $(SOURCES:%.cc=%.hh) $(INCLUDE_DIR)
+	install --mode=444 $(SOURCES:%.cc=%.hh) stp.hh $(INCLUDE_DIR)
 	install --mode=755 libSTP.so $(LIB_DIR)
 	install --mode=775 stp.so /vol/nst/lib
 
