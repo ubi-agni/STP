@@ -30,7 +30,7 @@ libSTP.a: $(SOURCES:%.cc=$(BUILD)/%.o)
 	ar rcs $(@F) $^
 
 stp.so: LDFLAGS += -L. -L$(INSTALL_DIR)/lib -Wl,-rpath -Wl,$(INSTALL_DIR)/lib -lSTP
-stp.so: CXXFLAGS += -I/vol/nst/include -Wno-write-strings
+stp.so: CXXFLAGS += -I/vol/nst/include -Wno-write-strings -fPIC
 stp.so: $(BUILD)/progaux_stp.o
 	$(CXX) -shared $^ -o $(@F) $(LDFLAGS)
 
