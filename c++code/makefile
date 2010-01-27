@@ -1,7 +1,7 @@
 INSTALL_DIR ?= /vol/nirobots
-CXXFLAGS += -O4 -mfpmath=sse -march=pentium4
-#CXXFLAGS += -O4 -mfpmath=sse -march=pentium3
-#CXXFLAGS += -g3
+CXXFLAGS ?= -O4 -mfpmath=sse -march=pentium4
+#CXXFLAGS ?= -O4 -mfpmath=sse -march=pentium3
+#CXXFLAGS ?= -g3
 
 BUILD=o.$(ARCH)
 
