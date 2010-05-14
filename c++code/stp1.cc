@@ -6,9 +6,8 @@ Stp1::Stp1 () : _v(0), _T(0) {
 }
 
 void Stp1::move(double t, double &x, double &v) const {
-	v = _v;
-	if (t >= _T) x = _x[1];
-	else x = _x[0] + _v * t;
+	v = vel(t);
+	x = pos(t);
 }
 
 double Stp1::pos(double t) const {
@@ -17,6 +16,7 @@ double Stp1::pos(double t) const {
 }
 
 double Stp1::vel(double t) const {
+	if (t >= _T) return 0;
 	return _v;
 }
 
