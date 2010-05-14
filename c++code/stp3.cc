@@ -132,7 +132,7 @@ double Stp3::planFastestProfile(double x0, double xtarget, double v0,
                                 double vmax, double amax) throw(logic_error) {
 	// check, whether vmax and amax are greater than zero
 	if (isNegative(vmax) || isNegative(amax))
-		throw invalid_argument("Could not compute 2nd order profile - Values for vmax and amax must be positive!");
+		throw invalid_argument("vmax and amax must be positive!");
 	
 	// first set object fields
     _vmax = vmax; _amax = amax;
@@ -142,7 +142,7 @@ double Stp3::planFastestProfile(double x0, double xtarget, double v0,
     // Do the planning algorithm --> we get back the jerks and time points.
     planProfile();
 	// check if we have valid times, if not, throw a logic error
-	if (!isValidMovement()) throw logic_error("No solution found for 3stp profile.");
+	if (!isValidMovement()) throw logic_error("Invalid solution.");
 
     // calculate the missing x and v values
     for (int i = 1; i < 4; i++) {

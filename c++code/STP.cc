@@ -57,8 +57,8 @@ double STP::planFastestProfile(double xtarget, double x0, double v0, double a0) 
 				  return pStp1->planFastestProfile(x0, xtarget, vmax);
 			}
 		} catch (const logic_error &e) {
-			cout << "Error calculating profile of " << o << ". order: " 
-				  << e.what() << endl;
+			cout << "Error calculating profile of " << (int)o << ". order: " 
+				  << e.what() << endl << *this << endl;
 		}
 	}
 }
@@ -85,8 +85,8 @@ double STP::scaleToDuration(double dNewDuration) {
 				  return pStp1->scaleToDuration(dNewDuration);
 			}
 		} catch (const logic_error &e) {
-			cout << "Error stretching profile of " << o << ". order: " 
-				  << e.what() << endl;
+			cout << "Error stretching profile of " << (int)o << ". order to "
+				  << dNewDuration << ": " << e.what() << endl << *this << endl;
 
 			// plan initial profile of lower order
 			order oldDesired = desiredOrder;

@@ -28,8 +28,8 @@
  * By means of this stretching the movement of this single joint can be
  * synchronized with other joints.
  *
- * This class acts mainly as a fasade for the underlying classes stp7 and stp3,
- * which handle the 3rd and 2nd order case. 
+ * This class acts mainly as a fasade for the underlying classes stp7, stp3, stp1,
+ * which handle the 3rd, 2nd, and 1st order case. 
  *
  * Problem / error handling:
  * In case the Stp7 class throws a logic_error, because it could not find a

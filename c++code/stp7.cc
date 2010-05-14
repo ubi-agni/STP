@@ -895,7 +895,7 @@ double Stp7::planFastestProfile(double x0, double xtarget, double v0,
                                 double jmax) throw(logic_error) {
 	// check, whether vmax, amax and jmax are greater than zero
 	if (isNegative(vmax) || isNegative(amax) || isNegative(jmax))
-		    throw logic_error("Could not compute 3rd order profile - Values for vmax, amax and jmax must be positive!");
+		    throw logic_error("vmax, amax and jmax must be positive!");
 	
     // first set object fields
     _vmax = vmax; _amax = amax; _jmax = jmax;
