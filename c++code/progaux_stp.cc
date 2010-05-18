@@ -12,7 +12,7 @@ char ARRAYDIM_SHOULD_BE[] = "%s: dim of array arg #%d must be %d\n";
 
 const char *MultiSTP_c[] = {
   "STP_:", // class prefix
-  "STP (int nAxes, int b3rdOrder)", // class constructor
+  "STP (int nAxes, int order)", // class constructor
   "~STP ()", // class destructor
   
   "float planFastestProfile (float* pfGoal, float* pfCur, "
@@ -35,8 +35,8 @@ const char *MultiSTP_c[] = {
 // class constructor
 MultiSTP* STP_STP (int *piDim, void **ppvArg) {
    int iOrder = *((int*)ppvArg[1]);
-   return new MultiSTP (*((int*)ppvArg[0]), 
-                        iOrder == 1 || iOrder == 3);
+	if (iOrder < 1 || iOrder > 3) iOrder = 2; // 2nd order is default
+   return new MultiSTP (*((int*)ppvArg[0]), iOrder);
 }
 // class destructor
 void STP_FREE_STP (MultiSTP* pSTP) {
