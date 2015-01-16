@@ -1,5 +1,5 @@
 INSTALL_DIR ?= /vol/nirobots
-CXXFLAGS ?= -O4 -mfpmath=sse -march=native -mtune=native
+CXXFLAGS ?= -O4 -march=native -mtune=native
 #CXXFLAGS ?= -O4 -mfpmath=sse -march=pentium3
 #CXXFLAGS ?= -O0 -g3
 
