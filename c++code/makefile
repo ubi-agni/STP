@@ -1,25 +1,25 @@
 INSTALL_DIR ?= /vol/nirobots
 CXXFLAGS ?= -O4 -march=native -mtune=native
-#CXXFLAGS ?= -O4 -mfpmath=sse -march=pentium3
-#CXXFLAGS ?= -O0 -g3
 
 BUILD=o.$(ARCH)
 
 .PHONY : all clean veryclean depend install
 
-all: $(BUILD) depend libSTP.so stp.so
+all: depend libSTP.so stp.so
 
 doc: 
 	doxygen
 
 clean:
-	rm -f $(BUILD)/*.o
+	rm -f $(BUILD)/*.[od]
 
 veryclean: clean
 	rm -f libSTP.so stp.so
 
 SOURCES=complex.cc polynomial.cc tools.cc \
 	     stp1.cc stp3.cc stp7.cc stp7Formulars.cc STP.cc MultiSTP.cc
+
+%.o: depend
 
 libSTP.so: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX -fPIC
 libSTP.so: $(SOURCES:%.cc=$(BUILD)/%.o)
@@ -45,14 +45,14 @@ install: all
 	install -d $(INCLUDE_DIR)
 	install --mode=444 $(SOURCES:%.cc=%.hh) stp.hh $(INCLUDE_DIR)
 	install --mode=755 libSTP.so $(LIB_DIR)
-	install --mode=775 stp.so /vol/nst/lib
+	-install --mode=775 stp.so /vol/nst/lib
 
 $(BUILD)/*.o: makefile
 
 $(BUILD):
 	mkdir $(BUILD)
 
-depend: $(SOURCES:%.cc=$(BUILD)/%.d)
+depend: makefile $(BUILD) $(SOURCES:%.cc=$(BUILD)/%.d)
 
 $(BUILD)/%.d: %.c
 	@echo "generating dependencies for file $<"
