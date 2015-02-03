@@ -23,13 +23,14 @@ SOURCES=complex.cc polynomial.cc tools.cc \
 
 libSTP.so: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX -fPIC
 libSTP.so: $(SOURCES:%.cc=$(BUILD)/%.o)
-	$(CXX) -shared $^ -o $(@F) -L$(INSTALL_DIR)/lib -lLogger
+	$(CXX) -shared $^ -o $(@F) -L$(INSTALL_DIR)/lib $(LDFLAGS) -lLogger
 
 libSTP.a: CXXFLAGS += -I$(INSTALL_DIR)/include -I/vol/xcf/include -DUSE_LOG4CXX
 libSTP.a: $(SOURCES:%.cc=$(BUILD)/%.o)
 	ar rcs $(@F) $^
 
 stp.so: LDFLAGS += -L. -L$(INSTALL_DIR)/lib -Wl,-rpath -Wl,$(INSTALL_DIR)/lib -lSTP
+stp.so: libSTP.so
 stp.so: CXXFLAGS += -I/vol/nst/include -Wno-write-strings -fPIC
 stp.so: $(BUILD)/progaux_stp.o
 	$(CXX) -shared $^ -o $(@F) $(LDFLAGS)
