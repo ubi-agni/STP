@@ -1,0 +1,4 @@
+stp1.NST.gz  - simple approach for scaling
+stp2.NST.gz - better scaling, but still discontinous sometimes
+stp3.NST.gz - final version
+stp4.NST.gz - final version + writing to postscript

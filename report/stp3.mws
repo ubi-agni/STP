@@ -1,0 +1,123 @@
+{VERSION 5 0 "IBM INTEL LINUX" "5.0" }
+{USTYLETAB {CSTYLE "Maple Input" -1 0 "Courier" 0 1 255 0 0 1 0 1 0 0 
+1 0 0 0 0 1 }{CSTYLE "2D Math" -1 2 "Times" 0 1 0 0 0 0 0 0 2 0 0 0 0 
+0 0 1 }{CSTYLE "2D Output" 2 20 "" 0 1 0 0 255 1 0 0 0 0 0 0 0 0 0 1 }
+{PSTYLE "Normal" -1 0 1 {CSTYLE "" -1 -1 "" 0 1 0 0 0 0 0 0 0 0 0 0 0 
+0 0 0 }0 0 0 -1 -1 -1 0 0 0 0 0 0 -1 0 }{PSTYLE "Maple Output" 0 11 1 
+{CSTYLE "" -1 -1 "" 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 }3 3 0 -1 -1 -1 0 
+0 0 0 0 0 -1 0 }{PSTYLE "" 11 12 1 {CSTYLE "" -1 -1 "" 0 1 0 0 0 0 0 
+0 0 0 0 0 0 0 0 0 }1 0 0 -1 -1 -1 0 0 0 0 0 0 -1 0 }}
+{SECT 0 {EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 96 "a := t -> a[0] + a[1
+]*t + a[2]*t^2;\nc := t -> c[0] + c[1]*t;\nd := t -> d[0] + d[1]*t + d
+[2]*t^2;" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%\"aGf*6#%\"tG6\"6$%)oper
+atorG%&arrowGF(,(&F$6#\"\"!\"\"\"*&&F$6#F0F09$F0F0*&&F$6#\"\"#F0)F4F8F
+0F0F(F(F(" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%\"cGf*6#%\"tG6\"6$%)ope
+ratorG%&arrowGF(,&&F$6#\"\"!\"\"\"*&&F$6#F0F09$F0F0F(F(F(" }}{PARA 11 
+"" 1 "" {XPPMATH 20 "6#>%\"dGf*6#%\"tG6\"6$%)operatorG%&arrowGF(,(&F$6
+#\"\"!\"\"\"*&&F$6#F0F09$F0F0*&&F$6#\"\"#F0)F4F8F0F0F(F(F(" }}}{EXCHG 
+{PARA 0 "" 0 "" {TEXT -1 31 "Fastest way with linear segment" }}}
+{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 491 "eqn0 := \{a(0) = thetaCur, \+
+\n         eval(diff(a(t),t),t=0) = vCur, \n         eval(diff(a(t),t,
+t),t=0) = dir * acc\};\neqn1 := \{a(t[1]) = c(t[1]),\n         eval(di
+ff(a(t),t),t=t[1]) = dir * vMax,\n         eval(diff(a(t),t),t=t[1]) =
+ eval(diff(c(t),t),t=t[1])\};\neqn2 := \{c(t[2]) = d(t[2]), \n        \+
+ eval(diff(d(t),t),t=t[2]) = eval(diff(c(t),t),t=t[2]),\n         eval
+(diff(d(t),t,t),t=t[2]) = -dir * acc\};\neqn3 := \{d(t[3]) = thetaGoal
+,\n         eval(diff(d(t),t),t=t[3]) = 0\};                  " }}
+{PARA 11 "" 1 "" {XPPMATH 20 "6#>%%eqn0G<%/&%\"aG6#\"\"!%)thetaCurG/&F
+(6#\"\"\"%%vCurG/,$*&\"\"#F/&F(6#F4F/F/*&%$dirGF/%$accGF/" }}{PARA 11 
+"" 1 "" {XPPMATH 20 "6#>%%eqn1G<%/,(&%\"aG6#\"\"!\"\"\"*&&F)6#F,F,&%\"
+tGF/F,F,*&&F)6#\"\"#F,)F0F5F,F,,&&%\"cGF*F,*&&F9F/F,F0F,F,/,&F.F,*(F5F
+,F3F,F0F,F,*&%$dirGF,%%vMaxGF,/F=F;" }}{PARA 11 "" 1 "" {XPPMATH 20 "6
+#>%%eqn2G<%/,&&%\"cG6#\"\"!\"\"\"*&&F)6#F,F,&%\"tG6#\"\"#F,F,,(&%\"dGF
+*F,*&&F6F/F,F0F,F,*&&F6F2F,)F0F3F,F,/,&F8F,*(F3F,F:F,F0F,F,F./,$*&F3F,
+F:F,F,,$*&%$dirGF,%$accGF,!\"\"" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%%
+eqn3G<$/,(&%\"dG6#\"\"!\"\"\"*&&F)6#F,F,&%\"tG6#\"\"$F,F,*&&F)6#\"\"#F
+,)F0F7F,F,%*thetaGoalG/,&F.F,*(F7F,F5F,F0F,F,F+" }}}{PARA 12 "" 1 "" 
+{TEXT -1 0 "" }}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 111 "sol:=simpli
+fy (solve (`union`(eqn0,eqn1,eqn2,eqn3), \{a[0],a[1],a[2],c[0],c[1],d[
+0],d[1],d[2],t[1],t[2],t[3]\}));" }}{PARA 12 "" 1 "" {XPPMATH 20 "6#>%
+$solG<-/&%\"aG6#\"\"!%)thetaCurG/&F(6#\"\"\"%%vCurG/&%\"dG6#\"\"#,$*(F
+5!\"\"%$dirGF/%$accGF/F8/&F(F4,$*(F5F8F9F/F:F/F//&%\"tGF.,$*(,&F0F/*&F
+9F/%%vMaxGF/F8F/F9F8F:F8F8/&FAF4,$*,F5F8,***F5F/F+F/F9F/F:F/F8*$)F0F5F
+/F/**F5F/F0F/F9F/FFF/F8**F5F/%*thetaGoalGF/F9F/F:F/F/F/F9!\"#F:F8FFF8F
+//&FA6#\"\"$,$*,F5F8,,**F5F/F+F/F9F/F:F/F8FMF/**F5F/F0F/F9F/FFF/F8**F5
+F/FQF/F9F/F:F/F/*(F5F/)F9F5F/)FFF5F/F/F/F9FRF:F8FFF8F//&F3F),$*,\"\")F
+8,<**\"\"%F/)FQF5F/FhnF/)F:F5F/F/**F^oF/F0F/)F9FVF/)FFFVF/F8**F^oF/FNF
+/FhnF/FinF/F/**FaoF/)F0FVF/F9F/FFF/F8**FaoF/)F+F5F/FhnF/FcoF/F/*(FaoF/
+)F9FaoF/)FFFaoF/F/*,FaoF/F+F/F9F/F:F/FNF/F8*,F^oF/F+F/FhnF/FcoF/FQF/F8
+*,F^oF/F+F/FeoF/F:F/FinF/F8*,FaoF/FNF/FQF/F9F/F:F/F/*$)F0FaoF/F/*.F^oF
+/F+F/FhnF/F:F/F0F/FFF/F/*.F^oF/F0F/FhnF/FFF/FQF/F:F/F8F/F9!\"$F:F8FFFR
+F8/&%\"cGF),$**F5F8,***F5F/F+F/F9F/F:F/F8FMF/**F5F/F0F/F9F/FFF/F8*&Fhn
+F/FinF/F/F/F9F8F:F8F8/&FjpF.FE/&F3F.,$**F5F8F9F8FYF/FFF8F/" }}}{EXCHG 
+{PARA 0 "" 0 "" {TEXT -1 34 "Fastest way without linear segment" }}}
+{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 349 "eqn0 := \{a(0) = thetaCur, \+
+\n         eval(diff(a(t),t),t=0) = vCur, \n         eval(diff(a(t),t,
+t),t=0) = dir * acc\};\neqn2 := \{a(t[2]) = d(t[2]), \n         eval(d
+iff(d(t),t),t=t[2]) = eval(diff(a(t),t),t=t[2]),\n         eval(diff(d
+(t),t,t),t=t[2]) = -dir * acc\};\neqn3 := \{d(t[3]) = thetaGoal,\n    \+
+     eval(diff(d(t),t),t=t[3]) = 0\};                  " }}{PARA 11 "
+" 1 "" {XPPMATH 20 "6#>%%eqn0G<%/&%\"aG6#\"\"!%)thetaCurG/&F(6#\"\"\"%
+%vCurG/,$*&\"\"#F/&F(6#F4F/F/*&%$dirGF/%$accGF/" }}{PARA 11 "" 1 "" 
+{XPPMATH 20 "6#>%%eqn2G<%/,$*&\"\"#\"\"\"&%\"dG6#F)F*F*,$*&%$dirGF*%$a
+ccGF*!\"\"/,(&%\"aG6#\"\"!F**&&F66#F*F*&%\"tGF-F*F**&&F6F-F*)F<F)F*F*,
+(&F,F7F**&&F,F;F*F<F*F**&F+F*F@F*F*/,&FDF**(F)F*F+F*F<F*F*,&F:F**(F)F*
+F?F*F<F*F*" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%%eqn3G<$/,(&%\"dG6#\"
+\"!\"\"\"*&&F)6#F,F,&%\"tG6#\"\"$F,F,*&&F)6#\"\"#F,)F0F7F,F,%*thetaGoa
+lG/,&F.F,*(F7F,F5F,F0F,F,F+" }}}{PARA 12 "" 1 "" {TEXT -1 0 "" }}
+{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 91 "sol:=simplify (solve (`union
+`(eqn0,eqn2,eqn3), \{a[0],a[1],a[2],d[0],d[1],d[2],t[2],t[3]\}));" }}
+{PARA 12 "" 1 "" {XPPMATH 20 "6#>%$solG<*/&%\"aG6#\"\"!%)thetaCurG/&%
+\"dG6#\"\"\",&*&\"\"#F0-%'RootOfG6$,,**F3F0F+F0%$dirGF0%$accGF0F0*$)%%
+vCurGF3F0F0**F3F0%*thetaGoalGF0F9F0F:F0!\"\"*(\"\"%F0F=F0%#_ZGF0F0*&F3
+F0)FCF3F0F0/%&labelG%$_L3GF0F0F=F0/&F(F/F=/&F.6#F3,$*(F3F@F9F0F:F0F@/&
+F(FM,$*(F3F@F9F0F:F0F0/&%\"tGFM*(F4F0F:F@F9F@/&FV6#\"\"$*(F1F0F9F@F:F@
+/&F.F),$*&#F0F3F0*(,*F;F0**F3F0F?F0F9F0F:F0F@**FBF0F+F0F9F0F:F0F0*(FBF
+0F4F0F=F0F0F0F9F@F:F@F0F0" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 0 
+"" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 0 "" }}}{EXCHG {PARA 0 "> \+
+" 0 "" {MPLTEXT 1 0 424 "eqn0 := \{a(0) = thetaCur, \n         eval(di
+ff(a(t),t),t=0) = vCur, \n         eval(diff(a(t),t,t),t=0) = dir * ac
+c\};\neqn1 := \{a(t[1]) = c(t[1]),\n         eval(diff(a(t),t),t=t[1])
+ = eval(diff(c(t),t),t=t[1])\};\neqn2 := \{c(t[2]) = d(t[2]), \n      \+
+   eval(diff(d(t),t),t=t[2]) = eval(diff(c(t),t),t=t[2]),\n         ev
+al(diff(d(t),t,t),t=t[2]) = -dir * acc\};\neqn3 := \{d(t[3]) = thetaGo
+al,\n         eval(diff(d(t),t),t=t[3]) = 0\};" }}{PARA 11 "" 1 "" 
+{XPPMATH 20 "6#>%%eqn0G<%/&%\"aG6#\"\"!%)thetaCurG/&F(6#\"\"\"%%vCurG/
+,$*&\"\"#F/&F(6#F4F/F/*&%%dir|irGF/%$accGF/" }}{PARA 11 "" 1 "" 
+{XPPMATH 20 "6#>%%eqn1G<$/,(&%\"aG6#\"\"!\"\"\"*&&F)6#F,F,&%\"tGF/F,F,
+*&&F)6#\"\"#F,)F0F5F,F,,&&%\"cGF*F,*&&F9F/F,F0F,F,/,&F.F,*(F5F,F3F,F0F
+,F,F;" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%%eqn2G<%/,&&%\"cG6#\"\"!\"
+\"\"*&&F)6#F,F,&%\"tG6#\"\"#F,F,,(&%\"dGF*F,*&&F6F/F,F0F,F,*&&F6F2F,)F
+0F3F,F,/,&F8F,*(F3F,F:F,F0F,F,F./,$*&F3F,F:F,F,,$*&%%dir|irGF,%$accGF,
+!\"\"" }}{PARA 11 "" 1 "" {XPPMATH 20 "6#>%%eqn3G<$/,(&%\"dG6#\"\"!\"
+\"\"*&&F)6#F,F,&%\"tG6#\"\"$F,F,*&&F)6#\"\"#F,)F0F7F,F,%*thetaGoalG/,&
+F.F,*(F7F,F5F,F0F,F,F+" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 115 "
+eqns := `union`(eqn0,eqn1,eqn2,eqn3):\nsimplify (solve (eqns, \{a[0],a
+[1],a[2],c[0],c[1],d[0],d[1],d[2],t[1],t[2]\}));" }}{PARA 12 "" 1 "" 
+{XPPMATH 20 "6#<,/&%\"cG6#\"\"\",&*(%%dir|irGF(%$accGF(&%\"tG6#\"\"$F(
+F(-%'RootOfG6$,.*$)%%vCurG\"\"#F(F(*,F8F(F+F(F,F(F-F(F7F(!\"\"**F8F(%*
+thetaGoalGF(F+F(F,F(F(**F8F(%)thetaCurGF(F+F(F,F(F:*&,&*&F8F(F7F(F(**F
+8F(F+F(F,F(F-F(F:F(%#_ZGF(F(*&F8F()FCF8F(F(/%&labelG%$_L2GF:/&%\"aG6#
+\"\"!F>/&FKF'F7/&%\"dG6#F8,$*(F8F:F+F(F,F(F:/&FKFS,$*(F8F:F+F(F,F(F(/&
+FRF'F*/&FRFL,&*&#F(F8F(*(F+F(F,F()F-F8F(F(F:F<F(/&F.FS*(F1F(F,F:F+F:/&
+F.F',$*(,(F*F:F1F(F7F(F(F+F:F,F:F:/&F&FL,$*&#F(\"\"%F(*(,0**F8F(F>F(F+
+F(F,F(F:**F8F()F+F8F()F,F8F(F\\oF(F(F5F(*,F8F(F+F(F,F(F-F(F7F(F:**F8F(
+F<F(F+F(F,F(F:*,F8F(F+F(F,F(F-F(F1F(F:*(F8F(F1F(F7F(F(F(F+F:F,F:F(F:" 
+}}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 126 "simplify(solve (\{deltaP
+ = t1*(v+dir*acc*t1) + t2*dir*(w-acc*t2), t2=dir*w/(2*dir*acc), t1=(di
+r*w-v)/(2*dir*acc)\}, \{t1,t2,w\}));" }}{PARA 12 "" 1 "" {XPPMATH 20 "
+6#<%/%#t1G,$*&#\"\"\"\"\"#F)*(-%'RootOfG6$,***\"\"%F)%'deltaPGF)%$dirG
+F)%$accGF)!\"\"*$)%\"vGF*F)F)*(F1F)F8F)%#_ZGF)F)*&F*F))F:F*F)F)/%&labe
+lG%$_L3GF)F4F5F3F5F)F)/%#t2G,$*&F(F)*(,&F,F)F8F)F)F3F5F4F5F)F)/%\"wG*&
+FEF)F3F5" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 23 "solve (x^2+p*x+
+q=0, x);" }}{PARA 11 "" 1 "" {XPPMATH 20 "6$,&*&\"\"#!\"\"%\"pG\"\"\"F
+&*&F%F&,&*$)F'F%F(F(*&\"\"%F(%\"qGF(F&#F(F%F(,&*&F%F&F'F(F&*&F%F&F*F0F
+&" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 47 "solve (-4*deltaP*dir*a
+cc+v^2+4*v*_Z+2*_Z^2,_Z);" }}{PARA 11 "" 1 "" {XPPMATH 20 "6$,&%\"vG!
+\"\"*&\"\"#F%,&*&F'\"\"\")F$F'F*F***\"\")F*%'deltaPGF*%$dirGF*%$accGF*
+F*#F*F'F*,&F$F%*&F'F%F(F1F%" }}}{EXCHG {PARA 0 "> " 0 "" {MPLTEXT 1 0 
+49 "simplify (-v+1/2*(2*v^2+8*deltaP*dir*acc)^(1/2));" }}{PARA 11 "" 
+1 "" {XPPMATH 20 "6#,&%\"vG!\"\"*&\"\"#F%,&*&F'\"\"\")F$F'F*F***\"\")F
+*%'deltaPGF*%$dirGF*%$accGF*F*#F*F'F*" }}}{EXCHG {PARA 0 "> " 0 "" 
+{MPLTEXT 1 0 0 "" }}}}{MARK "13 1 0" 0 }{VIEWOPTS 1 1 0 1 1 1803 1 1 
+1 1 }{PAGENUMBERS 0 1 2 33 1 1 }
